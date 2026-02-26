@@ -246,7 +246,7 @@ Usuario ──────────────┬──── Venta ──�
 
 | Componente | Tecnología |
 |-----------|------------|
-| Lenguaje | Java 25 LTS |
+| Lenguaje | Java 21 LTS |
 | UI Desktop | JavaFX |
 | Backend interno | Spring Boot (embedded) |
 | ORM | JPA + Hibernate |
