@@ -21,7 +21,8 @@ public class ProveedorEntity {
     @Column(nullable = false, length = 100)
     private String nombre;
 
-    @Column(length = 20)
+    // unique = true: si el NIT se ingresa, no puede repetirse entre proveedores
+    @Column(unique = true, length = 20)
     private String nit;
 
     @Column(length = 20)

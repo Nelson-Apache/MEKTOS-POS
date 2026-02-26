@@ -19,4 +19,10 @@ public interface ProveedorRepository {
 
     // Solo proveedores activos — usados al asignar proveedor principal a un producto
     List<Proveedor> findAllActivos();
+
+    // Usado para detectar NIT duplicado antes de guardar (el NIT es opcional pero único si existe)
+    Optional<Proveedor> findByNit(String nit);
+
+    // Usado para advertir si ya existe un proveedor con el mismo nombre
+    Optional<Proveedor> findByNombre(String nombre);
 }
