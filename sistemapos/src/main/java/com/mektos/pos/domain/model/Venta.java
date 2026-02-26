@@ -1,8 +1,12 @@
 package com.mektos.pos.domain.model;
 
 import com.mektos.pos.domain.exception.BusinessException;
+import com.mektos.pos.domain.model.enums.EstadoVenta;
+import com.mektos.pos.domain.model.enums.MetodoPago;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -10,24 +14,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Venta {
 
     private Long id;
-    private LocalDateTime fecha;
+    @Builder.Default
+    private LocalDateTime fecha = LocalDateTime.now();
     private BigDecimal total;
     private MetodoPago metodoPago;
     private Cliente cliente;
     private Usuario usuario;
     private Caja caja;
-    private EstadoVenta estado;
-    private List<DetalleVenta> detalles;
-
-    public Venta() {
-        this.detalles = new ArrayList<>();
-        this.fecha = LocalDateTime.now();
-        this.estado = EstadoVenta.COMPLETADA;
-    }
+    @Builder.Default
+    private EstadoVenta estado = EstadoVenta.COMPLETADA;
+    @Builder.Default
+    private List<DetalleVenta> detalles = new ArrayList<>();
 
     /**
      * Suma los subtotales de todos los detalles para obtener el total de la venta.

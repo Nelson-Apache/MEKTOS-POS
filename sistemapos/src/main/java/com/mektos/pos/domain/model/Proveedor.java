@@ -1,16 +1,17 @@
 package com.mektos.pos.domain.model;
 
 import com.mektos.pos.domain.exception.BusinessException;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Proveedor {
 
     private Long id;
@@ -18,16 +19,19 @@ public class Proveedor {
     private String nit;
     private String celular;
     private String direccion;
-
-    @Setter(AccessLevel.NONE)
     private BigDecimal porcentajeGanancia;
-
     private boolean activo;
 
-    public void setPorcentajeGanancia(BigDecimal porcentajeGanancia) {
-        if (porcentajeGanancia == null || porcentajeGanancia.compareTo(BigDecimal.ZERO) <= 0) {
+    /**
+     * Único punto de mutación del porcentajeGanancia.
+     * Incluye validación — no puede ser nulo ni menor o igual a cero.
+     * Al cambiar el porcentaje, el servicio recalculará los precios de todos
+     * los productos que tienen este proveedor como principal.
+     */
+    public void actualizarPorcentajeGanancia(BigDecimal nuevoPorcentaje) {
+        if (nuevoPorcentaje == null || nuevoPorcentaje.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("El porcentaje de ganancia del proveedor debe ser mayor que cero.");
         }
-        this.porcentajeGanancia = porcentajeGanancia;
+        this.porcentajeGanancia = nuevoPorcentaje;
     }
 }

@@ -1,14 +1,16 @@
 package com.mektos.pos.domain.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class DetalleCompra {
 
     private Long id;
@@ -17,6 +19,10 @@ public class DetalleCompra {
     private BigDecimal precioCompraUnitario;
     private BigDecimal subtotal;
 
+    /**
+     * Constructor para crear un detalle al registrar una compra.
+     * Calcula el subtotal automáticamente — no se recibe desde la UI.
+     */
     public DetalleCompra(Producto producto, int cantidad, BigDecimal precioCompraUnitario) {
         this.producto = producto;
         this.cantidad = cantidad;

@@ -1,4 +1,4 @@
-package com.mektos.pos.domain.model;
+package com.mektos.pos.domain.model.enums;
 
 public enum EstadoCaja {
     ABIERTA,

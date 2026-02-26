@@ -1,15 +1,18 @@
 package com.mektos.pos.domain.model;
 
 import com.mektos.pos.domain.exception.BusinessException;
+import com.mektos.pos.domain.model.enums.PlazoPago;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Cliente {
 
     private Long id;
@@ -20,6 +23,7 @@ public class Cliente {
     private BigDecimal montoCredito;
     private PlazoPago plazoPago;
     // saldoUtilizado arranca en 0 al crear el cliente
+    @Builder.Default
     private BigDecimal saldoUtilizado = BigDecimal.ZERO;
     private boolean activo;
 
@@ -65,5 +69,15 @@ public class Cliente {
             throw new BusinessException("El monto del abono debe ser mayor que cero.");
         }
         this.saldoUtilizado = this.saldoUtilizado.subtract(monto).max(BigDecimal.ZERO);
+    }
+
+    /** Reactiva un cliente que fue desactivado. */
+    public void activar() {
+        this.activo = true;
+    }
+
+    /** Desactiva un cliente — no aparecerá disponible en ventas. */
+    public void desactivar() {
+        this.activo = false;
     }
 }

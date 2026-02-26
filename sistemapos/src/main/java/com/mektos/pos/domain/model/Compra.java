@@ -1,8 +1,10 @@
 package com.mektos.pos.domain.model;
 
 import com.mektos.pos.domain.exception.BusinessException;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -10,21 +12,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Compra {
 
     private Long id;
-    private LocalDateTime fecha;
+    @Builder.Default
+    private LocalDateTime fecha = LocalDateTime.now();
     private Proveedor proveedor;
     private String numeroFactura;
     private BigDecimal total;
     private Usuario usuario;
-    private List<DetalleCompra> detalles;
-
-    public Compra() {
-        this.detalles = new ArrayList<>();
-        this.fecha = LocalDateTime.now();
-    }
+    @Builder.Default
+    private List<DetalleCompra> detalles = new ArrayList<>();
 
     /**
      * Suma los subtotales de cada DetalleCompra para calcular el total.

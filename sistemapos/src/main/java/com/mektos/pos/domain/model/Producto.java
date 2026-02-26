@@ -1,14 +1,18 @@
 package com.mektos.pos.domain.model;
 
 import com.mektos.pos.domain.exception.BusinessException;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Producto {
 
     private Long id;
@@ -17,15 +21,11 @@ public class Producto {
     private BigDecimal precioVenta;
     private BigDecimal precioCompra;
     private Proveedor proveedorPrincipal;
-    private BigDecimal ajusteProducto;
+    // Por defecto 0: el precio se calcula con el % base del proveedor sin ajuste
+    @Builder.Default
+    private BigDecimal ajusteProducto = BigDecimal.ZERO;
     private int stock;
     private boolean activo;
-
-    public Producto() {
-        // Por defecto el ajuste es 0, lo que significa que el precio
-        // se calcula usando únicamente el porcentaje base del proveedor.
-        this.ajusteProducto = BigDecimal.ZERO;
-    }
 
     /**
      * Recalcula el precioVenta usando la fórmula del PRD:
@@ -65,6 +65,20 @@ public class Producto {
     }
 
     /**
+     * Aplica un ajuste al margen del proveedor para este producto específico.
+     * El valor puede ser positivo (aumentar) o negativo (reducir).
+     * El margen efectivo total nunca puede quedar en 0 o negativo.
+     */
+    public void aplicarAjuste(BigDecimal ajuste) {
+        BigDecimal margenResultante = proveedorPrincipal.getPorcentajeGanancia().add(ajuste);
+        if (margenResultante.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("El margen efectivo del producto '" + nombre + "' debe ser mayor que cero.");
+        }
+        this.ajusteProducto = ajuste;
+        calcularPrecioVenta();
+    }
+
+    /**
      * Descuenta stock al registrar una venta.
      * Lanza excepción si no hay suficiente stock — nunca puede quedar negativo.
      */
@@ -83,5 +97,15 @@ public class Producto {
             throw new BusinessException("La cantidad a incrementar debe ser mayor que cero.");
         }
         this.stock += cantidad;
+    }
+
+    /** Reactiva un producto — vuelve a aparecer disponible en ventas. */
+    public void activar() {
+        this.activo = true;
+    }
+
+    /** Desactiva un producto — deja de aparecer en ventas sin eliminarlo del historial. */
+    public void desactivar() {
+        this.activo = false;
     }
 }
