@@ -99,6 +99,18 @@ public class Producto {
         this.stock += cantidad;
     }
 
+    /**
+     * Actualiza el precio de compra del producto (registrado durante una compra al proveedor)
+     * y recalcula automáticamente el precio de venta con el nuevo costo base.
+     */
+    public void actualizarCosto(BigDecimal nuevoPrecioCompra) {
+        if (nuevoPrecioCompra == null || nuevoPrecioCompra.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("El precio de compra debe ser mayor que cero.");
+        }
+        this.precioCompra = nuevoPrecioCompra;
+        calcularPrecioVenta();
+    }
+
     /** Reactiva un producto — vuelve a aparecer disponible en ventas. */
     public void activar() {
         this.activo = true;

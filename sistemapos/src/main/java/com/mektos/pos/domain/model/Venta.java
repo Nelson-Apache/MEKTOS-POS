@@ -43,6 +43,17 @@ public class Venta {
     }
 
     /**
+     * Anula la venta. Solo se pueden anular ventas en estado COMPLETADA.
+     * El servicio de aplicación restaura el stock y el crédito antes de llamar a este método.
+     */
+    public void anular() {
+        if (!EstadoVenta.COMPLETADA.equals(this.estado)) {
+            throw new BusinessException("Solo se pueden anular ventas en estado COMPLETADA.");
+        }
+        this.estado = EstadoVenta.ANULADA;
+    }
+
+    /**
      * Valida las reglas de negocio antes de persistir la venta.
      * El servicio de aplicación llama a este método antes de guardar.
      */
