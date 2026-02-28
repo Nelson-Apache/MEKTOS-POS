@@ -6,7 +6,7 @@ plugins {
     id 'jacoco'
 }
 
-group = 'com.mektos'
+group = 'com.nap'
 version = '1.0.0'
 
 java {
@@ -82,16 +82,86 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
-                'com/mektos/pos/infrastructure/**',
-                'com/mektos/pos/config/**',
-                'com/mektos/pos/ui/**',
-                'com/mektos/pos/Launcher*'
+                'com/nap/pos/infrastructure/**',
+                'com/nap/pos/config/**',
+                'com/nap/pos/ui/**',
+                'com/nap/pos/Launcher*'
             ])
         }))
     }
 }
 
 springBoot {
-    mainClass = 'com.mektos.pos.Launcher'
+    mainClass = 'com.nap.pos.Launcher'
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Generador de instalador Windows con jpackage
+//
+// Requisitos previos:
+//   - JDK 21 con jpackage (incluido desde JDK 14)
+//   - WiX Toolset 3.0+ instalado (https://wixtoolset.org/)
+//     y agregado al PATH del sistema
+//
+// Uso:
+//   ./gradlew generarInstalador
+//
+// Resultado:
+//   build/installer/NAP POS-1.0.0.exe
+// ─────────────────────────────────────────────────────────────────
+tasks.register('generarInstalador') {
+    group       = 'distribution'
+    description = 'Genera el instalador .exe para Windows con jpackage (requiere WiX Toolset 3.0+)'
+    dependsOn bootJar
+
+    doLast {
+        def outDir = layout.buildDirectory.dir('installer').get().asFile
+        outDir.mkdirs()
+
+        def jar = bootJar.archiveFile.get().asFile
+
+        // Obtiene los directorios que contienen los JARs de JavaFX descargados
+        // por Gradle (incluyen las DLLs nativas para Windows).
+        def jfxJarDirs = configurations.runtimeClasspath
+                .resolvedConfiguration.resolvedArtifacts
+                .findAll { it.moduleVersion.id.group.startsWith('org.openjfx') }
+                .collect { it.file.parent }
+                .unique()
+        def jfxModulePath = jfxJarDirs.join(File.pathSeparator)
+
+        def cmd = [
+            'jpackage',
+            '--type',              'exe',
+            '--name',              'NAP POS',
+            '--app-version',       "${project.version}",
+            '--vendor',            'MEKTOS',
+            '--description',       'Sistema de Punto de Venta',
+            '--input',             jar.parent,
+            '--main-jar',          jar.name,
+            '--dest',              outDir.absolutePath,
+            '--win-menu',
+            '--win-shortcut',
+            '--win-dir-chooser',
+            '--win-per-user-install',
+            '--java-options',      '-Dfile.encoding=UTF-8'
+        ]
+
+        if (jfxModulePath) {
+            cmd += [
+                '--module-path', jfxModulePath,
+                '--add-modules', 'javafx.controls,javafx.fxml,javafx.graphics'
+            ]
+        }
+
+        // Agrega el ícono si existe en resources
+        def iconFile = file('src/main/resources/icon.ico')
+        if (iconFile.exists()) {
+            cmd += ['--icon', iconFile.absolutePath]
+        }
+
+        exec { commandLine cmd }
+
+        println "\n✅ Instalador generado en: ${outDir.absolutePath}"
+    }
 }
 

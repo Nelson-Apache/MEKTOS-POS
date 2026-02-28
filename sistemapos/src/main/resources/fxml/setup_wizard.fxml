@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.mektos.pos.ui.controller.SetupWizardController"
+            fx:controller="com.nap.pos.ui.controller.SetupWizardController"
             stylesheets="@../css/setup_wizard.css"
             styleClass="wizard-root"
             prefWidth="820" prefHeight="580">

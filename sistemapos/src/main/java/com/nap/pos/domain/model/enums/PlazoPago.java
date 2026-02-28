@@ -1,0 +1,16 @@
+package com.nap.pos.domain.model.enums;
+
+public enum PlazoPago {
+    QUINCE_DIAS(15),
+    TREINTA_DIAS(30);
+
+    private final int dias;
+
+    PlazoPago(int dias) {
+        this.dias = dias;
+    }
+
+    public int getDias() {
+        return dias;
+    }
+}
