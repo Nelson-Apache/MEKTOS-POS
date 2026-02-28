@@ -40,6 +40,12 @@ dependencies {
     // Logging
     implementation 'org.springframework.boot:spring-boot-starter-logging'
 
+    // Apache POI — lectura y escritura de archivos Excel (.xlsx/.xls)
+    implementation 'org.apache.poi:poi-ooxml:5.3.0'
+
+    // OpenCSV — lectura y escritura de archivos CSV
+    implementation 'com.opencsv:opencsv:5.9'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

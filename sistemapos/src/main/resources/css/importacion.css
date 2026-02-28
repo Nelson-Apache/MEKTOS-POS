@@ -1,0 +1,65 @@
+/* ================================================================
+   NAP POS — Importación masiva: estilos específicos
+   (complementa setup_wizard.css que define las clases compartidas)
+   ================================================================ */
+
+/* ── Tabla de errores ──────────────────────────────────────────── */
+.error-row {
+    -fx-background-color: #FFF5F5;
+}
+
+.table-view {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #EDF2F7;
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #2D3748;
+    -fx-font-size: 12px;
+}
+
+.table-view .table-cell {
+    -fx-font-size: 13px;
+    -fx-text-fill: #2D3748;
+}
+
+/* ── ComboBox en tabla de duplicados ──────────────────────────── */
+.table-view .combo-box {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 4px;
+    -fx-font-size: 12px;
+}
+
+/* ── ScrollPane transparente ──────────────────────────────────── */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* ── Paso 4: contadores de resultado ─────────────────────────── */
+#lblImportados {
+    -fx-text-fill: #276749;
+    -fx-font-size: 14px;
+}
+
+#lblActualizados {
+    -fx-text-fill: #2B6CB0;
+    -fx-font-size: 14px;
+}
+
+#lblOmitidos {
+    -fx-text-fill: #744210;
+    -fx-font-size: 14px;
+}

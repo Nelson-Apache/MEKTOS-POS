@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nap.pos.ui.controller.ImportacionController"
+            styleClass="wizard-root"
+            stylesheets="@../css/setup_wizard.css,@../css/importacion.css"
+            prefWidth="900" prefHeight="640">
+
+  <!-- ═══════════════════════ CABECERA ═══════════════════════════ -->
+  <top>
+    <VBox styleClass="wizard-header">
+      <HBox alignment="CENTER_LEFT" spacing="16" style="-fx-padding: 18 32 18 32;">
+        <Label text="NAP POS"            styleClass="wizard-brand"/>
+        <Label text="—"                  styleClass="wizard-subtitle"/>
+        <Label fx:id="lblTituloPaso"
+               text="Importación masiva" styleClass="wizard-subtitle"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <!-- Indicadores de paso -->
+        <HBox spacing="8" alignment="CENTER">
+          <Label fx:id="ind1" text="1" styleClass="indicador-activo"/>
+          <Label text="—"              styleClass="indicador-linea"/>
+          <Label fx:id="ind2" text="2" styleClass="indicador-inactivo"/>
+          <Label text="—"              styleClass="indicador-linea"/>
+          <Label fx:id="ind3" text="3" styleClass="indicador-inactivo"/>
+          <Label text="—"              styleClass="indicador-linea"/>
+          <Label fx:id="ind4" text="4" styleClass="indicador-inactivo"/>
+        </HBox>
+      </HBox>
+    </VBox>
+  </top>
+
+  <!-- ═══════════════════════ CONTENIDO ══════════════════════════ -->
+  <center>
+    <StackPane fx:id="stackPanePasos" styleClass="wizard-content">
+
+      <!-- ── PASO 0: Selección de tipo y archivo ──────────────── -->
+      <VBox fx:id="paso0" spacing="28" alignment="TOP_CENTER" styleClass="paso-container">
+        <Label text="¿Qué desea importar?" styleClass="paso-titulo"/>
+
+        <HBox spacing="28" alignment="CENTER">
+          <!-- Tarjeta Productos -->
+          <VBox fx:id="cardProductos" styleClass="tarjeta" spacing="10"
+                alignment="CENTER" onMouseClicked="#onSeleccionarProductos"
+                style="-fx-padding: 24; -fx-min-width: 190; -fx-min-height: 140;">
+            <Label text="📦" styleClass="tarjeta-icono"/>
+            <Label text="Productos"               styleClass="tarjeta-titulo"/>
+            <Label text="Stock, precios y proveedor" styleClass="tarjeta-desc"
+                   wrapText="true" style="-fx-text-alignment: center;"/>
+          </VBox>
+          <!-- Tarjeta Clientes -->
+          <VBox fx:id="cardClientes" styleClass="tarjeta" spacing="10"
+                alignment="CENTER" onMouseClicked="#onSeleccionarClientes"
+                style="-fx-padding: 24; -fx-min-width: 190; -fx-min-height: 140;">
+            <Label text="👥" styleClass="tarjeta-icono"/>
+            <Label text="Clientes"               styleClass="tarjeta-titulo"/>
+            <Label text="Contacto y crédito"     styleClass="tarjeta-desc"
+                   wrapText="true" style="-fx-text-alignment: center;"/>
+          </VBox>
+        </HBox>
+
+        <VBox spacing="10" alignment="CENTER">
+          <Label text="Archivo seleccionado:" styleClass="form-label"/>
+          <Label fx:id="lblArchivo" text="(ninguno)" styleClass="logo-path"/>
+          <Button text="Seleccionar archivo…" onAction="#onSeleccionarArchivo"
+                  styleClass="btn-secundario"/>
+        </VBox>
+      </VBox>
+
+      <!-- ── PASO 1: Mapeo de columnas ────────────────────────── -->
+      <VBox fx:id="paso1" spacing="14" styleClass="paso-container"
+            visible="false" managed="false">
+        <Label text="Mapeo de columnas" styleClass="paso-titulo"/>
+        <Label text="Asocia cada campo del sistema con la columna del archivo.  (* = obligatorio)"
+               styleClass="tarjeta-desc" wrapText="true"/>
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                    style="-fx-background-color: transparent; -fx-background: transparent;">
+          <VBox fx:id="contenedorMapeo" spacing="0" style="-fx-padding: 4 0 4 0;"/>
+        </ScrollPane>
+      </VBox>
+
+      <!-- ── PASO 2: Validación ────────────────────────────────── -->
+      <VBox fx:id="paso2" spacing="20" alignment="TOP_CENTER" styleClass="paso-container"
+            visible="false" managed="false">
+        <Label text="Validando archivo…" styleClass="paso-titulo"/>
+        <ProgressIndicator fx:id="progressValidacion" prefWidth="60" prefHeight="60"/>
+
+        <!-- Panel de errores — visible solo si hay errores -->
+        <VBox fx:id="panelErrores" spacing="10" visible="false" managed="false"
+              VBox.vgrow="ALWAYS">
+          <Label fx:id="lblContadorErrores" text=""
+                 style="-fx-text-fill: #E53E3E; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+          <Label text="Corrija los errores en el archivo y vuelva a intentarlo."
+                 styleClass="tarjeta-desc"/>
+          <TableView fx:id="tablaErrores" VBox.vgrow="ALWAYS"/>
+        </VBox>
+      </VBox>
+
+      <!-- ── PASO 3: Duplicados ────────────────────────────────── -->
+      <VBox fx:id="paso3" spacing="14" styleClass="paso-container"
+            visible="false" managed="false">
+        <Label text="Registros duplicados" styleClass="paso-titulo"/>
+        <Label text="Estos registros ya existen en el sistema. Elige qué hacer con cada uno."
+               styleClass="tarjeta-desc" wrapText="true"/>
+        <HBox spacing="10">
+          <Button text="Todos: Actualizar" onAction="#onMarcarTodosActualizar"
+                  styleClass="btn-secundario"/>
+          <Button text="Todos: Omitir"     onAction="#onMarcarTodosOmitir"
+                  styleClass="btn-secundario"/>
+        </HBox>
+        <TableView fx:id="tablaDuplicados" VBox.vgrow="ALWAYS"/>
+      </VBox>
+
+      <!-- ── PASO 4: Resultado ─────────────────────────────────── -->
+      <VBox fx:id="paso4" spacing="28" alignment="CENTER" styleClass="paso-container"
+            visible="false" managed="false">
+        <Label text="Importación completada" styleClass="paso-titulo"
+               style="-fx-text-fill: #276749;"/>
+        <VBox spacing="14" alignment="CENTER" styleClass="tarjeta"
+              style="-fx-padding: 32; -fx-min-width: 360;">
+          <Label fx:id="lblImportados"   text="" styleClass="form-label"/>
+          <Label fx:id="lblActualizados" text="" styleClass="form-label"/>
+          <Label fx:id="lblOmitidos"     text="" styleClass="form-label"/>
+        </VBox>
+      </VBox>
+
+    </StackPane>
+  </center>
+
+  <!-- ═══════════════════════ PIE ════════════════════════════════ -->
+  <bottom>
+    <HBox styleClass="wizard-footer" spacing="12" alignment="CENTER_LEFT"
+          style="-fx-padding: 14 32 14 32;">
+      <Button fx:id="btnAnterior"          text="← Anterior"
+              onAction="#onAnterior"        styleClass="btn-secundario"/>
+      <Region HBox.hgrow="ALWAYS"/>
+      <Button fx:id="btnDescargarPlantilla" text="⬇ Descargar plantilla"
+              onAction="#onDescargarPlantilla" styleClass="btn-secundario"
+              visible="false" managed="false"/>
+      <Button fx:id="btnDetectarAuto"      text="🔍 Detectar automáticamente"
+              onAction="#onDetectarAuto"    styleClass="btn-secundario"
+              visible="false" managed="false"/>
+      <Button fx:id="btnSiguiente"         text="Siguiente →"
+              onAction="#onSiguiente"       styleClass="btn-primario"/>
+    </HBox>
+  </bottom>
+
+</BorderPane>
