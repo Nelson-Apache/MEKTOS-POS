@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '3.4.3'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'jacoco'
 }
 
 group = 'com.mektos'
@@ -50,6 +51,44 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+
+    // Muestra en consola el nombre y resultado de cada test al ejecutar
+    testLogging {
+        events 'passed', 'failed', 'skipped'
+        showExceptions true
+        showCauses true
+    }
+}
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        // Reporte HTML navegable: build/reports/jacoco/test/html/index.html
+        html.required = true
+        // Reporte XML para herramientas externas (SonarQube, CI, etc.)
+        xml.required  = true
+        // CSV desactivado — no agrega valor en este proyecto
+        csv.required  = false
+    }
+
+    // Solo mide la cobertura de las capas de dominio y aplicación.
+    // Se excluyen: entidades JPA, mappers, config y clases generadas por Lombok.
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                'com/mektos/pos/infrastructure/**',
+                'com/mektos/pos/config/**',
+                'com/mektos/pos/ui/**',
+                'com/mektos/pos/Launcher*'
+            ])
+        }))
+    }
 }
 
 springBoot {

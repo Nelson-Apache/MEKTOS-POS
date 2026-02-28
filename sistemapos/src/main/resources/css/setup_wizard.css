@@ -1,0 +1,195 @@
+/* ================================================================
+   NAP POS — Setup Wizard Stylesheet
+   ================================================================ */
+
+/* ── Raíz ─────────────────────────────────────────────────────── */
+.wizard-root {
+    -fx-background-color: #F5F6FA;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+/* ── Cabecera ─────────────────────────────────────────────────── */
+.wizard-header {
+    -fx-background-color: #1E2A3A;
+}
+
+.wizard-brand {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FFFFFF;
+}
+
+.wizard-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #A0AEC0;
+}
+
+/* ── Indicadores de paso ──────────────────────────────────────── */
+.indicador-activo {
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
+    -fx-background-color: #3B82F6;
+    -fx-background-radius: 16px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER;
+}
+
+.indicador-inactivo {
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
+    -fx-background-color: #4A5568;
+    -fx-background-radius: 16px;
+    -fx-text-fill: #A0AEC0;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER;
+}
+
+.indicador-linea {
+    -fx-text-fill: #4A5568;
+    -fx-font-size: 10px;
+}
+
+/* ── Contenido central ────────────────────────────────────────── */
+.wizard-content {
+    -fx-padding: 32 40 16 40;
+}
+
+.paso-container {
+    -fx-padding: 0 0 0 0;
+}
+
+.paso-titulo {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1E2A3A;
+}
+
+/* ── Tarjetas de selección (paso 1) ──────────────────────────── */
+.tarjeta {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-width: 2px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-cursor: hand;
+    -fx-min-width: 210px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0, 0, 2);
+}
+
+.tarjeta:hover {
+    -fx-border-color: #93C5FD;
+    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.15), 10, 0, 0, 3);
+}
+
+.tarjeta-seleccionada {
+    -fx-border-color: #3B82F6;
+    -fx-background-color: #EFF6FF;
+    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.2), 10, 0, 0, 3);
+}
+
+.tarjeta-radio {
+    -fx-opacity: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
+.tarjeta-icono {
+    -fx-font-size: 40px;
+}
+
+.tarjeta-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2D3748;
+}
+
+.tarjeta-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: #718096;
+}
+
+/* ── Formulario (paso 2) ──────────────────────────────────────── */
+.form-grid {
+    -fx-padding: 4 0 0 0;
+}
+
+.form-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4A5568;
+}
+
+.text-field, .text-area {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8 12 8 12;
+    -fx-font-size: 13px;
+}
+
+.text-field:focused, .text-area:focused {
+    -fx-border-color: #3B82F6;
+    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.2), 6, 0, 0, 0);
+}
+
+/* ── Logo (paso 3) ────────────────────────────────────────────── */
+.logo-section {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 20 24 20 24;
+}
+
+.logo-preview {
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-background-color: #F7FAFC;
+}
+
+.logo-path {
+    -fx-font-size: 12px;
+    -fx-text-fill: #718096;
+    -fx-font-style: italic;
+}
+
+/* ── Pie y botones ────────────────────────────────────────────── */
+.wizard-footer {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1 0 0 0;
+}
+
+.btn-primario {
+    -fx-background-color: #3B82F6;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 10 28 10 28;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.btn-primario:hover {
+    -fx-background-color: #2563EB;
+}
+
+.btn-primario:pressed {
+    -fx-background-color: #1D4ED8;
+}
+
+.btn-secundario {
+    -fx-background-color: #EDF2F7;
+    -fx-text-fill: #4A5568;
+    -fx-font-size: 13px;
+    -fx-padding: 10 20 10 20;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.btn-secundario:hover {
+    -fx-background-color: #E2E8F0;
+}
