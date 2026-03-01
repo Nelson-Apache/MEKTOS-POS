@@ -95,7 +95,27 @@
 }
 
 .tarjeta-icono {
-    -fx-font-size: 40px;
+    -fx-background-color: #EFF6FF;
+    -fx-background-radius: 28px;
+    -fx-min-width: 56px;
+    -fx-min-height: 56px;
+    -fx-max-width: 56px;
+    -fx-max-height: 56px;
+    -fx-alignment: CENTER;
+}
+
+.tarjeta-fa-icon {
+    -fx-icon-color: #3B82F6;
+    -fx-fill: #3B82F6;
+}
+
+.tarjeta-seleccionada .tarjeta-icono {
+    -fx-background-color: #DBEAFE;
+}
+
+.tarjeta-seleccionada .tarjeta-fa-icon {
+    -fx-icon-color: #1D4ED8;
+    -fx-fill: #1D4ED8;
 }
 
 .tarjeta-titulo {
@@ -134,6 +154,232 @@
     -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.2), 6, 0, 0, 0);
 }
 
+/* ── ComboBox ─────────────────────────────────────────────────── */
+.combo-box {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.combo-box:hover {
+    -fx-border-color: #93C5FD;
+}
+
+.combo-box:focused {
+    -fx-border-color: #3B82F6;
+    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.2), 6, 0, 0, 0);
+}
+
+.combo-box .list-cell {
+    -fx-font-size: 13px;
+    -fx-text-fill: #2D3748;
+    -fx-padding: 8 12 8 12;
+    -fx-background-color: transparent;
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0 10 0 0;
+}
+
+.combo-box .arrow-button .arrow {
+    -fx-background-color: #718096;
+    -fx-shape: "M 0 0 L 4 4 L 8 0 Z";
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 12, 0, 0, 4);
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-font-size: 13px;
+    -fx-text-fill: #2D3748;
+    -fx-padding: 9 14 9 14;
+    -fx-background-color: #FFFFFF;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #EFF6FF;
+}
+
+.combo-box-popup .list-view .list-cell:selected {
+    -fx-background-color: #DBEAFE;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-weight: bold;
+}
+
+/* ── Spinner ──────────────────────────────────────────────────── */
+.spinner {
+    -fx-background-color: transparent;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+
+.spinner:hover {
+    -fx-border-color: #93C5FD;
+}
+
+.spinner:focused {
+    -fx-border-color: #3B82F6;
+    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.2), 6, 0, 0, 0);
+}
+
+.spinner .text-field {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent;
+    -fx-border-radius: 6px 0 0 6px;
+    -fx-background-radius: 6px 0 0 6px;
+    -fx-padding: 7 8 7 12;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2D3748;
+}
+
+.spinner .increment-arrow-button,
+.spinner .decrement-arrow-button {
+    -fx-background-color: #F7FAFC;
+    -fx-border-color: #CBD5E0 #CBD5E0 #CBD5E0 #E2E8F0;
+    -fx-cursor: hand;
+    -fx-padding: 4 8 4 8;
+}
+
+.spinner .increment-arrow-button:hover,
+.spinner .decrement-arrow-button:hover {
+    -fx-background-color: #EDF2F7;
+}
+
+.spinner .increment-arrow-button .increment-arrow {
+    -fx-background-color: #4A5568;
+}
+
+.spinner .decrement-arrow-button .decrement-arrow {
+    -fx-background-color: #4A5568;
+}
+
+/* ── DatePicker ───────────────────────────────────────────────── */
+.date-picker {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+
+.date-picker:hover {
+    -fx-border-color: #93C5FD;
+}
+
+.date-picker:focused {
+    -fx-border-color: #3B82F6;
+    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.2), 6, 0, 0, 0);
+}
+
+.date-picker .text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 7 10 7 12;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2D3748;
+}
+
+.date-picker .arrow-button {
+    -fx-background-color: #F7FAFC;
+    -fx-border-color: transparent transparent transparent #E2E8F0;
+    -fx-border-radius: 0 6 6 0;
+    -fx-background-radius: 0 6 6 0;
+    -fx-cursor: hand;
+    -fx-padding: 4 10 4 10;
+}
+
+.date-picker .arrow-button:hover {
+    -fx-background-color: #EDF2F7;
+}
+
+.date-picker-popup {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 12, 0, 0, 4);
+}
+
+.date-picker-popup .month-year-pane {
+    -fx-background-color: #1E2A3A;
+    -fx-padding: 8 12 8 12;
+}
+
+.date-picker-popup .month-year-pane .label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+}
+
+.date-picker-popup .month-year-pane .spinner .button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+
+.date-picker-popup .day-cell {
+    -fx-background-color: transparent;
+    -fx-font-size: 12px;
+    -fx-padding: 6;
+    -fx-background-radius: 4px;
+}
+
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: #EFF6FF;
+}
+
+.date-picker-popup .selected {
+    -fx-background-color: #3B82F6;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+}
+
+.date-picker-popup .today {
+    -fx-border-color: #3B82F6;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+}
+
+/* ── CheckBox ─────────────────────────────────────────────────── */
+.check-box {
+    -fx-font-size: 13px;
+    -fx-text-fill: #2D3748;
+    -fx-cursor: hand;
+}
+
+.check-box .box {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 3;
+    -fx-min-width: 18px;
+    -fx-min-height: 18px;
+    -fx-max-width: 18px;
+    -fx-max-height: 18px;
+}
+
+.check-box:hover .box {
+    -fx-border-color: #93C5FD;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #3B82F6;
+    -fx-border-color: #3B82F6;
+}
+
+.check-box:selected .box .mark {
+    -fx-background-color: #FFFFFF;
+}
+
 /* ── Logo (paso 3) ────────────────────────────────────────────── */
 .logo-section {
     -fx-background-color: #FFFFFF;
@@ -154,6 +400,34 @@
     -fx-font-size: 12px;
     -fx-text-fill: #718096;
     -fx-font-style: italic;
+}
+
+/* ── ScrollPane transparente para pasos con mucho contenido ─────── */
+.wizard-scroll {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.wizard-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.wizard-scroll .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+
+/* ── Info régimen (aparece cuando IVA no aplica) ──────────────── */
+.info-regimen {
+    -fx-background-color: #EFF6FF;
+    -fx-background-radius: 8px;
+    -fx-border-color: #BFDBFE;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-padding: 12 16 12 16;
+    -fx-text-fill: #1E40AF;
+    -fx-font-size: 12px;
+    -fx-wrap-text: true;
 }
 
 /* ── Pie y botones ────────────────────────────────────────────── */
@@ -192,4 +466,27 @@
 
 .btn-secundario:hover {
     -fx-background-color: #E2E8F0;
+}
+
+/* ── Iconos de botones ────────────────────────────────────────── */
+.btn-primario-icon {
+    -fx-icon-color: #FFFFFF;
+    -fx-fill: #FFFFFF;
+}
+
+.btn-secundario-icon {
+    -fx-icon-color: #4A5568;
+    -fx-fill: #4A5568;
+}
+
+/* ── Icono de información de régimen ──────────────────────────── */
+.info-regimen-icon {
+    -fx-icon-color: #3B82F6;
+    -fx-fill: #3B82F6;
+}
+
+/* ── Icono OK del logo ────────────────────────────────────────── */
+.logo-ok-icon {
+    -fx-icon-color: #22C55E;
+    -fx-fill: #22C55E;
 }

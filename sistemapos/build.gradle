@@ -40,6 +40,10 @@ dependencies {
     // Logging
     implementation 'org.springframework.boot:spring-boot-starter-logging'
 
+    // Ikonli — iconos vectoriales para JavaFX (FontAwesome 5)
+    implementation 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
+    implementation 'org.kordamp.ikonli:ikonli-fontawesome5-pack:12.3.1'
+
     // Apache POI — lectura y escritura de archivos Excel (.xlsx/.xls)
     implementation 'org.apache.poi:poi-ooxml:5.3.0'
 
@@ -99,6 +103,32 @@ jacocoTestReport {
 
 springBoot {
     mainClass = 'com.nap.pos.Launcher'
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Compatibilidad Spring Boot + JavaFX
+//
+// El task 'bootRun' de Spring Boot NO hereda el module-path que el
+// plugin org.openjfx.javafxplugin configura en el task 'run'.
+// JavaFX 17+ requiere que sus JARs estén en el module-path (JPMS),
+// no solo en el classpath ordinario, de lo contrario lanza:
+//   "Error: faltan los componentes de JavaFX runtime"
+//
+// Solución: extraer los JARs de JavaFX del runtimeClasspath de
+// Gradle (que incluye los JARs nativos de la plataforma correcta)
+// y pasarlos explícitamente como --module-path a la JVM.
+// ─────────────────────────────────────────────────────────────────
+bootRun {
+    doFirst {
+        def jfxJars = configurations.runtimeClasspath.files.findAll {
+            it.name.contains('javafx') && it.name.endsWith('.jar')
+        }
+        if (!jfxJars.isEmpty()) {
+            def modulePath = jfxJars.collect { it.absolutePath }.join(File.pathSeparator)
+            jvmArgs '--module-path', modulePath,
+                    '--add-modules', 'javafx.controls,javafx.fxml,javafx.graphics'
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────

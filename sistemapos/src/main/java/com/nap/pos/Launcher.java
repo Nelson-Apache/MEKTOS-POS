@@ -2,11 +2,11 @@ package com.nap.pos;
 
 import com.nap.pos.application.service.ConfiguracionService;
 import javafx.application.Application;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -59,19 +59,23 @@ public class Launcher extends Application {
                 getClass().getResource("/fxml/setup_wizard.fxml"));
         // El controller es un bean Spring → se inyectan dependencias automáticamente
         loader.setControllerFactory(context::getBean);
-        Scene scene = new Scene(loader.load(), 820, 580);
+        Scene scene = new Scene(loader.load(), 820, 660);
         stage.setTitle("NAP POS — Configuración inicial");
         stage.setScene(scene);
-        stage.setResizable(false);
+        stage.setMinWidth(700);
+        stage.setMinHeight(560);
         stage.centerOnScreen();
         stage.show();
     }
 
     private void mostrarVentanaPrincipal(Stage stage, String nombreTienda) throws Exception {
-        // TODO: cargar main_window.fxml cuando esté implementado
+        FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/fxml/login.fxml"));
+        loader.setControllerFactory(context::getBean);
+        Scene scene = new Scene(loader.load(), 900, 620);
         stage.setTitle(nombreTienda + " — NAP POS");
-        stage.setWidth(1280);
-        stage.setHeight(800);
+        stage.setScene(scene);
+        stage.setResizable(false);
         stage.centerOnScreen();
         stage.show();
     }

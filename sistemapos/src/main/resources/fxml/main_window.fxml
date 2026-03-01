@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane
+    xmlns:fx="http://javafx.com/fxml/1"
+    xmlns="http://javafx.com/javafx/21"
+    fx:controller="com.nap.pos.ui.controller.MainWindowController"
+    stylesheets="@../css/styles.css">
+
+    <!-- ══════════════════════════════════════════════════════
+         SIDEBAR — navegación lateral
+         ══════════════════════════════════════════════════════ -->
+    <left>
+        <VBox styleClass="sidebar">
+
+            <!-- Brand / nombre tienda -->
+            <VBox styleClass="sidebar-brand-area">
+                <Label text="NAP POS" styleClass="sidebar-app-name"/>
+                <Label fx:id="lblNombreTienda" text="" styleClass="sidebar-store-name"/>
+            </VBox>
+
+            <!-- Separador -->
+            <Region styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
+
+            <!-- Grupo: Principal -->
+            <Label text="PRINCIPAL" styleClass="sidebar-group-label"/>
+
+            <Button fx:id="btnVentas"
+                    text="Punto de Venta"
+                    styleClass="nav-item"
+                    onAction="#navVentas"
+                    maxWidth="Infinity"/>
+
+            <Button fx:id="btnInventario"
+                    text="Inventario"
+                    styleClass="nav-item"
+                    onAction="#navInventario"
+                    maxWidth="Infinity"/>
+
+            <Button fx:id="btnCompras"
+                    text="Compras"
+                    styleClass="nav-item"
+                    onAction="#navCompras"
+                    maxWidth="Infinity"/>
+
+            <Button fx:id="btnClientes"
+                    text="Clientes"
+                    styleClass="nav-item"
+                    onAction="#navClientes"
+                    maxWidth="Infinity"/>
+
+            <!-- Grupo: Análisis -->
+            <Label text="ANÁLISIS" styleClass="sidebar-group-label"/>
+
+            <Button fx:id="btnReportes"
+                    text="Reportes"
+                    styleClass="nav-item"
+                    onAction="#navReportes"
+                    maxWidth="Infinity"/>
+
+            <!-- Relleno para empujar lo siguiente al fondo -->
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Separador -->
+            <Region styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
+
+            <!-- Grupo: Gestión (solo ADMIN) -->
+            <Button fx:id="btnConfiguracion"
+                    text="Configuración"
+                    styleClass="nav-item"
+                    onAction="#navConfiguracion"
+                    maxWidth="Infinity"
+                    visible="false"
+                    managed="false"/>
+
+            <!-- Separador -->
+            <Region styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
+
+            <!-- Usuario activo -->
+            <VBox styleClass="sidebar-user-area">
+                <Label fx:id="lblUsername" text="" styleClass="sidebar-username"/>
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label fx:id="lblRol" text="" styleClass="sidebar-rol"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar sesión"
+                            styleClass="sidebar-logout"
+                            onAction="#onCerrarSesion"/>
+                </HBox>
+            </VBox>
+
+        </VBox>
+    </left>
+
+    <!-- ══════════════════════════════════════════════════════
+         ÁREA CENTRAL — topbar + contenido dinámico
+         ══════════════════════════════════════════════════════ -->
+    <center>
+        <VBox>
+
+            <!-- Barra superior -->
+            <HBox styleClass="topbar" alignment="CENTER_LEFT">
+
+                <Label fx:id="lblSeccion" text="" styleClass="topbar-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- Badge de estado de caja -->
+                <HBox fx:id="hboxCajaBadge" styleClass="caja-badge caja-cerrada"
+                      alignment="CENTER_LEFT" spacing="5">
+                    <Label fx:id="lblCaja" text="Sin caja abierta"
+                           styleClass="caja-badge-text-cerrada"/>
+                </HBox>
+
+                <!-- Notificaciones -->
+                <Button fx:id="btnNotificaciones"
+                        text="🔔"
+                        styleClass="topbar-action-btn"
+                        onAction="#onNotificaciones">
+                    <HBox.margin><Insets left="8"/></HBox.margin>
+                </Button>
+
+                <!-- Chip de usuario -->
+                <HBox styleClass="user-chip" alignment="CENTER">
+                    <HBox.margin><Insets left="4"/></HBox.margin>
+                    <Label fx:id="lblUserChip" text="" styleClass="user-chip-text"/>
+                </HBox>
+
+            </HBox>
+
+            <!-- Contenido — se inyectan módulos aquí -->
+            <StackPane fx:id="contenido" styleClass="content-area" VBox.vgrow="ALWAYS"/>
+
+        </VBox>
+    </center>
+
+</BorderPane>

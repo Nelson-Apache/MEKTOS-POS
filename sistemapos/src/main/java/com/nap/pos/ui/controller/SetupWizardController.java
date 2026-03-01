@@ -5,7 +5,9 @@ import com.nap.pos.domain.model.ConfiguracionTienda;
 import com.nap.pos.domain.model.enums.RegimenTributario;
 import com.nap.pos.domain.model.enums.TipoPersona;
 import javafx.collections.FXCollections;
+import com.nap.pos.Launcher;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -13,6 +15,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
+import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
+import org.kordamp.ikonli.javafx.FontIcon;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -67,6 +71,7 @@ public class SetupWizardController {
     @FXML private Spinner<Integer> spnStockMinimo;
     @FXML private ComboBox<RegimenTributario> cmbRegimen;
     @FXML private VBox vboxIva;
+    @FXML private Label lblInfoIva;
     @FXML private Spinner<Integer> spnIva;
     @FXML private CheckBox chkPrecioConIvaIncluido;
     @FXML private Spinner<Integer> spnGanancia;
@@ -104,9 +109,40 @@ public class SetupWizardController {
 
     @FXML
     public void onRegimenChanged() {
-        boolean esOrdinario = cmbRegimen.getValue() == RegimenTributario.REGIMEN_ORDINARIO;
-        vboxIva.setVisible(esOrdinario);
-        vboxIva.setManaged(esOrdinario);
+        RegimenTributario regimen = cmbRegimen.getValue();
+        boolean esResponsableIva = regimen != RegimenTributario.NO_RESPONSABLE_IVA;
+
+        // vboxIva visible para Ordinario y RST — ambos cobran IVA
+        vboxIva.setVisible(esResponsableIva);
+        vboxIva.setManaged(esResponsableIva);
+
+        String infoTexto = switch (regimen) {
+            case NO_RESPONSABLE_IVA ->
+                "En este regimen no cobras IVA a tus clientes. El IVA que pagas en " +
+                "tus compras se trata como un costo del negocio y se incluye directamente " +
+                "en el precio de los productos. El precio de venta es el precio final.";
+            case REGIMEN_SIMPLE ->
+                "En el RST (Regimen Simple de Tributacion) pagas un impuesto " +
+                "unificado, pero el IVA sigue siendo un impuesto aparte. Si tu " +
+                "actividad es tienda pequena, minimercado o peluqueria (Grupo 1, " +
+                "Art. 908 ET), o eres persona natural con ingresos < 3.500 UVT, " +
+                "NO eres responsable de IVA - deja el porcentaje en 0 %. En caso " +
+                "contrario debes discriminar el IVA en tus ventas. El RST exige " +
+                "siempre factura electronica o POS electronico.";
+            default -> "";
+        };
+
+        lblInfoIva.setText(infoTexto);
+        lblInfoIva.setVisible(!infoTexto.isEmpty());
+        lblInfoIva.setManaged(!infoTexto.isEmpty());
+
+        if (!infoTexto.isEmpty()) {
+            FontIcon infoIcon = FontIcon.of(FontAwesomeSolid.INFO_CIRCLE, 16);
+            infoIcon.getStyleClass().add("info-regimen-icon");
+            lblInfoIva.setGraphic(infoIcon);
+        } else {
+            lblInfoIva.setGraphic(null);
+        }
     }
 
     // ── Handlers paso 1 ─────────────────────────────────────────────────
@@ -171,7 +207,10 @@ public class SetupWizardController {
 
             rutaLogoSeleccionada = destino.toAbsolutePath().toString();
             imgLogo.setImage(new Image(destino.toUri().toString()));
-            lblRutaLogo.setText("logo." + extension + "   ✓ guardado en datos de la aplicación");
+            FontIcon okIcon = FontIcon.of(FontAwesomeSolid.CHECK_CIRCLE, 14);
+            okIcon.getStyleClass().add("logo-ok-icon");
+            lblRutaLogo.setGraphic(okIcon);
+            lblRutaLogo.setText("logo." + extension + " — guardado en datos de la aplicacion");
         } catch (IOException e) {
             mostrarError("No se pudo guardar el logo: " + e.getMessage());
         }
@@ -211,7 +250,8 @@ public class SetupWizardController {
                 .rutaLogo(rutaLogoSeleccionada)
                 .stockMinimoGlobal(spnStockMinimo.getValue())
                 .regimenTributario(cmbRegimen.getValue())
-                .ivaPorDefecto(cmbRegimen.getValue() == RegimenTributario.REGIMEN_ORDINARIO
+                // IVA aplica tanto para Régimen Ordinario como para RST
+                .ivaPorDefecto(cmbRegimen.getValue() != RegimenTributario.NO_RESPONSABLE_IVA
                         ? spnIva.getValue() : 0)
                 .precioConIvaIncluido(chkPrecioConIvaIncluido.isSelected())
                 .porcentajeGananciaGlobal(spnGanancia.getValue())
@@ -225,17 +265,19 @@ public class SetupWizardController {
         Stage wizardStage = (Stage) paso1.getScene().getWindow();
         wizardStage.close();
 
-        // Abre la ventana principal con el nombre de la tienda recién configurado
+        // Abre la pantalla de login (la tienda ya está configurada)
         try {
-            Stage mainStage = new Stage();
-            // TODO: reemplazar por FXMLLoader cuando main_window.fxml esté listo
-            mainStage.setTitle(config.getNombreTienda() + " — NAP POS");
-            mainStage.setWidth(1280);
-            mainStage.setHeight(800);
-            mainStage.centerOnScreen();
-            mainStage.show();
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/login.fxml"));
+            loader.setControllerFactory(Launcher.getContext()::getBean);
+            Stage loginStage = new Stage();
+            loginStage.setTitle(config.getNombreTienda() + " — NAP POS");
+            loginStage.setScene(new javafx.scene.Scene(loader.load(), 900, 620));
+            loginStage.setResizable(false);
+            loginStage.centerOnScreen();
+            loginStage.show();
         } catch (Exception e) {
-            mostrarError("Error al abrir la ventana principal: " + e.getMessage());
+            mostrarError("Error al abrir la pantalla de login: " + e.getMessage());
         }
     }
 
@@ -251,10 +293,18 @@ public class SetupWizardController {
         btnAnterior.setVisible(paso > 0);
 
         if (paso == 2) {
-            btnSiguiente.setText("Finalizar ✓");
+            btnSiguiente.setText("Finalizar");
+            FontIcon checkIcon = FontIcon.of(FontAwesomeSolid.CHECK, 13);
+            checkIcon.getStyleClass().add("btn-primario-icon");
+            btnSiguiente.setGraphic(checkIcon);
+            btnSiguiente.setContentDisplay(javafx.scene.control.ContentDisplay.RIGHT);
             btnSiguiente.setOnAction(e -> onFinalizar());
         } else {
-            btnSiguiente.setText("Siguiente →");
+            btnSiguiente.setText("Siguiente");
+            FontIcon arrowIcon = FontIcon.of(FontAwesomeSolid.ARROW_RIGHT, 13);
+            arrowIcon.getStyleClass().add("btn-primario-icon");
+            btnSiguiente.setGraphic(arrowIcon);
+            btnSiguiente.setContentDisplay(javafx.scene.control.ContentDisplay.RIGHT);
             btnSiguiente.setOnAction(e -> onSiguiente());
         }
 

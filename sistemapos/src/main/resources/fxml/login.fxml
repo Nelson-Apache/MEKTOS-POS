@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane
+    xmlns:fx="http://javafx.com/fxml/1"
+    xmlns="http://javafx.com/javafx/21"
+    fx:controller="com.nap.pos.ui.controller.LoginController"
+    styleClass="login-root"
+    stylesheets="@../css/styles.css">
+
+    <VBox alignment="CENTER" spacing="0">
+
+        <!-- ── Tarjeta de login ───────────────────────────────── -->
+        <VBox styleClass="login-card">
+
+            <!-- Cabecera / Brand -->
+            <VBox alignment="CENTER" spacing="6">
+                <padding><Insets top="40" right="48" bottom="28" left="48"/></padding>
+
+                <Label text="NAP POS" styleClass="login-brand"/>
+                <Label fx:id="lblNombreTienda"
+                       text="Sistema de Punto de Venta"
+                       styleClass="login-store-name"/>
+            </VBox>
+
+            <!-- Línea divisora -->
+            <Separator/>
+
+            <!-- ── Formulario ─────────────────────────────────── -->
+            <VBox spacing="14">
+                <padding><Insets top="28" right="48" bottom="40" left="48"/></padding>
+
+                <!-- Usuario -->
+                <VBox spacing="5">
+                    <Label text="USUARIO" styleClass="form-label"/>
+                    <TextField
+                        fx:id="txtUsuario"
+                        promptText="Nombre de usuario"
+                        styleClass="login-field"
+                        onAction="#onLogin"/>
+                </VBox>
+
+                <!-- Contraseña -->
+                <VBox spacing="5">
+                    <Label text="CONTRASEÑA" styleClass="form-label"/>
+                    <PasswordField
+                        fx:id="txtPassword"
+                        promptText="••••••••"
+                        styleClass="login-field"
+                        onAction="#onLogin"/>
+                </VBox>
+
+                <!-- Mensaje de error / info -->
+                <Label fx:id="lblMensaje"
+                       text=""
+                       styleClass="login-error"
+                       wrapText="true"
+                       maxWidth="Infinity"/>
+
+                <!-- Botón Ingresar -->
+                <Button
+                    text="Ingresar"
+                    styleClass="btn-primario"
+                    maxWidth="Infinity"
+                    onAction="#onLogin"
+                    style="-fx-padding: 12 0 12 0;"/>
+            </VBox>
+        </VBox>
+
+        <!-- Pie de pantalla -->
+        <Label text="NAP POS  ·  Punto de Venta Local"
+               styleClass="login-footer"
+               style="-fx-padding: 18 0 0 0;"/>
+    </VBox>
+</StackPane>

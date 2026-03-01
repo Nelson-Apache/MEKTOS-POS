@@ -1,0 +1,415 @@
+/* ================================================================
+   NAP POS — Sistema de diseño global
+   Paleta: mostrador oscuro + papel de recibo cálido
+   ================================================================
+
+   Tokens de color
+   ─────────────────────────────────────────────────────────────────
+   Superficies:
+     #1E2A3A  — mek-dark    : sidebar / headers (carbón mostrador)
+     #F5F1EB  — mek-base    : fondo app (papel de recibo)
+     #FDFCFA  — mek-card    : cards, paneles elevados
+     #EDE9E2  — mek-input   : campos de entrada (hundidos)
+
+   Tinta / jerarquía de texto:
+     #1A1F2E  — ink-1 : texto primario
+     #4B5563  — ink-2 : texto secundario
+     #78716C  — ink-3 : terciario / gris cálido
+     #A8A29E  — ink-4 : desactivado / placeholder
+
+   Sobre superficie oscura:
+     #F0EDE8       — on-dark-1 : texto primario
+     rgba 0.62     — on-dark-2 : texto secundario
+     rgba 0.35     — on-dark-3 : texto desactivado
+
+   Acentos de marca:
+     #3B82F6  — blue         : acción primaria
+     #2563EB  — blue-hover
+     #1D4ED8  — blue-pressed
+     #EFF6FF  — blue-tint
+
+   Semánticos:
+     #15803D / #DCFCE7  — success (sello aprobado)
+     #DC2626 / #FEE2E2  — danger  (sello anulado)
+     #D97706 / #FEF3C7  — warning / cobre (caja)
+
+   Bordes:
+     rgba(26,31,46, 0.12)   — border estándar
+     rgba(26,31,46, 0.06)   — border suave
+     rgba(26,31,46, 0.28)   — border énfasis
+     rgba(240,237,232,0.10) — border sobre oscuro
+   ================================================================ */
+
+/* ── Base ──────────────────────────────────────────────────────── */
+.root {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+}
+
+/* ── Pantalla de login ──────────────────────────────────────────── */
+.login-root {
+    -fx-background-color: #1E2A3A;
+}
+
+.login-card {
+    -fx-background-color: #FDFCFA;
+    -fx-background-radius: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.30), 48, 0, 0, 10);
+    -fx-max-width: 420px;
+    -fx-min-width: 380px;
+}
+
+.login-brand {
+    -fx-font-size: 24px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1E2A3A;
+    -fx-letter-spacing: 1.5px;
+}
+
+.login-store-name {
+    -fx-font-size: 13px;
+    -fx-text-fill: #78716C;
+}
+
+.login-footer {
+    -fx-text-fill: rgba(240,237,232,0.20);
+    -fx-font-size: 11px;
+}
+
+.login-error {
+    -fx-text-fill: #DC2626;
+    -fx-font-size: 12px;
+    -fx-min-height: 18px;
+}
+
+.login-info {
+    -fx-text-fill: #15803D;
+    -fx-font-size: 12px;
+    -fx-min-height: 18px;
+}
+
+.login-field {
+    -fx-background-color: #EDE9E2;
+    -fx-border-color: rgba(26,31,46,0.12);
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10 14 10 14;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1A1F2E;
+    -fx-prompt-text-fill: #A8A29E;
+}
+
+.login-field:focused {
+    -fx-border-color: #3B82F6;
+    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.18), 6, 0, 0, 0);
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────── */
+.sidebar {
+    -fx-background-color: #1E2A3A;
+    -fx-border-color: transparent rgba(240,237,232,0.10) transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-pref-width: 220px;
+    -fx-min-width: 220px;
+    -fx-max-width: 220px;
+}
+
+.sidebar-brand-area {
+    -fx-padding: 24 20 18 20;
+    -fx-spacing: 3;
+}
+
+.sidebar-app-name {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F0EDE8;
+    -fx-letter-spacing: 0.8px;
+}
+
+.sidebar-store-name {
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(240,237,232,0.55);
+    -fx-padding: 1 0 0 0;
+}
+
+.sidebar-sep {
+    -fx-background-color: rgba(240,237,232,0.10);
+    -fx-pref-height: 1px;
+    -fx-max-height: 1px;
+}
+
+.sidebar-group-label {
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(240,237,232,0.32);
+    -fx-padding: 18 20 4 20;
+    -fx-letter-spacing: 1.2px;
+}
+
+/* Ítem de navegación */
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(240,237,232,0.60);
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-padding: 10 20 10 20;
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-pref-width: 220px;
+    -fx-max-width: 220px;
+    -fx-effect: none;
+}
+
+.nav-item:hover {
+    -fx-background-color: rgba(240,237,232,0.06);
+    -fx-text-fill: #F0EDE8;
+}
+
+.nav-item:pressed {
+    -fx-background-color: rgba(240,237,232,0.04);
+}
+
+.nav-item-active {
+    -fx-background-color: rgba(59,130,246,0.14);
+    -fx-text-fill: #93C5FD;
+    -fx-border-color: transparent transparent transparent #3B82F6;
+    -fx-border-width: 0 0 0 3px;
+    -fx-padding: 10 20 10 17px;
+}
+
+.nav-item-active:hover {
+    -fx-background-color: rgba(59,130,246,0.20);
+}
+
+/* Área de usuario al pie del sidebar */
+.sidebar-user-area {
+    -fx-padding: 14 20 20 20;
+    -fx-spacing: 3;
+}
+
+.sidebar-username {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F0EDE8;
+}
+
+.sidebar-rol {
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(240,237,232,0.38);
+}
+
+.sidebar-logout {
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(240,237,232,0.35);
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+    -fx-underline: false;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.sidebar-logout:hover {
+    -fx-text-fill: #FCA5A5;
+}
+
+/* ── Barra superior ─────────────────────────────────────────────── */
+.topbar {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.10) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 24 0 24;
+    -fx-min-height: 58px;
+    -fx-pref-height: 58px;
+    -fx-spacing: 12;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.topbar-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+}
+
+.topbar-action-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #4B5563;
+    -fx-font-size: 15px;
+    -fx-padding: 6 10 6 10;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.topbar-action-btn:hover {
+    -fx-background-color: rgba(26,31,46,0.06);
+}
+
+/* Badge de estado de caja */
+.caja-badge {
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+    -fx-border-width: 1px;
+    -fx-padding: 4 12 4 12;
+    -fx-spacing: 5;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.caja-abierta {
+    -fx-background-color: #DCFCE7;
+    -fx-border-color: #15803D;
+}
+
+.caja-cerrada {
+    -fx-background-color: #FEF3C7;
+    -fx-border-color: #D97706;
+}
+
+.caja-badge-text-abierta {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #15803D;
+}
+
+.caja-badge-text-cerrada {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #D97706;
+}
+
+/* Chip de usuario en topbar */
+.user-chip {
+    -fx-background-color: rgba(26,31,46,0.07);
+    -fx-background-radius: 20px;
+    -fx-padding: 5 14 5 14;
+    -fx-spacing: 6;
+    -fx-alignment: CENTER;
+}
+
+.user-chip-text {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #4B5563;
+}
+
+/* ── Área de contenido ─────────────────────────────────────────── */
+.content-area {
+    -fx-background-color: #F5F1EB;
+    -fx-padding: 0;
+}
+
+/* Pantalla placeholder mientras no hay módulo cargado */
+.placeholder-container {
+    -fx-alignment: CENTER;
+    -fx-spacing: 10;
+}
+
+.placeholder-icon {
+    -fx-font-size: 40px;
+    -fx-text-fill: rgba(26,31,46,0.12);
+}
+
+.placeholder-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(26,31,46,0.22);
+}
+
+.placeholder-sub {
+    -fx-font-size: 13px;
+    -fx-text-fill: rgba(26,31,46,0.16);
+}
+
+/* ── Componentes de formulario compartidos ──────────────────────── */
+.form-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #4B5563;
+}
+
+.text-field, .password-field, .text-area {
+    -fx-background-color: #EDE9E2;
+    -fx-border-color: rgba(26,31,46,0.12);
+    -fx-border-radius: 7px;
+    -fx-background-radius: 7px;
+    -fx-padding: 9 12 9 12;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1A1F2E;
+    -fx-prompt-text-fill: #A8A29E;
+}
+
+.text-field:focused, .password-field:focused, .text-area:focused {
+    -fx-border-color: #3B82F6;
+    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.16), 5, 0, 0, 0);
+}
+
+/* ── Botones compartidos ────────────────────────────────────────── */
+.btn-primario {
+    -fx-background-color: #3B82F6;
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-font-size: 13px;
+    -fx-padding: 10 28 10 28;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.btn-primario:hover {
+    -fx-background-color: #2563EB;
+}
+
+.btn-primario:pressed {
+    -fx-background-color: #1D4ED8;
+}
+
+.btn-secundario {
+    -fx-background-color: rgba(26,31,46,0.07);
+    -fx-text-fill: #4B5563;
+    -fx-font-size: 13px;
+    -fx-padding: 10 20 10 20;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.btn-secundario:hover {
+    -fx-background-color: rgba(26,31,46,0.12);
+}
+
+.btn-danger {
+    -fx-background-color: #DC2626;
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-font-size: 13px;
+    -fx-padding: 10 24 10 24;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #B91C1C;
+}
+
+/* ── Cards generales ────────────────────────────────────────────── */
+.card {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.10);
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 20;
+}
+
+/* ── Separador de Separator ─────────────────────────────────────── */
+.separator .line {
+    -fx-border-color: rgba(26,31,46,0.08);
+    -fx-border-width: 0.5 0 0 0;
+}

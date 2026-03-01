@@ -4,6 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nap.pos.ui.controller.SetupWizardController"
@@ -51,7 +52,9 @@
                         <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
                         <RadioButton fx:id="rbNatural" onAction="#onNatural"
                                      styleClass="tarjeta-radio"/>
-                        <Label text="&#128100;" styleClass="tarjeta-icono"/>
+                        <StackPane styleClass="tarjeta-icono">
+                            <FontIcon iconLiteral="fas-user" iconSize="28" styleClass="tarjeta-fa-icon"/>
+                        </StackPane>
                         <Label text="Persona Natural" styleClass="tarjeta-titulo"/>
                         <Label text="Trabajas como persona física.&#10;Se registra tu cédula."
                                styleClass="tarjeta-desc" wrapText="true"
@@ -65,7 +68,9 @@
                         <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
                         <RadioButton fx:id="rbJuridica" onAction="#onJuridica"
                                      styleClass="tarjeta-radio"/>
-                        <Label text="&#127970;" styleClass="tarjeta-icono"/>
+                        <StackPane styleClass="tarjeta-icono">
+                            <FontIcon iconLiteral="fas-building" iconSize="28" styleClass="tarjeta-fa-icon"/>
+                        </StackPane>
                         <Label text="Persona Jurídica" styleClass="tarjeta-titulo"/>
                         <Label text="Empresa, sociedad o comercio.&#10;Se registra el NIT."
                                styleClass="tarjeta-desc" wrapText="true"
@@ -77,190 +82,211 @@
 
             <!-- ─────────────────────── PASO 2 : Datos básicos ──── -->
             <VBox fx:id="paso2" styleClass="paso-container"
-                  alignment="TOP_CENTER" spacing="20"
+                  alignment="TOP_CENTER" spacing="0"
                   visible="false" managed="false">
-                <padding><Insets top="8"/></padding>
 
-                <Label text="Información del negocio" styleClass="paso-titulo"/>
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                            hbarPolicy="NEVER" styleClass="wizard-scroll">
+                    <content>
+                        <VBox spacing="20">
+                            <padding><Insets top="8" right="4" bottom="8" left="4"/></padding>
 
-                <!-- Nombre de la tienda (siempre visible) -->
-                <GridPane styleClass="form-grid" hgap="16" vgap="12">
-                    <columnConstraints>
-                        <ColumnConstraints minWidth="160" prefWidth="160"/>
-                        <ColumnConstraints hgrow="ALWAYS"/>
-                    </columnConstraints>
-                    <Label text="Nombre de la tienda *" styleClass="form-label"
-                           GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                    <TextField fx:id="txtNombreTienda"
-                               promptText="Ej: Tienda La Esperanza"
-                               GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                </GridPane>
+                            <Label text="Información del negocio" styleClass="paso-titulo"/>
 
-                <!-- Grupo Persona Natural -->
-                <VBox fx:id="grupoNatural" spacing="0">
-                    <GridPane styleClass="form-grid" hgap="16" vgap="12">
-                        <columnConstraints>
-                            <ColumnConstraints minWidth="160" prefWidth="160"/>
-                            <ColumnConstraints hgrow="ALWAYS"/>
-                        </columnConstraints>
-                        <Label text="Nombre *" styleClass="form-label"
-                               GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                        <TextField fx:id="txtNombre" promptText="Nombre del titular"
-                                   GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                        <Label text="Apellido *" styleClass="form-label"
-                               GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <TextField fx:id="txtApellido" promptText="Apellido del titular"
-                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                        <Label text="Cédula *" styleClass="form-label"
-                               GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                        <TextField fx:id="txtCedula" promptText="Número de cédula"
-                                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                    </GridPane>
-                </VBox>
+                            <!-- Nombre de la tienda -->
+                            <GridPane styleClass="form-grid" hgap="16" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="160" prefWidth="160"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+                                <Label text="Nombre de la tienda *" styleClass="form-label"
+                                       GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                <TextField fx:id="txtNombreTienda"
+                                           promptText="Ej: Tienda La Esperanza"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                            </GridPane>
 
-                <!-- Grupo Persona Jurídica -->
-                <VBox fx:id="grupoJuridica" spacing="0" visible="false" managed="false">
-                    <GridPane styleClass="form-grid" hgap="16" vgap="12">
-                        <columnConstraints>
-                            <ColumnConstraints minWidth="160" prefWidth="160"/>
-                            <ColumnConstraints hgrow="ALWAYS"/>
-                        </columnConstraints>
-                        <Label text="Razón social *" styleClass="form-label"
-                               GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                        <TextField fx:id="txtRazonSocial"
-                                   promptText="Nombre legal de la empresa"
-                                   GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                        <Label text="NIT *" styleClass="form-label"
-                               GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <TextField fx:id="txtNit" promptText="NIT de la empresa"
-                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                    </GridPane>
-                </VBox>
+                            <!-- Grupo Persona Natural -->
+                            <VBox fx:id="grupoNatural" spacing="0">
+                                <GridPane styleClass="form-grid" hgap="16" vgap="12">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="160" prefWidth="160"/>
+                                        <ColumnConstraints hgrow="ALWAYS"/>
+                                    </columnConstraints>
+                                    <Label text="Nombre *" styleClass="form-label"
+                                           GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                    <TextField fx:id="txtNombre" promptText="Nombre del titular"
+                                               GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                    <Label text="Apellido *" styleClass="form-label"
+                                           GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                    <TextField fx:id="txtApellido" promptText="Apellido del titular"
+                                               GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                    <Label text="Cédula *" styleClass="form-label"
+                                           GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                    <TextField fx:id="txtCedula" promptText="Número de cédula"
+                                               GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                </GridPane>
+                            </VBox>
 
-                <!-- Contacto (siempre visible) -->
-                <GridPane styleClass="form-grid" hgap="16" vgap="12">
-                    <columnConstraints>
-                        <ColumnConstraints minWidth="160" prefWidth="160"/>
-                        <ColumnConstraints hgrow="ALWAYS"/>
-                    </columnConstraints>
-                    <Label text="Teléfono / celular *" styleClass="form-label"
-                           GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                    <TextField fx:id="txtTelefono" promptText="Ej: 3001234567"
-                               GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                    <Label text="Correo electrónico" styleClass="form-label"
-                           GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                    <TextField fx:id="txtCorreo" promptText="correo@ejemplo.com (opcional)"
-                               GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                </GridPane>
+                            <!-- Grupo Persona Jurídica -->
+                            <VBox fx:id="grupoJuridica" spacing="0" visible="false" managed="false">
+                                <GridPane styleClass="form-grid" hgap="16" vgap="12">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="160" prefWidth="160"/>
+                                        <ColumnConstraints hgrow="ALWAYS"/>
+                                    </columnConstraints>
+                                    <Label text="Razón social *" styleClass="form-label"
+                                           GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                    <TextField fx:id="txtRazonSocial"
+                                               promptText="Nombre legal de la empresa"
+                                               GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                    <Label text="NIT *" styleClass="form-label"
+                                           GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                    <TextField fx:id="txtNit" promptText="NIT de la empresa"
+                                               GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                </GridPane>
+                            </VBox>
 
+                            <!-- Contacto -->
+                            <GridPane styleClass="form-grid" hgap="16" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="160" prefWidth="160"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+                                <Label text="Teléfono / celular *" styleClass="form-label"
+                                       GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                <TextField fx:id="txtTelefono" promptText="Ej: 3001234567"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                <Label text="Correo electrónico" styleClass="form-label"
+                                       GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                <TextField fx:id="txtCorreo" promptText="correo@ejemplo.com (opcional)"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                            </GridPane>
+                        </VBox>
+                    </content>
+                </ScrollPane>
             </VBox>
 
             <!-- ─────────────────────── PASO 3 : Logo y dirección ── -->
             <VBox fx:id="paso3" styleClass="paso-container"
-                  alignment="TOP_CENTER" spacing="24"
+                  alignment="TOP_CENTER" spacing="0"
                   visible="false" managed="false">
-                <padding><Insets top="8"/></padding>
 
-                <Label text="Últimos detalles" styleClass="paso-titulo"/>
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                            hbarPolicy="NEVER" styleClass="wizard-scroll">
+                    <content>
+                        <VBox spacing="24">
+                            <padding><Insets top="8" right="4" bottom="8" left="4"/></padding>
 
-                <!-- Logo -->
-                <HBox alignment="CENTER_LEFT" spacing="24" styleClass="logo-section">
-                    <ImageView fx:id="imgLogo"
-                               fitWidth="120" fitHeight="120"
-                               preserveRatio="true"
-                               styleClass="logo-preview"/>
-                    <VBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="Logo de la tienda (opcional)" styleClass="form-label"/>
-                        <Label fx:id="lblRutaLogo" text="Sin logo seleccionado"
-                               styleClass="logo-path"/>
-                        <Button text="Seleccionar imagen..."
-                                onAction="#onSeleccionarLogo"
-                                styleClass="btn-secundario"/>
-                    </VBox>
-                </HBox>
+                            <Label text="Últimos detalles" styleClass="paso-titulo"/>
 
-                <!-- Dirección -->
-                <VBox spacing="6">
-                    <Label text="Dirección *" styleClass="form-label"/>
-                    <TextArea fx:id="txtDireccion"
-                              promptText="Dirección completa del negocio"
-                              prefRowCount="3" wrapText="true"/>
-                </VBox>
-
-                <!-- Stock mínimo global -->
-                <VBox spacing="6">
-                    <Label text="Stock mínimo para alertas *" styleClass="form-label"/>
-                    <HBox spacing="14" alignment="CENTER_LEFT">
-                        <Spinner fx:id="spnStockMinimo" prefWidth="100" editable="true"/>
-                        <Label text="Si el stock de un producto llega a este número o menos, se mostrará una alerta al iniciar sesión."
-                               styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
-                               maxWidth="Infinity"/>
-                    </HBox>
-                </VBox>
-
-                <!-- Régimen tributario + IVA -->
-                <VBox spacing="10">
-                    <VBox spacing="6">
-                        <Label text="Régimen tributario *" styleClass="form-label"/>
-                        <ComboBox fx:id="cmbRegimen" maxWidth="Infinity"
-                                  onAction="#onRegimenChanged"/>
-                    </VBox>
-                    <!-- Solo visible cuando régimen = REGIMEN_ORDINARIO -->
-                    <VBox fx:id="vboxIva" spacing="10">
-                        <VBox spacing="6">
-                            <Label text="IVA por defecto (%) *" styleClass="form-label"/>
-                            <HBox spacing="14" alignment="CENTER_LEFT">
-                                <Spinner fx:id="spnIva" prefWidth="100" editable="true"/>
-                                <Label text="Valores comunes en Colombia: 0 %, 5 % o 19 %."
-                                       styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
-                                       maxWidth="Infinity"/>
+                            <!-- Logo -->
+                            <HBox alignment="CENTER_LEFT" spacing="24" styleClass="logo-section">
+                                <ImageView fx:id="imgLogo"
+                                           fitWidth="120" fitHeight="120"
+                                           preserveRatio="true"
+                                           styleClass="logo-preview"/>
+                                <VBox spacing="8" alignment="CENTER_LEFT">
+                                    <Label text="Logo de la tienda (opcional)" styleClass="form-label"/>
+                                    <Label fx:id="lblRutaLogo" text="Sin logo seleccionado"
+                                           styleClass="logo-path"/>
+                                    <Button text="Seleccionar imagen..."
+                                            onAction="#onSeleccionarLogo"
+                                            styleClass="btn-secundario"/>
+                                </VBox>
                             </HBox>
+
+                            <!-- Dirección -->
+                            <VBox spacing="6">
+                                <Label text="Dirección *" styleClass="form-label"/>
+                                <TextArea fx:id="txtDireccion"
+                                          promptText="Dirección completa del negocio"
+                                          prefRowCount="3" wrapText="true"/>
+                            </VBox>
+
+                            <!-- Stock mínimo global -->
+                            <VBox spacing="6">
+                                <Label text="Stock mínimo para alertas *" styleClass="form-label"/>
+                                <HBox spacing="14" alignment="CENTER_LEFT">
+                                    <Spinner fx:id="spnStockMinimo" prefWidth="100" editable="true"/>
+                                    <Label text="Si el stock de un producto llega a este número o menos, se mostrará una alerta al iniciar sesión."
+                                           styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
+                                           maxWidth="Infinity"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Régimen tributario + IVA -->
+                            <VBox spacing="10">
+                                <VBox spacing="6">
+                                    <Label text="Régimen tributario *" styleClass="form-label"/>
+                                    <ComboBox fx:id="cmbRegimen" maxWidth="Infinity"
+                                              onAction="#onRegimenChanged"/>
+                                </VBox>
+                                <!-- Visible solo cuando régimen = REGIMEN_ORDINARIO -->
+                                <VBox fx:id="vboxIva" spacing="10">
+                                    <VBox spacing="6">
+                                        <Label text="IVA por defecto (%) *" styleClass="form-label"/>
+                                        <HBox spacing="14" alignment="CENTER_LEFT">
+                                            <Spinner fx:id="spnIva" prefWidth="100" editable="true"/>
+                                            <Label text="Valores comunes en Colombia: 0 %, 5 % o 19 %."
+                                                   styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
+                                                   maxWidth="Infinity"/>
+                                        </HBox>
+                                    </VBox>
+                                    <CheckBox fx:id="chkPrecioConIvaIncluido"
+                                              text="El precio de venta de los productos ya incluye el IVA"/>
+                                </VBox>
+                                <!-- Visible cuando el régimen NO aplica IVA:
+                                     explica al usuario cómo lo tratará el sistema -->
+                                <Label fx:id="lblInfoIva"
+                                       styleClass="info-regimen"
+                                       wrapText="true" maxWidth="Infinity"
+                                       visible="false" managed="false"/>
+                            </VBox>
+
+                            <!-- Ganancia global -->
+                            <VBox spacing="6">
+                                <Label text="Ganancia por defecto (%) *" styleClass="form-label"/>
+                                <HBox spacing="14" alignment="CENTER_LEFT">
+                                    <Spinner fx:id="spnGanancia" prefWidth="100" editable="true"/>
+                                    <Label text="Margen de ganancia usado al crear productos sin proveedor asignado."
+                                           styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
+                                           maxWidth="Infinity"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Comprobantes -->
+                            <GridPane styleClass="form-grid" hgap="16" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="160" prefWidth="160"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                    <ColumnConstraints minWidth="160" prefWidth="160"/>
+                                    <ColumnConstraints prefWidth="120"/>
+                                </columnConstraints>
+                                <Label text="Prefijo comprobante *" styleClass="form-label"
+                                       GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                <TextField fx:id="txtPrefijo" promptText="Ej: FAC-"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                <Label text="Número inicial *" styleClass="form-label"
+                                       GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                                <Spinner fx:id="spnNumeroInicial" prefWidth="110" editable="true"
+                                         GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                            </GridPane>
+
+                            <!-- Inventario anual -->
+                            <VBox spacing="6">
+                                <Label text="Fecha del inventario general anual (opcional)" styleClass="form-label"/>
+                                <HBox spacing="14" alignment="CENTER_LEFT">
+                                    <DatePicker fx:id="dpFechaInventario" promptText="dd/mm/aaaa"/>
+                                    <Label text="El sistema te avisará cuando se acerque esta fecha para hacer el conteo general de productos."
+                                           styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
+                                           maxWidth="Infinity"/>
+                                </HBox>
+                            </VBox>
+
                         </VBox>
-                        <CheckBox fx:id="chkPrecioConIvaIncluido"
-                                  text="El precio de venta de los productos ya incluye el IVA"/>
-                    </VBox>
-                </VBox>
-
-                <!-- % Ganancia global -->
-                <VBox spacing="6">
-                    <Label text="% Ganancia por defecto *" styleClass="form-label"/>
-                    <HBox spacing="14" alignment="CENTER_LEFT">
-                        <Spinner fx:id="spnGanancia" prefWidth="100" editable="true"/>
-                        <Label text="Margen de ganancia usado al crear productos sin proveedor asignado."
-                               styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
-                               maxWidth="Infinity"/>
-                    </HBox>
-                </VBox>
-
-                <!-- Comprobantes -->
-                <GridPane styleClass="form-grid" hgap="16" vgap="12">
-                    <columnConstraints>
-                        <ColumnConstraints minWidth="160" prefWidth="160"/>
-                        <ColumnConstraints hgrow="ALWAYS"/>
-                        <ColumnConstraints minWidth="160" prefWidth="160"/>
-                        <ColumnConstraints prefWidth="120"/>
-                    </columnConstraints>
-                    <Label text="Prefijo comprobante *" styleClass="form-label"
-                           GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                    <TextField fx:id="txtPrefijo" promptText="Ej: FAC-"
-                               GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                    <Label text="Número inicial *" styleClass="form-label"
-                           GridPane.columnIndex="2" GridPane.rowIndex="0"/>
-                    <Spinner fx:id="spnNumeroInicial" prefWidth="110" editable="true"
-                             GridPane.columnIndex="3" GridPane.rowIndex="0"/>
-                </GridPane>
-
-                <!-- Inventario general anual -->
-                <VBox spacing="6">
-                    <Label text="Fecha del inventario general anual (opcional)" styleClass="form-label"/>
-                    <HBox spacing="14" alignment="CENTER_LEFT">
-                        <DatePicker fx:id="dpFechaInventario" promptText="dd/mm/aaaa"/>
-                        <Label text="El sistema te avisará cuando se acerque esta fecha para hacer el conteo general de productos."
-                               styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
-                               maxWidth="Infinity"/>
-                    </HBox>
-                </VBox>
-
+                    </content>
+                </ScrollPane>
             </VBox>
 
         </StackPane>
@@ -270,14 +296,19 @@
     <bottom>
         <HBox styleClass="wizard-footer" alignment="CENTER_LEFT" spacing="12">
             <padding><Insets top="16" right="32" bottom="20" left="32"/></padding>
-            <Button fx:id="btnAnterior" text="← Anterior"
+            <Button fx:id="btnAnterior" text="Anterior"
                     onAction="#onAnterior"
                     styleClass="btn-secundario"
-                    visible="false"/>
+                    visible="false">
+                <graphic><FontIcon iconLiteral="fas-arrow-left" iconSize="13" styleClass="btn-secundario-icon"/></graphic>
+            </Button>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="btnSiguiente" text="Siguiente →"
+            <Button fx:id="btnSiguiente" text="Siguiente"
                     onAction="#onSiguiente"
-                    styleClass="btn-primario"/>
+                    styleClass="btn-primario"
+                    contentDisplay="RIGHT">
+                <graphic><FontIcon iconLiteral="fas-arrow-right" iconSize="13" styleClass="btn-primario-icon"/></graphic>
+            </Button>
         </HBox>
     </bottom>
 

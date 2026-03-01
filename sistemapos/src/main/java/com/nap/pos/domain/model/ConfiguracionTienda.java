@@ -45,7 +45,9 @@ public class ConfiguracionTienda {
 
     /**
      * Porcentaje de IVA aplicado en ventas (0, 5 o 19 en Colombia).
-     * Solo aplica cuando regimenTributario = REGIMEN_ORDINARIO.
+     * Aplica cuando el negocio es responsable de IVA: tanto en Régimen Ordinario
+     * como en RST, excepto en RST Grupo 1 (tiendas/minimercados/peluquerías) o
+     * personas naturales RST con ingresos < 3.500 UVT, quienes deben poner 0.
      */
     @Builder.Default
     private int ivaPorDefecto = 19;
@@ -54,7 +56,7 @@ public class ConfiguracionTienda {
      * Indica si el precioVenta almacenado ya incluye el IVA dentro.
      * - true  → precio ya incluye IVA; se desglosa en el recibo
      * - false → precio es base; el IVA se calcula y suma al total
-     * Solo aplica cuando regimenTributario = REGIMEN_ORDINARIO.
+     * Aplica cuando el negocio es responsable de IVA (Ordinario o RST responsable).
      */
     @Builder.Default
     private boolean precioConIvaIncluido = false;
