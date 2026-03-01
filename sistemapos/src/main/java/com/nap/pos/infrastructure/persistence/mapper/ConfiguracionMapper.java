@@ -28,6 +28,7 @@ public class ConfiguracionMapper {
         e.setPorcentajeGananciaGlobal(domain.getPorcentajeGananciaGlobal());
         e.setPrefijoComprobante(domain.getPrefijoComprobante());
         e.setNumeroInicialComprobante(domain.getNumeroInicialComprobante());
+        e.setFechaInventarioAnual(domain.getFechaInventarioAnual());
         return e;
     }
 
@@ -52,6 +53,7 @@ public class ConfiguracionMapper {
                 .porcentajeGananciaGlobal(e.getPorcentajeGananciaGlobal())
                 .prefijoComprobante(e.getPrefijoComprobante())
                 .numeroInicialComprobante(e.getNumeroInicialComprobante())
+                .fechaInventarioAnual(e.getFechaInventarioAnual())
                 .build();
     }
 }

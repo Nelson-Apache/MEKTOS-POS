@@ -72,6 +72,7 @@ public class SetupWizardController {
     @FXML private Spinner<Integer> spnGanancia;
     @FXML private TextField txtPrefijo;
     @FXML private Spinner<Integer> spnNumeroInicial;
+    @FXML private DatePicker dpFechaInventario;
 
     // ── Estado interno ───────────────────────────────────────────────────
     private int pasoActual = 0;
@@ -216,6 +217,7 @@ public class SetupWizardController {
                 .porcentajeGananciaGlobal(spnGanancia.getValue())
                 .prefijoComprobante(txtPrefijo.getText().trim())
                 .numeroInicialComprobante(spnNumeroInicial.getValue())
+                .fechaInventarioAnual(dpFechaInventario.getValue())
                 .build();
 
         configuracionService.guardar(config);

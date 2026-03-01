@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -80,4 +82,7 @@ public class ConfiguracionTiendaEntity {
 
     @Column(name = "numero_inicial_comprobante", nullable = false, columnDefinition = "INTEGER DEFAULT 1")
     private int numeroInicialComprobante = 1;
+
+    @Column(name = "fecha_inventario_anual")
+    private LocalDate fechaInventarioAnual;
 }

@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -73,4 +75,10 @@ public class ConfiguracionTienda {
     /** Número a partir del cual se numera el primer comprobante. */
     @Builder.Default
     private int numeroInicialComprobante = 1;
+
+    /**
+     * Fecha programada para el próximo inventario general anual.
+     * null si el usuario no la configuró.
+     */
+    private LocalDate fechaInventarioAnual;
 }

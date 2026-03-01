@@ -250,6 +250,17 @@
                              GridPane.columnIndex="3" GridPane.rowIndex="0"/>
                 </GridPane>
 
+                <!-- Inventario general anual -->
+                <VBox spacing="6">
+                    <Label text="Fecha del inventario general anual (opcional)" styleClass="form-label"/>
+                    <HBox spacing="14" alignment="CENTER_LEFT">
+                        <DatePicker fx:id="dpFechaInventario" promptText="dd/mm/aaaa"/>
+                        <Label text="El sistema te avisará cuando se acerque esta fecha para hacer el conteo general de productos."
+                               styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
+                               maxWidth="Infinity"/>
+                    </HBox>
+                </VBox>
+
             </VBox>
 
         </StackPane>
