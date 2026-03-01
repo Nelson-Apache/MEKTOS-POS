@@ -1,8 +1,10 @@
 package com.nap.pos.ui.controller;
 
 import com.nap.pos.application.service.ConfiguracionService;
+import com.nap.pos.application.service.UsuarioService;
 import com.nap.pos.domain.model.ConfiguracionTienda;
 import com.nap.pos.domain.model.enums.RegimenTributario;
+import com.nap.pos.domain.model.enums.Rol;
 import com.nap.pos.domain.model.enums.TipoPersona;
 import javafx.collections.FXCollections;
 import com.nap.pos.Launcher;
@@ -12,6 +14,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -25,22 +28,26 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.Normalizer;
 
 @Component
 @RequiredArgsConstructor
 public class SetupWizardController {
 
     private final ConfiguracionService configuracionService;
+    private final UsuarioService usuarioService;
 
     // ── Navegación de pasos ──────────────────────────────────────────────
     @FXML private VBox paso1;
     @FXML private VBox paso2;
     @FXML private VBox paso3;
+    @FXML private VBox paso4;
 
     // ── Indicadores de paso ──────────────────────────────────────────────
     @FXML private Label indicador1;
     @FXML private Label indicador2;
     @FXML private Label indicador3;
+    @FXML private Label indicador4;
 
     // ── Botones de navegación ────────────────────────────────────────────
     @FXML private Button btnAnterior;
@@ -61,6 +68,8 @@ public class SetupWizardController {
     @FXML private VBox grupoJuridica;
     @FXML private TextField txtRazonSocial;
     @FXML private TextField txtNit;
+    @FXML private TextField txtRepLegalNombre;
+    @FXML private TextField txtRepLegalApellido;
     @FXML private TextField txtTelefono;
     @FXML private TextField txtCorreo;
 
@@ -78,6 +87,12 @@ public class SetupWizardController {
     @FXML private TextField txtPrefijo;
     @FXML private Spinner<Integer> spnNumeroInicial;
     @FXML private DatePicker dpFechaInventario;
+
+    // ── Paso 4: credenciales del administrador ──────────────────────────
+    @FXML private TextField txtUsername;
+    @FXML private PasswordField txtPassword;
+    @FXML private PasswordField txtPasswordConfirm;
+    @FXML private Label lblPasswordError;
 
     // ── Estado interno ───────────────────────────────────────────────────
     private int pasoActual = 0;
@@ -230,6 +245,11 @@ public class SetupWizardController {
     public void onFinalizar() {
         if (!validarPasoActual()) return;
 
+        // Crear usuario administrador primero (la config lo referencia)
+        String username = txtUsername.getText().trim();
+        String password = txtPassword.getText();
+        var admin = usuarioService.crear(username, password, Rol.ADMIN);
+
         ConfiguracionTienda config = ConfiguracionTienda.builder()
                 .id(1L)
                 .tipoPersona(tipoSeleccionado)
@@ -244,6 +264,10 @@ public class SetupWizardController {
                         ? txtRazonSocial.getText().trim() : null)
                 .nit(tipoSeleccionado == TipoPersona.JURIDICA
                         ? txtNit.getText().trim() : null)
+                .representanteLegalNombre(tipoSeleccionado == TipoPersona.JURIDICA
+                        ? txtRepLegalNombre.getText().trim() : null)
+                .representanteLegalApellido(tipoSeleccionado == TipoPersona.JURIDICA
+                        ? txtRepLegalApellido.getText().trim() : null)
                 .telefono(txtTelefono.getText().trim())
                 .correo(txtCorreo.getText().isBlank() ? null : txtCorreo.getText().trim())
                 .direccion(txtDireccion.getText().trim())
@@ -258,6 +282,7 @@ public class SetupWizardController {
                 .prefijoComprobante(txtPrefijo.getText().trim())
                 .numeroInicialComprobante(spnNumeroInicial.getValue())
                 .fechaInventarioAnual(dpFechaInventario.getValue())
+                .propietarioId(admin.getId())
                 .build();
 
         configuracionService.guardar(config);
@@ -289,10 +314,16 @@ public class SetupWizardController {
         setVisible(paso1, paso == 0);
         setVisible(paso2, paso == 1);
         setVisible(paso3, paso == 2);
+        setVisible(paso4, paso == 3);
 
         btnAnterior.setVisible(paso > 0);
 
-        if (paso == 2) {
+        // Al entrar al paso 4, generar el username por defecto
+        if (paso == 3) {
+            generarUsernameAutomatico();
+        }
+
+        if (paso == 3) {
             btnSiguiente.setText("Finalizar");
             FontIcon checkIcon = FontIcon.of(FontAwesomeSolid.CHECK, 13);
             checkIcon.getStyleClass().add("btn-primario-icon");
@@ -315,6 +346,7 @@ public class SetupWizardController {
         indicador1.getStyleClass().setAll(paso >= 0 ? "indicador-activo" : "indicador-inactivo");
         indicador2.getStyleClass().setAll(paso >= 1 ? "indicador-activo" : "indicador-inactivo");
         indicador3.getStyleClass().setAll(paso >= 2 ? "indicador-activo" : "indicador-inactivo");
+        indicador4.getStyleClass().setAll(paso >= 3 ? "indicador-activo" : "indicador-inactivo");
     }
 
     private void actualizarTarjetas() {
@@ -343,6 +375,7 @@ public class SetupWizardController {
             case 0 -> true; // solo elegir tipo, siempre válido
             case 1 -> validarPaso2();
             case 2 -> validarPaso3();
+            case 3 -> validarPaso4();
             default -> true;
         };
     }
@@ -364,6 +397,11 @@ public class SetupWizardController {
                 mostrarError("Razón social y NIT son obligatorios.");
                 return false;
             }
+            if (txtRepLegalNombre.getText().isBlank()
+                    || txtRepLegalApellido.getText().isBlank()) {
+                mostrarError("El nombre y apellido del representante legal son obligatorios.");
+                return false;
+            }
         }
         if (txtTelefono.getText().isBlank()) {
             mostrarError("El teléfono de contacto es obligatorio.");
@@ -382,6 +420,72 @@ public class SetupWizardController {
             return false;
         }
         return true;
+    }
+
+    private boolean validarPaso4() {
+        lblPasswordError.setVisible(false);
+        lblPasswordError.setManaged(false);
+
+        String username = txtUsername.getText().trim();
+        if (username.isBlank()) {
+            mostrarErrorPassword("El nombre de usuario es obligatorio.");
+            return false;
+        }
+        if (username.length() < 3) {
+            mostrarErrorPassword("El nombre de usuario debe tener al menos 3 caracteres.");
+            return false;
+        }
+        String password = txtPassword.getText();
+        if (password.isBlank()) {
+            mostrarErrorPassword("La contraseña es obligatoria.");
+            return false;
+        }
+        if (password.length() < 6) {
+            mostrarErrorPassword("La contraseña debe tener al menos 6 caracteres.");
+            return false;
+        }
+        if (!password.equals(txtPasswordConfirm.getText())) {
+            mostrarErrorPassword("Las contraseñas no coinciden.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Genera el username por defecto a partir del nombre y apellido.
+     * Para persona natural: inicial del nombre + apellido (ej: nmolina).
+     * Para persona jurídica: inicial del nombre + apellido del representante legal.
+     * Solo se genera si el campo está vacío (no sobreescribe si el usuario ya lo cambió).
+     */
+    private void generarUsernameAutomatico() {
+        if (!txtUsername.getText().isBlank()) return; // no sobreescribir si ya tiene valor
+
+        String nombre;
+        String apellido;
+
+        if (tipoSeleccionado == TipoPersona.NATURAL) {
+            nombre = txtNombre.getText().trim();
+            apellido = txtApellido.getText().trim();
+        } else {
+            nombre = txtRepLegalNombre.getText().trim();
+            apellido = txtRepLegalApellido.getText().trim();
+        }
+
+        if (!nombre.isEmpty() && !apellido.isEmpty()) {
+            String raw = nombre.charAt(0) + apellido;
+            // Normalizar: quitar tildes (é→e, ñ→n, etc.) y caracteres especiales
+            String normalized = Normalizer.normalize(raw, Normalizer.Form.NFD)
+                    .replaceAll("\\p{M}", "")       // quitar diacríticos
+                    .toLowerCase()
+                    .replaceAll("[^a-z0-9]", "");    // solo alfanuméricos
+            txtUsername.setText(normalized);
+        }
+    }
+
+    private void mostrarErrorPassword(String mensaje) {
+        lblPasswordError.setText(mensaje);
+        lblPasswordError.setVisible(true);
+        lblPasswordError.setManaged(true);
     }
 
     private void mostrarError(String mensaje) {

@@ -47,6 +47,12 @@ public class ConfiguracionTiendaEntity {
     @Column(length = 30)
     private String nit;
 
+    @Column(name = "representante_legal_nombre", length = 100)
+    private String representanteLegalNombre;
+
+    @Column(name = "representante_legal_apellido", length = 100)
+    private String representanteLegalApellido;
+
     @Column(nullable = false, length = 300)
     private String direccion;
 
@@ -85,4 +91,9 @@ public class ConfiguracionTiendaEntity {
 
     @Column(name = "fecha_inventario_anual")
     private LocalDate fechaInventarioAnual;
+
+    /** Usuario (administrador) que configuró la tienda. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "propietario_id")
+    private UsuarioEntity propietario;
 }

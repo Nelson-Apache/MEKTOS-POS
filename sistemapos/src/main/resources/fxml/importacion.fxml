@@ -2,6 +2,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nap.pos.ui.controller.ImportacionController"
             styleClass="wizard-root"
@@ -44,7 +45,9 @@
           <VBox fx:id="cardProductos" styleClass="tarjeta" spacing="10"
                 alignment="CENTER" onMouseClicked="#onSeleccionarProductos"
                 style="-fx-padding: 24; -fx-min-width: 190; -fx-min-height: 140;">
-            <Label text="📦" styleClass="tarjeta-icono"/>
+            <StackPane styleClass="tarjeta-icono">
+                <FontIcon iconLiteral="fas-box-open" iconSize="28" styleClass="tarjeta-fa-icon"/>
+            </StackPane>
             <Label text="Productos"               styleClass="tarjeta-titulo"/>
             <Label text="Stock, precios y proveedor" styleClass="tarjeta-desc"
                    wrapText="true" style="-fx-text-alignment: center;"/>
@@ -53,7 +56,9 @@
           <VBox fx:id="cardClientes" styleClass="tarjeta" spacing="10"
                 alignment="CENTER" onMouseClicked="#onSeleccionarClientes"
                 style="-fx-padding: 24; -fx-min-width: 190; -fx-min-height: 140;">
-            <Label text="👥" styleClass="tarjeta-icono"/>
+            <StackPane styleClass="tarjeta-icono">
+                <FontIcon iconLiteral="fas-users" iconSize="28" styleClass="tarjeta-fa-icon"/>
+            </StackPane>
             <Label text="Clientes"               styleClass="tarjeta-titulo"/>
             <Label text="Contacto y crédito"     styleClass="tarjeta-desc"
                    wrapText="true" style="-fx-text-alignment: center;"/>
@@ -147,17 +152,26 @@
   <bottom>
     <HBox styleClass="wizard-footer" spacing="12" alignment="CENTER_LEFT"
           style="-fx-padding: 14 32 14 32;">
-      <Button fx:id="btnAnterior"          text="← Anterior"
-              onAction="#onAnterior"        styleClass="btn-secundario"/>
+      <Button fx:id="btnAnterior"          text="Anterior"
+              onAction="#onAnterior"        styleClass="btn-secundario">
+          <graphic><FontIcon iconLiteral="fas-arrow-left" iconSize="13" styleClass="btn-secundario-icon"/></graphic>
+      </Button>
       <Region HBox.hgrow="ALWAYS"/>
-      <Button fx:id="btnDescargarPlantilla" text="⬇ Descargar plantilla"
+      <Button fx:id="btnDescargarPlantilla" text="Descargar plantilla"
               onAction="#onDescargarPlantilla" styleClass="btn-secundario"
-              visible="false" managed="false"/>
-      <Button fx:id="btnDetectarAuto"      text="🔍 Detectar automáticamente"
+              visible="false" managed="false">
+          <graphic><FontIcon iconLiteral="fas-download" iconSize="13" styleClass="btn-secundario-icon"/></graphic>
+      </Button>
+      <Button fx:id="btnDetectarAuto"      text="Detectar autom\u00e1ticamente"
               onAction="#onDetectarAuto"    styleClass="btn-secundario"
-              visible="false" managed="false"/>
-      <Button fx:id="btnSiguiente"         text="Siguiente →"
-              onAction="#onSiguiente"       styleClass="btn-primario"/>
+              visible="false" managed="false">
+          <graphic><FontIcon iconLiteral="fas-search" iconSize="13" styleClass="btn-secundario-icon"/></graphic>
+      </Button>
+      <Button fx:id="btnSiguiente"         text="Siguiente"
+              onAction="#onSiguiente"       styleClass="btn-primario"
+              contentDisplay="RIGHT">
+          <graphic><FontIcon iconLiteral="fas-arrow-right" iconSize="13" styleClass="btn-primario-icon"/></graphic>
+      </Button>
     </HBox>
   </bottom>
 

@@ -27,6 +27,8 @@ public class ConfiguracionTienda {
     // Solo cuando tipoPersona = JURIDICA
     private String razonSocial;
     private String nit;
+    private String representanteLegalNombre;
+    private String representanteLegalApellido;
 
     private String direccion;
     private String rutaLogo;         // null si no se configuró
@@ -83,4 +85,7 @@ public class ConfiguracionTienda {
      * null si el usuario no la configuró.
      */
     private LocalDate fechaInventarioAnual;
+
+    /** ID del usuario (administrador) que configuró la tienda inicialmente. */
+    private Long propietarioId;
 }

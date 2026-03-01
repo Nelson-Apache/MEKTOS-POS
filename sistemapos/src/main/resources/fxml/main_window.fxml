@@ -2,6 +2,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <BorderPane
     xmlns:fx="http://javafx.com/fxml/1"
@@ -114,9 +115,9 @@
 
                 <!-- Notificaciones -->
                 <Button fx:id="btnNotificaciones"
-                        text="🔔"
                         styleClass="topbar-action-btn"
                         onAction="#onNotificaciones">
+                    <graphic><FontIcon iconLiteral="fas-bell" iconSize="16"/></graphic>
                     <HBox.margin><Insets left="8"/></HBox.margin>
                 </Button>
 

@@ -22,13 +22,15 @@
                 <Label text="—  Configuración inicial" styleClass="wizard-subtitle"/>
             </HBox>
 
-            <!-- Indicadores de paso: ① — ② — ③ -->
+            <!-- Indicadores de paso: ① — ② — ③ — ④ -->
             <HBox alignment="CENTER" spacing="8">
                 <Label fx:id="indicador1" text="1" styleClass="indicador-activo"/>
                 <Label text="────" styleClass="indicador-linea"/>
                 <Label fx:id="indicador2" text="2" styleClass="indicador-inactivo"/>
                 <Label text="────" styleClass="indicador-linea"/>
                 <Label fx:id="indicador3" text="3" styleClass="indicador-inactivo"/>
+                <Label text="────" styleClass="indicador-linea"/>
+                <Label fx:id="indicador4" text="4" styleClass="indicador-inactivo"/>
             </HBox>
         </VBox>
     </top>
@@ -144,6 +146,21 @@
                                            GridPane.columnIndex="0" GridPane.rowIndex="1"/>
                                     <TextField fx:id="txtNit" promptText="NIT de la empresa"
                                                GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                    <!-- Representante Legal -->
+                                    <Label text="Representante legal" styleClass="form-label"
+                                           style="-fx-font-weight: 600; -fx-padding: 8 0 0 0;"
+                                           GridPane.columnIndex="0" GridPane.rowIndex="2"
+                                           GridPane.columnSpan="2"/>
+                                    <Label text="Nombre *" styleClass="form-label"
+                                           GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                                    <TextField fx:id="txtRepLegalNombre"
+                                               promptText="Nombre del representante legal"
+                                               GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                    <Label text="Apellido *" styleClass="form-label"
+                                           GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                                    <TextField fx:id="txtRepLegalApellido"
+                                               promptText="Apellido del representante legal"
+                                               GridPane.columnIndex="1" GridPane.rowIndex="4"/>
                                 </GridPane>
                             </VBox>
 
@@ -287,6 +304,55 @@
                         </VBox>
                     </content>
                 </ScrollPane>
+            </VBox>
+
+            <!-- ─────────────────────── PASO 4 : Cuenta administrador ── -->
+            <VBox fx:id="paso4" styleClass="paso-container"
+                  alignment="TOP_CENTER" spacing="0"
+                  visible="false" managed="false">
+
+                <VBox spacing="28" alignment="CENTER"
+                      style="-fx-max-width: 460; -fx-padding: 24 32 24 32;">
+
+                    <VBox spacing="6" alignment="CENTER">
+                        <StackPane styleClass="tarjeta-icono" style="-fx-pref-width: 64; -fx-pref-height: 64;">
+                            <FontIcon iconLiteral="fas-user-shield" iconSize="30" styleClass="tarjeta-fa-icon"/>
+                        </StackPane>
+                        <Label text="Crear cuenta de administrador" styleClass="paso-titulo"/>
+                        <Label text="Esta será tu cuenta para ingresar al sistema. Como es la configuración inicial, serás el administrador."
+                               styleClass="tarjeta-desc" wrapText="true"
+                               textAlignment="CENTER" maxWidth="420"/>
+                    </VBox>
+
+                    <GridPane styleClass="form-grid" hgap="16" vgap="14">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="160" prefWidth="160"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <Label text="Usuario" styleClass="form-label"
+                               GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <TextField fx:id="txtUsername"
+                                   promptText="Ej: nmolina"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                        <Label text="Contraseña *" styleClass="form-label"
+                               GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <PasswordField fx:id="txtPassword"
+                                       promptText="Ingrese su contraseña"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                        <Label text="Confirmar contraseña *" styleClass="form-label"
+                               GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                        <PasswordField fx:id="txtPasswordConfirm"
+                                       promptText="Repita la contraseña"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                    </GridPane>
+
+                    <Label fx:id="lblPasswordError" text=""
+                           styleClass="form-label" style="-fx-text-fill: #DC2626;"
+                           visible="false" managed="false" wrapText="true"/>
+                </VBox>
             </VBox>
 
         </StackPane>

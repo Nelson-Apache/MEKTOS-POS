@@ -2,6 +2,7 @@ package com.nap.pos.infrastructure.persistence.mapper;
 
 import com.nap.pos.domain.model.ConfiguracionTienda;
 import com.nap.pos.infrastructure.persistence.entity.ConfiguracionTiendaEntity;
+import com.nap.pos.infrastructure.persistence.entity.UsuarioEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,6 +18,8 @@ public class ConfiguracionMapper {
         e.setCedula(domain.getCedula());
         e.setRazonSocial(domain.getRazonSocial());
         e.setNit(domain.getNit());
+        e.setRepresentanteLegalNombre(domain.getRepresentanteLegalNombre());
+        e.setRepresentanteLegalApellido(domain.getRepresentanteLegalApellido());
         e.setDireccion(domain.getDireccion());
         e.setRutaLogo(domain.getRutaLogo());
         e.setTelefono(domain.getTelefono());
@@ -29,6 +32,11 @@ public class ConfiguracionMapper {
         e.setPrefijoComprobante(domain.getPrefijoComprobante());
         e.setNumeroInicialComprobante(domain.getNumeroInicialComprobante());
         e.setFechaInventarioAnual(domain.getFechaInventarioAnual());
+        if (domain.getPropietarioId() != null) {
+            UsuarioEntity propietario = new UsuarioEntity();
+            propietario.setId(domain.getPropietarioId());
+            e.setPropietario(propietario);
+        }
         return e;
     }
 
@@ -42,6 +50,8 @@ public class ConfiguracionMapper {
                 .cedula(e.getCedula())
                 .razonSocial(e.getRazonSocial())
                 .nit(e.getNit())
+                .representanteLegalNombre(e.getRepresentanteLegalNombre())
+                .representanteLegalApellido(e.getRepresentanteLegalApellido())
                 .direccion(e.getDireccion())
                 .rutaLogo(e.getRutaLogo())
                 .telefono(e.getTelefono())
@@ -54,6 +64,7 @@ public class ConfiguracionMapper {
                 .prefijoComprobante(e.getPrefijoComprobante())
                 .numeroInicialComprobante(e.getNumeroInicialComprobante())
                 .fechaInventarioAnual(e.getFechaInventarioAnual())
+                .propietarioId(e.getPropietario() != null ? e.getPropietario().getId() : null)
                 .build();
     }
 }
