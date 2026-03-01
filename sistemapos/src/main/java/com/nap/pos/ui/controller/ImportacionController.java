@@ -2,6 +2,7 @@ package com.nap.pos.ui.controller;
 
 import com.nap.pos.application.dto.importacion.*;
 import com.nap.pos.application.service.ImportacionService;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -34,11 +35,13 @@ public class ImportacionController {
     private Map<CampoImportacion, ComboBox<String>> comboBoxMapeo;
     private Map<CampoImportacion, Integer> mapeoActual;
     private ObservableList<DuplicadoViewModel> duplicadosObservable;
+    private ObservableList<CategoriaSubcategoriaViewModel> categoriasObservable;
+    private boolean mostroCategorias = false;
     private int pasoActual = 0;
 
     // ── Nodos FXML ──────────────────────────────────────────────────────
     @FXML private StackPane stackPanePasos;
-    @FXML private VBox paso0, paso1, paso2, paso3, paso4;
+    @FXML private VBox paso0, paso1, paso2, paso3Cat, paso3, paso4;
     @FXML private VBox cardProductos, cardClientes;
     @FXML private Label lblArchivo, lblTituloPaso;
     @FXML private Label ind1, ind2, ind3, ind4;
@@ -47,6 +50,7 @@ public class ImportacionController {
     @FXML private VBox panelErrores;
     @FXML private Label lblContadorErrores;
     @FXML private TableView<FilaError> tablaErrores;
+    @FXML private TableView<CategoriaSubcategoriaViewModel> tablaCategorias;
     @FXML private TableView<DuplicadoViewModel> tablaDuplicados;
     @FXML private Label lblImportados, lblActualizados, lblOmitidos;
     @FXML private Button btnAnterior, btnSiguiente, btnDescargarPlantilla, btnDetectarAuto;
@@ -54,6 +58,7 @@ public class ImportacionController {
     @FXML
     public void initialize() {
         configurarTablaErrores();
+        configurarTablaCategorias();
         configurarTablaDuplicados();
         cardProductos.getStyleClass().add("tarjeta-seleccionada");
         actualizarUI();
@@ -122,8 +127,9 @@ public class ImportacionController {
         switch (pasoActual) {
             case 0 -> avanzarDesdePaso0();
             case 1 -> avanzarDesdePaso1();
-            case 3 -> ejecutarImportacion();
-            case 4 -> cerrar();
+            case 3 -> avanzarDesdePaso3Cat();   // categorías nuevas → duplicados o importar
+            case 4 -> ejecutarImportacion();
+            case 5 -> cerrar();
         }
     }
 
@@ -131,8 +137,9 @@ public class ImportacionController {
     private void onAnterior() {
         switch (pasoActual) {
             case 1 -> mostrarPaso(0);
-            case 2 -> mostrarPaso(1);   // volver al mapeo desde la pantalla de errores
+            case 2 -> mostrarPaso(1);
             case 3 -> mostrarPaso(1);
+            case 4 -> mostrarPaso(mostroCategorias ? 3 : 1);
         }
     }
 
@@ -152,7 +159,25 @@ public class ImportacionController {
         }
     }
 
-    // ── Eventos de duplicados (paso 3) ──────────────────────────────────
+    // ── Eventos de categorías nuevas (paso 3) ──────────────────────────
+
+    @FXML
+    private void onSeleccionarTodasCategorias() {
+        if (categoriasObservable != null) {
+            categoriasObservable.forEach(c -> c.setCrear(true));
+            tablaCategorias.refresh();
+        }
+    }
+
+    @FXML
+    private void onDeseleccionarTodasCategorias() {
+        if (categoriasObservable != null) {
+            categoriasObservable.forEach(c -> c.setCrear(false));
+            tablaCategorias.refresh();
+        }
+    }
+
+    // ── Eventos de duplicados (paso 4) ──────────────────────────────────
 
     @FXML
     private void onMarcarTodosActualizar() {
@@ -209,7 +234,41 @@ public class ImportacionController {
             return;
         }
 
-        // Sin errores → detectar duplicados
+        // Sin errores → para productos, verificar si hay categorías/subcategorías nuevas
+        if (tipoEntidad == TipoEntidad.PRODUCTO) {
+            List<CategoriaSubcategoriaNueva> nuevas =
+                    importacionService.detectarCategoriasNuevas(archivoSeleccionado, mapeoActual);
+            if (!nuevas.isEmpty()) {
+                categoriasObservable = FXCollections.observableArrayList(
+                        nuevas.stream().map(CategoriaSubcategoriaViewModel::new).toList());
+                tablaCategorias.setItems(categoriasObservable);
+                mostroCategorias = true;
+                mostrarPaso(3);
+                return;
+            }
+        }
+
+        mostroCategorias = false;
+        irADuplicadosOImportar();
+    }
+
+    private void avanzarDesdePaso3Cat() {
+        List<CategoriaSubcategoriaNueva> aCrear = categoriasObservable.stream()
+                .filter(CategoriaSubcategoriaViewModel::isCrear)
+                .map(CategoriaSubcategoriaViewModel::getDatos)
+                .toList();
+        if (!aCrear.isEmpty()) {
+            try {
+                importacionService.crearCategoriasYSubcategorias(aCrear);
+            } catch (Exception e) {
+                mostrarError("Error al crear categorías/subcategorías:\n" + e.getMessage());
+                return;
+            }
+        }
+        irADuplicadosOImportar();
+    }
+
+    private void irADuplicadosOImportar() {
         List<DuplicadoEncontrado> duplicados = tipoEntidad == TipoEntidad.PRODUCTO
                 ? importacionService.detectarDuplicadosProductos(archivoSeleccionado, mapeoActual)
                 : importacionService.detectarDuplicadosClientes(archivoSeleccionado, mapeoActual);
@@ -220,7 +279,7 @@ public class ImportacionController {
             duplicadosObservable = FXCollections.observableArrayList(
                     duplicados.stream().map(DuplicadoViewModel::new).toList());
             tablaDuplicados.setItems(duplicadosObservable);
-            mostrarPaso(3);
+            mostrarPaso(4);
         }
     }
 
@@ -254,7 +313,7 @@ public class ImportacionController {
             lblImportados.setText("✅  " + resultado.importados() + " registro(s) nuevo(s) importado(s)");
             lblActualizados.setText("🔄  " + resultado.actualizados() + " registro(s) actualizado(s)");
             lblOmitidos.setText("⏭  " + resultado.omitidos() + " registro(s) omitido(s)");
-            mostrarPaso(4);
+            mostrarPaso(5);
 
         } catch (Exception e) {
             mostrarError("Error durante la importación:\n" + e.getMessage());
@@ -355,7 +414,8 @@ public class ImportacionController {
     }
 
     private void actualizarUI() {
-        VBox[] pasos = {paso0, paso1, paso2, paso3, paso4};
+        // pasoActual: 0=selección, 1=mapeo, 2=validación, 3=categorías, 4=duplicados, 5=resultado
+        VBox[] pasos = {paso0, paso1, paso2, paso3Cat, paso3, paso4};
         for (int i = 0; i < pasos.length; i++) {
             boolean activo = (i == pasoActual);
             pasos[i].setVisible(activo);
@@ -367,7 +427,12 @@ public class ImportacionController {
 
     private void actualizarIndicadores() {
         Label[] indicadores = {ind1, ind2, ind3, ind4};
-        int activo = Math.min(pasoActual, 3);
+        int activo = switch (pasoActual) {
+            case 0       -> 0;
+            case 1, 2   -> 1;
+            case 3, 4   -> 2;
+            default      -> 3;   // paso 5 (resultado)
+        };
         for (int i = 0; i < indicadores.length; i++) {
             if (i <= activo) {
                 indicadores[i].getStyleClass().remove("indicador-inactivo");
@@ -382,7 +447,6 @@ public class ImportacionController {
     }
 
     private void actualizarBotones() {
-        // Restablecer estado por defecto
         btnAnterior.setVisible(true);
         btnAnterior.setManaged(true);
         btnAnterior.setText("← Anterior");
@@ -407,15 +471,14 @@ public class ImportacionController {
                 btnSiguiente.setText("Validar →");
             }
             case 2 -> {
-                // Los botones del paso 2 se gestionan en mostrarErroresDeValidacion()
-                // o se ocultan cuando avanzamos directo al paso 3 o 4
                 btnAnterior.setVisible(false);
                 btnAnterior.setManaged(false);
                 btnSiguiente.setVisible(false);
                 btnSiguiente.setManaged(false);
             }
-            case 3 -> btnSiguiente.setText("Importar ✓");
-            case 4 -> {
+            case 3 -> btnSiguiente.setText("Crear y continuar →");
+            case 4 -> btnSiguiente.setText("Importar ✓");
+            case 5 -> {
                 btnAnterior.setVisible(false);
                 btnAnterior.setManaged(false);
                 btnSiguiente.setText("Cerrar");
@@ -424,6 +487,44 @@ public class ImportacionController {
     }
 
     // ── Configuración de tablas ─────────────────────────────────────────
+
+    @SuppressWarnings("unchecked")
+    private void configurarTablaCategorias() {
+        TableColumn<CategoriaSubcategoriaViewModel, Boolean> colCrear = new TableColumn<>("Crear");
+        colCrear.setCellValueFactory(d -> d.getValue().crearProperty().asObject());
+        colCrear.setCellFactory(col -> new TableCell<>() {
+            private final CheckBox cb = new CheckBox();
+            {
+                cb.setOnAction(e -> {
+                    if (getIndex() >= 0 && getIndex() < getTableView().getItems().size()) {
+                        getTableView().getItems().get(getIndex()).setCrear(cb.isSelected());
+                    }
+                });
+            }
+            @Override
+            protected void updateItem(Boolean item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getIndex() < 0) {
+                    setGraphic(null);
+                } else {
+                    cb.setSelected(getTableView().getItems().get(getIndex()).isCrear());
+                    setGraphic(cb);
+                }
+            }
+        });
+        colCrear.setPrefWidth(60);
+
+        TableColumn<CategoriaSubcategoriaViewModel, String> colCat = new TableColumn<>("Categoría");
+        colCat.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombreCategoria()));
+        colCat.setPrefWidth(260);
+
+        TableColumn<CategoriaSubcategoriaViewModel, String> colSub = new TableColumn<>("Subcategoría");
+        colSub.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombreSubcategoria()));
+        colSub.setPrefWidth(300);
+
+        tablaCategorias.getColumns().addAll(colCrear, colCat, colSub);
+        tablaCategorias.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+    }
 
     @SuppressWarnings("unchecked")
     private void configurarTablaErrores() {
@@ -511,6 +612,22 @@ public class ImportacionController {
         alert.setTitle("Información");
         alert.setHeaderText(null);
         alert.showAndWait();
+    }
+
+    // ── ViewModel para la tabla de categorías nuevas ────────────────────
+
+    public static class CategoriaSubcategoriaViewModel {
+        private final CategoriaSubcategoriaNueva datos;
+        private final SimpleBooleanProperty crear = new SimpleBooleanProperty(true);
+
+        public CategoriaSubcategoriaViewModel(CategoriaSubcategoriaNueva datos) { this.datos = datos; }
+
+        public SimpleBooleanProperty crearProperty()  { return crear; }
+        public boolean isCrear()                      { return crear.get(); }
+        public void    setCrear(boolean v)            { crear.set(v); }
+        public String  getNombreCategoria()           { return datos.nombreCategoria(); }
+        public String  getNombreSubcategoria()        { return datos.nombreSubcategoria(); }
+        public CategoriaSubcategoriaNueva getDatos()  { return datos; }
     }
 
     // ── ViewModel para la tabla de duplicados ───────────────────────────

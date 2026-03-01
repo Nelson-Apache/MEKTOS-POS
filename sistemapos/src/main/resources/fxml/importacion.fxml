@@ -97,7 +97,22 @@
         </VBox>
       </VBox>
 
-      <!-- ── PASO 3: Duplicados ────────────────────────────────── -->
+      <!-- ── PASO 3: Categorías y subcategorías nuevas ───────────── -->
+      <VBox fx:id="paso3Cat" spacing="14" styleClass="paso-container"
+            visible="false" managed="false">
+        <Label text="Categorías y subcategorías nuevas" styleClass="paso-titulo"/>
+        <Label text="Las siguientes categorías/subcategorías del archivo no existen en el sistema. Selecciona cuáles deseas crear antes de importar. Las que no marques se importarán sin subcategoría asignada."
+               styleClass="tarjeta-desc" wrapText="true"/>
+        <HBox spacing="10">
+          <Button text="Seleccionar todas"   onAction="#onSeleccionarTodasCategorias"
+                  styleClass="btn-secundario"/>
+          <Button text="Deseleccionar todas" onAction="#onDeseleccionarTodasCategorias"
+                  styleClass="btn-secundario"/>
+        </HBox>
+        <TableView fx:id="tablaCategorias" VBox.vgrow="ALWAYS"/>
+      </VBox>
+
+      <!-- ── PASO 4: Duplicados ────────────────────────────────── -->
       <VBox fx:id="paso3" spacing="14" styleClass="paso-container"
             visible="false" managed="false">
         <Label text="Registros duplicados" styleClass="paso-titulo"/>

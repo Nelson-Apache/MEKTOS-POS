@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class ProductoMapper {
 
     private final ProveedorMapper proveedorMapper;
+    private final SubcategoriaMapper subcategoriaMapper;
 
     /** Entity (DB) → Domain model */
     public Producto toDomain(ProductoEntity entity) {
@@ -23,6 +24,7 @@ public class ProductoMapper {
                 .proveedorPrincipal(proveedorMapper.toDomain(entity.getProveedorPrincipal()))
                 .ajusteProducto(entity.getAjusteProducto())
                 .stock(entity.getStock())
+                .subcategoria(subcategoriaMapper.toDomain(entity.getSubcategoria()))
                 .activo(entity.isActivo())
                 .build();
     }
@@ -42,6 +44,9 @@ public class ProductoMapper {
         }
         entity.setAjusteProducto(domain.getAjusteProducto());
         entity.setStock(domain.getStock());
+        if (domain.getSubcategoria() != null) {
+            entity.setSubcategoria(subcategoriaMapper.toRef(domain.getSubcategoria().getId()));
+        }
         entity.setActivo(domain.isActivo());
         return entity;
     }

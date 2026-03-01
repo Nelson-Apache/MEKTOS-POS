@@ -26,4 +26,7 @@ public interface ProductoRepository {
 
     // Usado para recalcular precios cuando el ADMIN cambia el % de ganancia del proveedor
     List<Producto> findByProveedorPrincipalId(Long proveedorId);
+
+    // Productos activos cuyo stock está en o por debajo del umbral mínimo global
+    List<Producto> findByStockBajoYActivo(int stockMinimo);
 }

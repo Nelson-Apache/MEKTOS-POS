@@ -13,6 +13,8 @@ public enum CampoImportacion {
     PRECIO_VENTA("Precio de venta",     true,  TipoEntidad.PRODUCTO),
     STOCK("Stock inicial",              true,  TipoEntidad.PRODUCTO),
     NIT_PROVEEDOR("NIT del proveedor",  false, TipoEntidad.PRODUCTO),
+    NOMBRE_CATEGORIA("Categoría",       false, TipoEntidad.PRODUCTO),
+    NOMBRE_SUBCATEGORIA("Subcategoría", false, TipoEntidad.PRODUCTO),
 
     // ── Cliente ───────────────────────────────────────────────────────────
     NOMBRE_CLIENTE("Nombre",            true,  TipoEntidad.CLIENTE),

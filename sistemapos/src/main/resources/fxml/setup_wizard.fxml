@@ -9,7 +9,7 @@
             fx:controller="com.nap.pos.ui.controller.SetupWizardController"
             stylesheets="@../css/setup_wizard.css"
             styleClass="wizard-root"
-            prefWidth="820" prefHeight="580">
+            prefWidth="820" prefHeight="660">
 
     <!-- ═══════════════════════════════════════════════ CABECERA ══ -->
     <top>
@@ -137,6 +137,22 @@
                     </GridPane>
                 </VBox>
 
+                <!-- Contacto (siempre visible) -->
+                <GridPane styleClass="form-grid" hgap="16" vgap="12">
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="160" prefWidth="160"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+                    <Label text="Teléfono / celular *" styleClass="form-label"
+                           GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <TextField fx:id="txtTelefono" promptText="Ej: 3001234567"
+                               GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                    <Label text="Correo electrónico" styleClass="form-label"
+                           GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <TextField fx:id="txtCorreo" promptText="correo@ejemplo.com (opcional)"
+                               GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                </GridPane>
+
             </VBox>
 
             <!-- ─────────────────────── PASO 3 : Logo y dirección ── -->
@@ -170,6 +186,69 @@
                               promptText="Dirección completa del negocio"
                               prefRowCount="3" wrapText="true"/>
                 </VBox>
+
+                <!-- Stock mínimo global -->
+                <VBox spacing="6">
+                    <Label text="Stock mínimo para alertas *" styleClass="form-label"/>
+                    <HBox spacing="14" alignment="CENTER_LEFT">
+                        <Spinner fx:id="spnStockMinimo" prefWidth="100" editable="true"/>
+                        <Label text="Si el stock de un producto llega a este número o menos, se mostrará una alerta al iniciar sesión."
+                               styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
+                               maxWidth="Infinity"/>
+                    </HBox>
+                </VBox>
+
+                <!-- Régimen tributario + IVA -->
+                <VBox spacing="10">
+                    <VBox spacing="6">
+                        <Label text="Régimen tributario *" styleClass="form-label"/>
+                        <ComboBox fx:id="cmbRegimen" maxWidth="Infinity"
+                                  onAction="#onRegimenChanged"/>
+                    </VBox>
+                    <!-- Solo visible cuando régimen = REGIMEN_ORDINARIO -->
+                    <VBox fx:id="vboxIva" spacing="10">
+                        <VBox spacing="6">
+                            <Label text="IVA por defecto (%) *" styleClass="form-label"/>
+                            <HBox spacing="14" alignment="CENTER_LEFT">
+                                <Spinner fx:id="spnIva" prefWidth="100" editable="true"/>
+                                <Label text="Valores comunes en Colombia: 0 %, 5 % o 19 %."
+                                       styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
+                                       maxWidth="Infinity"/>
+                            </HBox>
+                        </VBox>
+                        <CheckBox fx:id="chkPrecioConIvaIncluido"
+                                  text="El precio de venta de los productos ya incluye el IVA"/>
+                    </VBox>
+                </VBox>
+
+                <!-- % Ganancia global -->
+                <VBox spacing="6">
+                    <Label text="% Ganancia por defecto *" styleClass="form-label"/>
+                    <HBox spacing="14" alignment="CENTER_LEFT">
+                        <Spinner fx:id="spnGanancia" prefWidth="100" editable="true"/>
+                        <Label text="Margen de ganancia usado al crear productos sin proveedor asignado."
+                               styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
+                               maxWidth="Infinity"/>
+                    </HBox>
+                </VBox>
+
+                <!-- Comprobantes -->
+                <GridPane styleClass="form-grid" hgap="16" vgap="12">
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="160" prefWidth="160"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                        <ColumnConstraints minWidth="160" prefWidth="160"/>
+                        <ColumnConstraints prefWidth="120"/>
+                    </columnConstraints>
+                    <Label text="Prefijo comprobante *" styleClass="form-label"
+                           GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <TextField fx:id="txtPrefijo" promptText="Ej: FAC-"
+                               GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                    <Label text="Número inicial *" styleClass="form-label"
+                           GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                    <Spinner fx:id="spnNumeroInicial" prefWidth="110" editable="true"
+                             GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                </GridPane>
 
             </VBox>
 

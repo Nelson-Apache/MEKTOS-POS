@@ -16,9 +16,9 @@ import java.io.FileOutputStream;
 @Component
 public class GeneradorPlantilla {
 
-    private static final String[] COLS_PRODUCTO    = {"codigo_barras", "nombre", "precio_compra", "precio_venta", "stock", "nit_proveedor"};
-    private static final boolean[] REQ_PRODUCTO     = {false, true, true, true, true, false};
-    private static final String[] EJEMPLO_PRODUCTO  = {"P001", "Agua 500ml", "800", "1200", "50", ""};
+    private static final String[] COLS_PRODUCTO    = {"codigo_barras", "nombre", "precio_compra", "precio_venta", "stock", "nit_proveedor", "categoria", "subcategoria"};
+    private static final boolean[] REQ_PRODUCTO     = {false, true, true, true, true, false, false, false};
+    private static final String[] EJEMPLO_PRODUCTO  = {"P001", "Agua 500ml", "800", "1200", "50", "", "Bebidas", "Gaseosas"};
 
     private static final String[] INSTRUCCIONES_PRODUCTO = {
             "INSTRUCCIONES DE USO — Plantilla de Productos",
@@ -29,6 +29,10 @@ public class GeneradorPlantilla {
             "• stock: número entero mayor o igual a 0.",
             "• nit_proveedor: NIT exacto del proveedor registrado en el sistema.",
             "  Si el NIT no coincide, el producto se guarda sin proveedor (se asigna después).",
+            "• categoria y subcategoria: nombres exactos registrados en el sistema.",
+            "  Si se especifican ambas, la búsqueda se hace dentro de la categoría indicada.",
+            "  Si solo se ingresa subcategoria, se busca por nombre globalmente.",
+            "  Si el nombre no coincide, el producto se guarda sin subcategoría.",
             "• No modifique los nombres de los encabezados para que el sistema los detecte automáticamente."
     };
 

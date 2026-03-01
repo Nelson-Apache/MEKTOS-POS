@@ -65,4 +65,12 @@ public class ProductoRepositoryImpl implements ProductoRepository {
                 .map(productoMapper::toDomain)
                 .toList();
     }
+
+    // Productos activos con stock igual o por debajo del umbral mínimo
+    @Override
+    public List<Producto> findByStockBajoYActivo(int stockMinimo) {
+        return jpaProductoRepository.findByActivoTrueAndStockLessThanEqual(stockMinimo).stream()
+                .map(productoMapper::toDomain)
+                .toList();
+    }
 }

@@ -2,7 +2,9 @@ package com.nap.pos.ui.controller;
 
 import com.nap.pos.application.service.ConfiguracionService;
 import com.nap.pos.domain.model.ConfiguracionTienda;
+import com.nap.pos.domain.model.enums.RegimenTributario;
 import com.nap.pos.domain.model.enums.TipoPersona;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -46,7 +48,7 @@ public class SetupWizardController {
     @FXML private RadioButton rbNatural;
     @FXML private RadioButton rbJuridica;
 
-    // ── Paso 2: datos básicos ────────────────────────────────────────────
+    // ── Paso 2: datos básicos + contacto ────────────────────────────────
     @FXML private TextField txtNombreTienda;
     @FXML private VBox grupoNatural;
     @FXML private TextField txtNombre;
@@ -55,11 +57,21 @@ public class SetupWizardController {
     @FXML private VBox grupoJuridica;
     @FXML private TextField txtRazonSocial;
     @FXML private TextField txtNit;
+    @FXML private TextField txtTelefono;
+    @FXML private TextField txtCorreo;
 
-    // ── Paso 3: logo y dirección ─────────────────────────────────────────
+    // ── Paso 3: logo, dirección y configuración operativa ───────────────
     @FXML private ImageView imgLogo;
     @FXML private Label lblRutaLogo;
     @FXML private TextArea txtDireccion;
+    @FXML private Spinner<Integer> spnStockMinimo;
+    @FXML private ComboBox<RegimenTributario> cmbRegimen;
+    @FXML private VBox vboxIva;
+    @FXML private Spinner<Integer> spnIva;
+    @FXML private CheckBox chkPrecioConIvaIncluido;
+    @FXML private Spinner<Integer> spnGanancia;
+    @FXML private TextField txtPrefijo;
+    @FXML private Spinner<Integer> spnNumeroInicial;
 
     // ── Estado interno ───────────────────────────────────────────────────
     private int pasoActual = 0;
@@ -73,8 +85,27 @@ public class SetupWizardController {
         rbNatural.setToggleGroup(grupoTipo);
         rbJuridica.setToggleGroup(grupoTipo);
         rbNatural.setSelected(true);
+        spnStockMinimo.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 999, 5));
+        spnIva.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 100, 19));
+        spnGanancia.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 500, 30));
+        spnNumeroInicial.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 999_999, 1));
+        txtPrefijo.setText("FAC-");
+        cmbRegimen.setItems(FXCollections.observableArrayList(RegimenTributario.values()));
+        cmbRegimen.setValue(RegimenTributario.REGIMEN_ORDINARIO);
+        // vboxIva arranca visible porque el régimen por defecto es ORDINARIO
+        vboxIva.setVisible(true);
+        vboxIva.setManaged(true);
         actualizarGrupoCampos();
         mostrarPaso(0);
+    }
+
+    // ── Handler régimen tributario ───────────────────────────────────────
+
+    @FXML
+    public void onRegimenChanged() {
+        boolean esOrdinario = cmbRegimen.getValue() == RegimenTributario.REGIMEN_ORDINARIO;
+        vboxIva.setVisible(esOrdinario);
+        vboxIva.setManaged(esOrdinario);
     }
 
     // ── Handlers paso 1 ─────────────────────────────────────────────────
@@ -85,6 +116,7 @@ public class SetupWizardController {
         rbNatural.setSelected(true);
         actualizarTarjetas();
         actualizarGrupoCampos();
+        cmbRegimen.setItems(FXCollections.observableArrayList(RegimenTributario.values()));
     }
 
     @FXML
@@ -93,6 +125,12 @@ public class SetupWizardController {
         rbJuridica.setSelected(true);
         actualizarTarjetas();
         actualizarGrupoCampos();
+        // Las personas jurídicas no pueden ser "No responsable de IVA"
+        cmbRegimen.setItems(FXCollections.observableArrayList(
+                RegimenTributario.REGIMEN_ORDINARIO,
+                RegimenTributario.REGIMEN_SIMPLE));
+        cmbRegimen.setValue(RegimenTributario.REGIMEN_ORDINARIO);
+        onRegimenChanged();
     }
 
     // ── Handlers de navegación ───────────────────────────────────────────
@@ -166,8 +204,18 @@ public class SetupWizardController {
                         ? txtRazonSocial.getText().trim() : null)
                 .nit(tipoSeleccionado == TipoPersona.JURIDICA
                         ? txtNit.getText().trim() : null)
+                .telefono(txtTelefono.getText().trim())
+                .correo(txtCorreo.getText().isBlank() ? null : txtCorreo.getText().trim())
                 .direccion(txtDireccion.getText().trim())
                 .rutaLogo(rutaLogoSeleccionada)
+                .stockMinimoGlobal(spnStockMinimo.getValue())
+                .regimenTributario(cmbRegimen.getValue())
+                .ivaPorDefecto(cmbRegimen.getValue() == RegimenTributario.REGIMEN_ORDINARIO
+                        ? spnIva.getValue() : 0)
+                .precioConIvaIncluido(chkPrecioConIvaIncluido.isSelected())
+                .porcentajeGananciaGlobal(spnGanancia.getValue())
+                .prefijoComprobante(txtPrefijo.getText().trim())
+                .numeroInicialComprobante(spnNumeroInicial.getValue())
                 .build();
 
         configuracionService.guardar(config);
@@ -265,12 +313,20 @@ public class SetupWizardController {
                 return false;
             }
         }
+        if (txtTelefono.getText().isBlank()) {
+            mostrarError("El teléfono de contacto es obligatorio.");
+            return false;
+        }
         return true;
     }
 
     private boolean validarPaso3() {
         if (txtDireccion.getText().isBlank()) {
             mostrarError("La dirección del negocio es obligatoria.");
+            return false;
+        }
+        if (txtPrefijo.getText().isBlank()) {
+            mostrarError("El prefijo de comprobante es obligatorio.");
             return false;
         }
         return true;

@@ -14,4 +14,7 @@ public interface JpaProductoRepository extends JpaRepository<ProductoEntity, Lon
 
     // Usado para recalcular precios cuando cambia el % de ganancia del proveedor
     List<ProductoEntity> findByProveedorPrincipalId(Long proveedorId);
+
+    // Stock bajo: productos activos con stock <= umbral indicado
+    List<ProductoEntity> findByActivoTrueAndStockLessThanEqual(int stockMinimo);
 }

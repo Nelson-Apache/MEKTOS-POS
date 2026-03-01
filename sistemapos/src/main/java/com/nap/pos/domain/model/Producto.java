@@ -25,6 +25,7 @@ public class Producto {
     @Builder.Default
     private BigDecimal ajusteProducto = BigDecimal.ZERO;
     private int stock;
+    private Subcategoria subcategoria;
     private boolean activo;
 
     /**

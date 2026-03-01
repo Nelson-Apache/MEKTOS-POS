@@ -43,6 +43,10 @@ public class ProductoEntity {
     @Column(nullable = false)
     private int stock;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subcategoria_id")
+    private SubcategoriaEntity subcategoria;
+
     @Column(nullable = false)
     private boolean activo;
 }

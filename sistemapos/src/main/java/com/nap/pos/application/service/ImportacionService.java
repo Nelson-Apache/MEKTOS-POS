@@ -1,13 +1,17 @@
 package com.nap.pos.application.service;
 
 import com.nap.pos.application.dto.importacion.*;
+import com.nap.pos.domain.model.Categoria;
 import com.nap.pos.domain.model.Cliente;
 import com.nap.pos.domain.model.Producto;
 import com.nap.pos.domain.model.Proveedor;
+import com.nap.pos.domain.model.Subcategoria;
 import com.nap.pos.domain.model.enums.PlazoPago;
+import com.nap.pos.domain.repository.CategoriaRepository;
 import com.nap.pos.domain.repository.ClienteRepository;
 import com.nap.pos.domain.repository.ProductoRepository;
 import com.nap.pos.domain.repository.ProveedorRepository;
+import com.nap.pos.domain.repository.SubcategoriaRepository;
 import com.nap.pos.infrastructure.io.GeneradorPlantilla;
 import com.nap.pos.infrastructure.io.LectorArchivo;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +27,13 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ImportacionService {
 
-    private final LectorArchivo      lectorArchivo;
-    private final GeneradorPlantilla generadorPlantilla;
-    private final ProductoRepository productoRepository;
-    private final ClienteRepository  clienteRepository;
-    private final ProveedorRepository proveedorRepository;
+    private final LectorArchivo          lectorArchivo;
+    private final GeneradorPlantilla     generadorPlantilla;
+    private final ProductoRepository     productoRepository;
+    private final ClienteRepository      clienteRepository;
+    private final ProveedorRepository    proveedorRepository;
+    private final CategoriaRepository    categoriaRepository;
+    private final SubcategoriaRepository subcategoriaRepository;
 
     // ── Plantillas ──────────────────────────────────────────────────────
 
@@ -306,6 +312,66 @@ public class ImportacionService {
         return new ResultadoImportacion(importados, actualizados, omitidos, List.of());
     }
 
+    // ── Categorías y subcategorías nuevas ──────────────────────────────
+
+    /**
+     * Lee el archivo y devuelve los pares (categoría, subcategoría) que aparecen
+     * en alguna fila pero no existen en la base de datos.
+     * Solo aplica a importaciones de productos con la columna subcategoría mapeada.
+     */
+    public List<CategoriaSubcategoriaNueva> detectarCategoriasNuevas(
+            File archivo, Map<CampoImportacion, Integer> mapeo) {
+
+        if (!mapeo.containsKey(CampoImportacion.NOMBRE_SUBCATEGORIA)) return List.of();
+
+        List<String[]> filas = lectorArchivo.leerFilas(archivo);
+        Set<CategoriaSubcategoriaNueva> nuevas = new LinkedHashSet<>();
+
+        for (String[] fila : filas) {
+            String nombreSub = getValor(fila, mapeo, CampoImportacion.NOMBRE_SUBCATEGORIA);
+            if (nombreSub.isBlank()) continue;
+
+            String nombreCat = getValor(fila, mapeo, CampoImportacion.NOMBRE_CATEGORIA);
+            boolean existe = nombreCat.isBlank()
+                    ? subcategoriaRepository.findByNombre(nombreSub).isPresent()
+                    : subcategoriaRepository.findByNombreAndCategoriaNombre(nombreSub, nombreCat).isPresent();
+
+            if (!existe) {
+                nuevas.add(new CategoriaSubcategoriaNueva(nombreCat, nombreSub));
+            }
+        }
+        return new ArrayList<>(nuevas);
+    }
+
+    /**
+     * Crea en la base de datos las categorías y subcategorías seleccionadas.
+     * Si la categoría indicada no existe, la crea primero.
+     */
+    @Transactional
+    public void crearCategoriasYSubcategorias(List<CategoriaSubcategoriaNueva> nuevas) {
+        Map<String, Categoria> cache = new LinkedHashMap<>();
+
+        for (CategoriaSubcategoriaNueva nueva : nuevas) {
+            String nomCat = nueva.nombreCategoria();
+            String nomSub = nueva.nombreSubcategoria();
+
+            Categoria categoria = null;
+            if (!nomCat.isBlank()) {
+                categoria = cache.computeIfAbsent(nomCat, nombre ->
+                        categoriaRepository.findByNombre(nombre)
+                                .orElseGet(() -> categoriaRepository.save(
+                                        Categoria.builder().nombre(nombre).activo(true).build())));
+            }
+
+            subcategoriaRepository.save(
+                    Subcategoria.builder()
+                            .nombre(nomSub)
+                            .categoria(categoria)
+                            .activo(true)
+                            .build());
+        }
+    }
+
     // ── Constructores de dominio ────────────────────────────────────────
 
     private Producto construirProducto(String[] fila, Map<CampoImportacion, Integer> mapeo, Long id) {
@@ -313,6 +379,15 @@ public class ImportacionService {
         Proveedor proveedor = nit.isBlank()
                 ? null
                 : proveedorRepository.findByNit(nit).orElse(null);
+
+        String nombreSub = getValor(fila, mapeo, CampoImportacion.NOMBRE_SUBCATEGORIA);
+        String nombreCat = getValor(fila, mapeo, CampoImportacion.NOMBRE_CATEGORIA);
+        Subcategoria subcategoria = null;
+        if (!nombreSub.isBlank()) {
+            subcategoria = nombreCat.isBlank()
+                    ? subcategoriaRepository.findByNombre(nombreSub).orElse(null)
+                    : subcategoriaRepository.findByNombreAndCategoriaNombre(nombreSub, nombreCat).orElse(null);
+        }
 
         return Producto.builder()
                 .id(id)
@@ -322,6 +397,7 @@ public class ImportacionService {
                 .precioVenta(parseBD(getValor(fila, mapeo, CampoImportacion.PRECIO_VENTA)))
                 .stock(parseInt(getValor(fila, mapeo, CampoImportacion.STOCK)))
                 .proveedorPrincipal(proveedor)
+                .subcategoria(subcategoria)
                 .activo(true)
                 .build();
     }
@@ -390,7 +466,9 @@ public class ImportacionService {
             case PRECIO_COMPRA   -> normalizado.contains("compra") || normalizado.contains("costo");
             case PRECIO_VENTA    -> normalizado.contains("venta") && !normalizado.contains("compra");
             case STOCK           -> normalizado.contains("stock") || normalizado.contains("cantidad");
-            case NIT_PROVEEDOR   -> normalizado.contains("nit")   || normalizado.contains("proveedor");
+            case NIT_PROVEEDOR       -> normalizado.contains("nit")          || normalizado.contains("proveedor");
+            case NOMBRE_CATEGORIA    -> normalizado.contains("categoria")     && !normalizado.contains("sub");
+            case NOMBRE_SUBCATEGORIA -> normalizado.contains("subcategoria");
             case CEDULA          -> normalizado.contains("cedula") || normalizado.contains("documento");
             case CELULAR         -> normalizado.contains("celular") || normalizado.contains("telefono");
             case DIRECCION       -> normalizado.contains("direccion");
