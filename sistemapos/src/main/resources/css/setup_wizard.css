@@ -490,3 +490,25 @@
     -fx-icon-color: #22C55E;
     -fx-fill: #22C55E;
 }
+
+/* ── Botón toggle contraseña ──────────────────────────────────── */
+.btn-toggle-password {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 4 6 4 6;
+    -fx-cursor: hand;
+    -fx-min-width: 32;
+    -fx-min-height: 32;
+}
+.btn-toggle-password:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.05);
+    -fx-background-radius: 6;
+}
+.toggle-pw-icon {
+    -fx-icon-color: #6B7280;
+    -fx-fill: #6B7280;
+}
+.btn-toggle-password:hover .toggle-pw-icon {
+    -fx-icon-color: #374151;
+    -fx-fill: #374151;
+}

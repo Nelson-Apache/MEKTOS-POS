@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-
 @Getter
 @Builder
 @NoArgsConstructor
@@ -81,10 +79,12 @@ public class ConfiguracionTienda {
     private int numeroInicialComprobante = 1;
 
     /**
-     * Fecha programada para el próximo inventario general anual.
-     * null si el usuario no la configuró.
+     * Mes (1-12) y día (1-31) programados para el inventario general anual.
+     * null si el usuario no los configuró. El sistema entiende que es anual
+     * y cada año verifica si se realizó el conteo correspondiente.
      */
-    private LocalDate fechaInventarioAnual;
+    private Integer mesInventarioAnual;
+    private Integer diaInventarioAnual;
 
     /** ID del usuario (administrador) que configuró la tienda inicialmente. */
     private Long propietarioId;

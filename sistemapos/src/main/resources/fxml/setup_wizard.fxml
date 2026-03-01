@@ -292,13 +292,15 @@
 
                             <!-- Inventario anual -->
                             <VBox spacing="6">
-                                <Label text="Fecha del inventario general anual (opcional)" styleClass="form-label"/>
-                                <HBox spacing="14" alignment="CENTER_LEFT">
-                                    <DatePicker fx:id="dpFechaInventario" promptText="dd/mm/aaaa"/>
-                                    <Label text="El sistema te avisará cuando se acerque esta fecha para hacer el conteo general de productos."
-                                           styleClass="tarjeta-desc" wrapText="true" HBox.hgrow="ALWAYS"
-                                           maxWidth="Infinity"/>
+                                <Label text="Inventario general anual (opcional)" styleClass="form-label"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="Mes:" styleClass="form-label"/>
+                                    <ComboBox fx:id="cmbMesInventario" promptText="Mes" prefWidth="150"/>
+                                    <Label text="D&#237;a:" styleClass="form-label"/>
+                                    <ComboBox fx:id="cmbDiaInventario" promptText="D&#237;a" prefWidth="80"/>
                                 </HBox>
+                                <Label text="El sistema te avisar&#225; cada a&#241;o cuando se acerque esta fecha para hacer el conteo general de productos. Se registrar&#225; autom&#225;ticamente si se realiz&#243; o no."
+                                       styleClass="tarjeta-desc" wrapText="true" maxWidth="Infinity"/>
                             </VBox>
 
                         </VBox>
@@ -336,17 +338,41 @@
                                    promptText="Ej: nmolina"
                                    GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                        <Label text="Contraseña *" styleClass="form-label"
+                        <Label text="Contrase&#241;a *" styleClass="form-label"
                                GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <PasswordField fx:id="txtPassword"
-                                       promptText="Ingrese su contraseña"
-                                       GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        <HBox spacing="6" alignment="CENTER_LEFT"
+                              GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <PasswordField fx:id="txtPassword"
+                                           promptText="Ingrese su contrase&#241;a"
+                                           HBox.hgrow="ALWAYS" maxWidth="1.7976931348623157E308"/>
+                            <TextField fx:id="txtPasswordVisible"
+                                       promptText="Ingrese su contrase&#241;a"
+                                       visible="false" managed="false"
+                                       HBox.hgrow="ALWAYS" maxWidth="1.7976931348623157E308"/>
+                            <Button onAction="#onTogglePassword"
+                                    styleClass="btn-toggle-password" mnemonicParsing="false">
+                                <graphic><FontIcon iconLiteral="fas-eye" iconSize="14" styleClass="toggle-pw-icon"/></graphic>
+                                <tooltip><Tooltip text="Ver/ocultar contrase&#241;a"/></tooltip>
+                            </Button>
+                        </HBox>
 
-                        <Label text="Confirmar contraseña *" styleClass="form-label"
+                        <Label text="Confirmar contrase&#241;a *" styleClass="form-label"
                                GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                        <PasswordField fx:id="txtPasswordConfirm"
-                                       promptText="Repita la contraseña"
-                                       GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        <HBox spacing="6" alignment="CENTER_LEFT"
+                              GridPane.columnIndex="1" GridPane.rowIndex="2">
+                            <PasswordField fx:id="txtPasswordConfirm"
+                                           promptText="Repita la contrase&#241;a"
+                                           HBox.hgrow="ALWAYS" maxWidth="1.7976931348623157E308"/>
+                            <TextField fx:id="txtPasswordConfirmVisible"
+                                       promptText="Repita la contrase&#241;a"
+                                       visible="false" managed="false"
+                                       HBox.hgrow="ALWAYS" maxWidth="1.7976931348623157E308"/>
+                            <Button onAction="#onTogglePasswordConfirm"
+                                    styleClass="btn-toggle-password" mnemonicParsing="false">
+                                <graphic><FontIcon iconLiteral="fas-eye" iconSize="14" styleClass="toggle-pw-icon"/></graphic>
+                                <tooltip><Tooltip text="Ver/ocultar contrase&#241;a"/></tooltip>
+                            </Button>
+                        </HBox>
                     </GridPane>
 
                     <Label fx:id="lblPasswordError" text=""

@@ -17,6 +17,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import lombok.RequiredArgsConstructor;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -86,12 +87,15 @@ public class SetupWizardController {
     @FXML private Spinner<Integer> spnGanancia;
     @FXML private TextField txtPrefijo;
     @FXML private Spinner<Integer> spnNumeroInicial;
-    @FXML private DatePicker dpFechaInventario;
+    @FXML private ComboBox<String> cmbMesInventario;
+    @FXML private ComboBox<Integer> cmbDiaInventario;
 
-    // ── Paso 4: credenciales del administrador ──────────────────────────
+    // ── Paso 4: credenciales del administrador ──────────────────────
     @FXML private TextField txtUsername;
     @FXML private PasswordField txtPassword;
+    @FXML private TextField txtPasswordVisible;
     @FXML private PasswordField txtPasswordConfirm;
+    @FXML private TextField txtPasswordConfirmVisible;
     @FXML private Label lblPasswordError;
 
     // ── Estado interno ───────────────────────────────────────────────────
@@ -116,6 +120,58 @@ public class SetupWizardController {
         // vboxIva arranca visible porque el régimen por defecto es ORDINARIO
         vboxIva.setVisible(true);
         vboxIva.setManaged(true);
+
+        // ── Filtros de entrada en tiempo real ────────────────────────────
+        // Solo letras, espacios y tildes (nombres/apellidos)
+        txtNombre.setTextFormatter(filtroLetras(100));
+        txtApellido.setTextFormatter(filtroLetras(100));
+        txtRepLegalNombre.setTextFormatter(filtroLetras(100));
+        txtRepLegalApellido.setTextFormatter(filtroLetras(100));
+
+        // Solo dígitos (cédula colombiana: hasta 10-12 dígitos)
+        txtCedula.setTextFormatter(filtroDigitos(12));
+
+        // NIT colombiano: dígitos + guión + dígito verificación (ej: 900123456-1)
+        txtNit.setTextFormatter(filtroNit(15));
+
+        // Teléfono: solo dígitos (celular colombiano: 10 dígitos)
+        txtTelefono.setTextFormatter(filtroDigitos(10));
+
+        // Correo: sin espacios, máx 100 caracteres
+        txtCorreo.setTextFormatter(filtroSinEspacios(100));
+
+        // Prefijo comprobante: alfanumérico + guión, máx 10
+        txtPrefijo.setTextFormatter(filtroPrefijo(10));
+
+        // Username: alfanumérico, punto, guión bajo — sin espacios ni tildes
+        txtUsername.setTextFormatter(filtroUsername(30));
+
+        // Nombre de tienda: longitud máxima
+        txtNombreTienda.setTextFormatter(filtroLongitud(150));
+
+        // Razón social: longitud máxima
+        txtRazonSocial.setTextFormatter(filtroLongitud(200));
+
+        // Spinners: proteger contra texto inválido en modo editable
+        protegerSpinner(spnStockMinimo);
+        protegerSpinner(spnIva);
+        protegerSpinner(spnGanancia);
+        protegerSpinner(spnNumeroInicial);
+
+        // ── Inventario anual: ComboBox mes + día ────────────────────────
+        String[] meses = {"", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
+        cmbMesInventario.setItems(FXCollections.observableArrayList(meses));
+        cmbMesInventario.setValue(""); // vacío = no configurado
+        cmbDiaInventario.setItems(FXCollections.observableArrayList(generarDias(31)));
+        cmbDiaInventario.setValue(null);
+        // Al cambiar el mes, ajustar los días disponibles
+        cmbMesInventario.setOnAction(e -> actualizarDiasInventario());
+
+        // ── Toggle visibilidad de contraseñas ───────────────────────────
+        sincronizarPasswordToggle(txtPassword, txtPasswordVisible);
+        sincronizarPasswordToggle(txtPasswordConfirm, txtPasswordConfirmVisible);
+
         actualizarGrupoCampos();
         mostrarPaso(0);
     }
@@ -281,7 +337,8 @@ public class SetupWizardController {
                 .porcentajeGananciaGlobal(spnGanancia.getValue())
                 .prefijoComprobante(txtPrefijo.getText().trim())
                 .numeroInicialComprobante(spnNumeroInicial.getValue())
-                .fechaInventarioAnual(dpFechaInventario.getValue())
+                .mesInventarioAnual(obtenerMesInventario())
+                .diaInventarioAnual(cmbDiaInventario.getValue())
                 .propietarioId(admin.getId())
                 .build();
 
@@ -304,6 +361,189 @@ public class SetupWizardController {
         } catch (Exception e) {
             mostrarError("Error al abrir la pantalla de login: " + e.getMessage());
         }
+    }
+
+    // ── Filtros (TextFormatter factories) ───────────────────────────────
+
+    /** Solo letras Unicode (tildes, ñ, etc.) y espacios. */
+    private TextFormatter<String> filtroLetras(int maxLen) {
+        return new TextFormatter<>(change -> {
+            if (change.isContentChange()) {
+                String newText = change.getControlNewText();
+                if (newText.length() > maxLen || !newText.matches("[\\p{L} ]*")) return null;
+            }
+            return change;
+        });
+    }
+
+    /** Solo dígitos, con longitud máxima. */
+    private TextFormatter<String> filtroDigitos(int maxLen) {
+        return new TextFormatter<>(change -> {
+            if (change.isContentChange()) {
+                String newText = change.getControlNewText();
+                if (newText.length() > maxLen || !newText.matches("[0-9]*")) return null;
+            }
+            return change;
+        });
+    }
+
+    /** NIT colombiano: dígitos + un guión opcional + dígito de verificación. */
+    private TextFormatter<String> filtroNit(int maxLen) {
+        return new TextFormatter<>(change -> {
+            if (change.isContentChange()) {
+                String newText = change.getControlNewText();
+                if (newText.length() > maxLen || !newText.matches("[0-9\\-]*")) return null;
+                // Máximo un guión
+                if (newText.chars().filter(c -> c == '-').count() > 1) return null;
+            }
+            return change;
+        });
+    }
+
+    /** Sin espacios (útil para correo). */
+    private TextFormatter<String> filtroSinEspacios(int maxLen) {
+        return new TextFormatter<>(change -> {
+            if (change.isContentChange()) {
+                String newText = change.getControlNewText();
+                if (newText.length() > maxLen || newText.contains(" ")) return null;
+            }
+            return change;
+        });
+    }
+
+    /** Prefijo de comprobante: alfanumérico + guión. */
+    private TextFormatter<String> filtroPrefijo(int maxLen) {
+        return new TextFormatter<>(change -> {
+            if (change.isContentChange()) {
+                String newText = change.getControlNewText();
+                if (newText.length() > maxLen || !newText.matches("[A-Za-z0-9\\-]*")) return null;
+            }
+            return change;
+        });
+    }
+
+    /** Username: minúsculas, dígitos, punto, guión bajo. */
+    private TextFormatter<String> filtroUsername(int maxLen) {
+        return new TextFormatter<>(change -> {
+            if (change.isContentChange()) {
+                String newText = change.getControlNewText();
+                if (newText.length() > maxLen || !newText.matches("[a-z0-9._]*")) return null;
+            }
+            return change;
+        });
+    }
+
+    /** Solo longitud máxima, cualquier carácter. */
+    private TextFormatter<String> filtroLongitud(int maxLen) {
+        return new TextFormatter<>(change -> {
+            if (change.isContentChange()) {
+                if (change.getControlNewText().length() > maxLen) return null;
+            }
+            return change;
+        });
+    }
+
+    /** Protege un Spinner editable contra texto no numérico. */
+    private void protegerSpinner(Spinner<Integer> spinner) {
+        spinner.setEditable(true);
+        spinner.getEditor().setTextFormatter(new TextFormatter<>(change -> {
+            if (change.isContentChange()) {
+                String newText = change.getControlNewText();
+                if (!newText.matches("[0-9]*") || newText.length() > 6) return null;
+            }
+            return change;
+        }));
+        // Al perder foco, restaurar valor si quedó vacío o inválido
+        spinner.getEditor().focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+            if (!isFocused) {
+                try {
+                    int val = Integer.parseInt(spinner.getEditor().getText());
+                    spinner.getValueFactory().setValue(val);
+                } catch (NumberFormatException e) {
+                    spinner.getEditor().setText(String.valueOf(spinner.getValue()));
+                }
+            }
+        });
+    }
+
+    // ── Inventario anual helpers ───────────────────────────────────────
+
+    private static final String[] NOMBRES_MESES = {
+        "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    };
+
+    /** Genera lista de días: null + 1..max */
+    private java.util.List<Integer> generarDias(int max) {
+        java.util.List<Integer> dias = new java.util.ArrayList<>();
+        dias.add(null); // opción vacía
+        for (int i = 1; i <= max; i++) dias.add(i);
+        return dias;
+    }
+
+    /** Ajusta los días disponibles según el mes seleccionado. */
+    private void actualizarDiasInventario() {
+        String mes = cmbMesInventario.getValue();
+        if (mes == null || mes.isEmpty()) {
+            cmbDiaInventario.setItems(FXCollections.observableArrayList(generarDias(31)));
+            cmbDiaInventario.setValue(null);
+            return;
+        }
+        int maxDias = switch (mes) {
+            case "Febrero" -> 29; // permitir 29 para años bisiestos
+            case "Abril", "Junio", "Septiembre", "Noviembre" -> 30;
+            default -> 31;
+        };
+        Integer diaActual = cmbDiaInventario.getValue();
+        cmbDiaInventario.setItems(FXCollections.observableArrayList(generarDias(maxDias)));
+        if (diaActual != null && diaActual <= maxDias) {
+            cmbDiaInventario.setValue(diaActual);
+        } else {
+            cmbDiaInventario.setValue(null);
+        }
+    }
+
+    /** Convierte el nombre del mes seleccionado a su número (1-12), o null. */
+    private Integer obtenerMesInventario() {
+        String mes = cmbMesInventario.getValue();
+        if (mes == null || mes.isEmpty()) return null;
+        for (int i = 1; i < NOMBRES_MESES.length; i++) {
+            if (NOMBRES_MESES[i].equals(mes)) return i;
+        }
+        return null;
+    }
+
+    // ── Toggle visibilidad de contraseña ─────────────────────────────────
+
+    /**
+     * Sincroniza un PasswordField con un TextField "espejo" visible.
+     * Ambos comparten el mismo texto; uno está oculto siempre.
+     */
+    private void sincronizarPasswordToggle(PasswordField hidden, TextField visible) {
+        visible.setVisible(false);
+        visible.setManaged(false);
+        hidden.textProperty().bindBidirectional(visible.textProperty());
+    }
+
+    @FXML
+    private void onTogglePassword() {
+        toggleVisibilidad(txtPassword, txtPasswordVisible);
+    }
+
+    @FXML
+    private void onTogglePasswordConfirm() {
+        toggleVisibilidad(txtPasswordConfirm, txtPasswordConfirmVisible);
+    }
+
+    private void toggleVisibilidad(PasswordField hidden, TextField visible) {
+        boolean mostrar = !visible.isVisible();
+        hidden.setVisible(!mostrar);
+        hidden.setManaged(!mostrar);
+        visible.setVisible(mostrar);
+        visible.setManaged(mostrar);
+        // Dar foco al campo activo
+        if (mostrar) visible.requestFocus();
+        else hidden.requestFocus();
     }
 
     // ── Helpers privados ─────────────────────────────────────────────────
@@ -405,6 +645,12 @@ public class SetupWizardController {
         }
         if (txtTelefono.getText().isBlank()) {
             mostrarError("El teléfono de contacto es obligatorio.");
+            return false;
+        }
+        // Validar formato de correo si se ingresó
+        String correo = txtCorreo.getText().trim();
+        if (!correo.isEmpty() && !correo.matches("^[\\w.+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
+            mostrarError("El correo electrónico no tiene un formato válido.");
             return false;
         }
         return true;

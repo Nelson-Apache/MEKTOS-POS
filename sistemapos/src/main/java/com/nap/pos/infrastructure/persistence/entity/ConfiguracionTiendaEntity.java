@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -89,8 +87,11 @@ public class ConfiguracionTiendaEntity {
     @Column(name = "numero_inicial_comprobante", nullable = false, columnDefinition = "INTEGER DEFAULT 1")
     private int numeroInicialComprobante = 1;
 
-    @Column(name = "fecha_inventario_anual")
-    private LocalDate fechaInventarioAnual;
+    @Column(name = "mes_inventario_anual")
+    private Integer mesInventarioAnual;
+
+    @Column(name = "dia_inventario_anual")
+    private Integer diaInventarioAnual;
 
     /** Usuario (administrador) que configuró la tienda. */
     @ManyToOne(fetch = FetchType.LAZY)

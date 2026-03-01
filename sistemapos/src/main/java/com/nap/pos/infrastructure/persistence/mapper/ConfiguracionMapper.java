@@ -31,7 +31,8 @@ public class ConfiguracionMapper {
         e.setPorcentajeGananciaGlobal(domain.getPorcentajeGananciaGlobal());
         e.setPrefijoComprobante(domain.getPrefijoComprobante());
         e.setNumeroInicialComprobante(domain.getNumeroInicialComprobante());
-        e.setFechaInventarioAnual(domain.getFechaInventarioAnual());
+        e.setMesInventarioAnual(domain.getMesInventarioAnual());
+        e.setDiaInventarioAnual(domain.getDiaInventarioAnual());
         if (domain.getPropietarioId() != null) {
             UsuarioEntity propietario = new UsuarioEntity();
             propietario.setId(domain.getPropietarioId());
@@ -63,7 +64,8 @@ public class ConfiguracionMapper {
                 .porcentajeGananciaGlobal(e.getPorcentajeGananciaGlobal())
                 .prefijoComprobante(e.getPrefijoComprobante())
                 .numeroInicialComprobante(e.getNumeroInicialComprobante())
-                .fechaInventarioAnual(e.getFechaInventarioAnual())
+                .mesInventarioAnual(e.getMesInventarioAnual())
+                .diaInventarioAnual(e.getDiaInventarioAnual())
                 .propietarioId(e.getPropietario() != null ? e.getPropietario().getId() : null)
                 .build();
     }
