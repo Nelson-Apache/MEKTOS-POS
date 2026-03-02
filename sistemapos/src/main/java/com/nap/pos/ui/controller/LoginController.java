@@ -9,11 +9,17 @@ import com.nap.pos.domain.model.enums.Rol;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import java.io.File;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,18 +32,39 @@ public class LoginController {
 
     @FXML private TextField     txtUsuario;
     @FXML private PasswordField txtPassword;
+    @FXML private TextField     txtPasswordVisible;
+    @FXML private Button        btnTogglePassword;
     @FXML private Label         lblNombreTienda;
     @FXML private Label         lblMensaje;
+    @FXML private ImageView     imgLogo;
+    @FXML private Region        logoSpace;
 
     @FXML
     public void initialize() {
-        // Muestra el nombre de la tienda configurada
         try {
-            String nombre = configuracionService.obtener().getNombreTienda();
-            lblNombreTienda.setText(nombre);
+            var config = configuracionService.obtener();
+
+            // Nombre de la tienda
+            lblNombreTienda.setText(config.getNombreTienda());
+
+            // Logo: mostrar solo si el archivo existe
+            String rutaLogo = config.getRutaLogo();
+            if (rutaLogo != null && !rutaLogo.isBlank()) {
+                File archivo = new File(rutaLogo);
+                if (archivo.exists()) {
+                    imgLogo.setImage(new Image(archivo.toURI().toString()));
+                    imgLogo.setVisible(true);
+                    imgLogo.setManaged(true);
+                    logoSpace.setVisible(true);
+                    logoSpace.setManaged(true);
+                }
+            }
         } catch (Exception ignored) {
-            // Si no hay configuración aún, deja el texto por defecto
+            // Sin configuración aún: deja los valores por defecto del FXML
         }
+
+        // Sincroniza texto entre PasswordField y TextField para el toggle
+        txtPasswordVisible.textProperty().bindBidirectional(txtPassword.textProperty());
 
         // Primera ejecución: crea usuario admin inicial si la BD está vacía
         crearAdminInicialSiNecesario();
@@ -64,6 +91,37 @@ public class LoginController {
             txtPassword.requestFocus();
         } catch (Exception e) {
             mostrarError("Error al iniciar sesión. Intenta de nuevo.");
+        }
+    }
+
+    @FXML
+    public void onTogglePassword() {
+        boolean mostrar = !txtPasswordVisible.isVisible();
+        txtPassword.setVisible(!mostrar);
+        txtPassword.setManaged(!mostrar);
+        txtPasswordVisible.setVisible(mostrar);
+        txtPasswordVisible.setManaged(mostrar);
+        btnTogglePassword.setText(mostrar ? "🔒" : "👁");
+    }
+
+    @FXML
+    public void onRecuperarPassword() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/recuperar_contrasena.fxml"));
+            loader.setControllerFactory(Launcher.getContext()::getBean);
+            Scene scene = new Scene(loader.load(), 520, 500);
+            Stage stage = new Stage();
+            stage.setTitle("Recuperar contraseña — NAP POS");
+            stage.setMinWidth(420);
+            stage.setMinHeight(450);
+            stage.setScene(scene);
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(txtUsuario.getScene().getWindow());
+            stage.centerOnScreen();
+            stage.show();
+        } catch (Exception e) {
+            mostrarError("No se pudo abrir la ventana de recuperación.");
         }
     }
 

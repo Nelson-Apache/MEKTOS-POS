@@ -27,6 +27,7 @@ repositories {
 dependencies {
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     // SQLite JDBC driver
     implementation 'org.xerial:sqlite-jdbc:3.47.2.0'

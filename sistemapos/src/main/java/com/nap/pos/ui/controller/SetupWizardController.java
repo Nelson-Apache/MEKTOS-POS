@@ -355,7 +355,8 @@ public class SetupWizardController {
             Stage loginStage = new Stage();
             loginStage.setTitle(config.getNombreTienda() + " — NAP POS");
             loginStage.setScene(new javafx.scene.Scene(loader.load(), 900, 620));
-            loginStage.setResizable(false);
+            loginStage.setMinWidth(520);
+            loginStage.setMinHeight(480);
             loginStage.centerOnScreen();
             loginStage.show();
         } catch (Exception e) {

@@ -46,34 +46,88 @@
     -fx-font-size: 13px;
 }
 
-/* ── Pantalla de login ──────────────────────────────────────────── */
-.login-root {
+/* ── Pantalla de login — split panel ────────────────────────────── */
+
+/* Panel izquierdo: carbón mostrador */
+.login-panel-left {
     -fx-background-color: #1E2A3A;
+    -fx-pref-width: 340px;
+    -fx-min-width: 240px;
+    -fx-max-width: 400px;
 }
 
-.login-card {
-    -fx-background-color: #FDFCFA;
-    -fx-background-radius: 14px;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.30), 48, 0, 0, 10);
-    -fx-max-width: 420px;
-    -fx-min-width: 380px;
+/* Círculo decorativo superior-izquierdo (azul tenue) */
+.login-deco-1 {
+    -fx-background-color: rgba(59, 130, 246, 0.14);
+    -fx-background-radius: 150;
+    -fx-min-width: 300px;
+    -fx-max-width: 300px;
+    -fx-min-height: 300px;
+    -fx-max-height: 300px;
+    -fx-translate-x: -80;
+    -fx-translate-y: -80;
 }
 
-.login-brand {
-    -fx-font-size: 24px;
+/* Círculo decorativo inferior-izquierdo (blanco muy tenue) */
+.login-deco-2 {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+    -fx-background-radius: 90;
+    -fx-min-width: 180px;
+    -fx-max-width: 180px;
+    -fx-min-height: 180px;
+    -fx-max-height: 180px;
+    -fx-translate-x: -40;
+    -fx-translate-y: 60;
+}
+
+/* Nombre del sistema en el panel izquierdo */
+.login-brand-title {
+    -fx-font-size: 30px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Subtítulo bajo el nombre */
+.login-brand-sub {
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-text-fill: rgba(240, 237, 232, 0.50);
+}
+
+/* Línea azul separadora entre nombre y tagline */
+.login-brand-rule {
+    -fx-background-color: rgba(59, 130, 246, 0.55);
+    -fx-background-radius: 1;
+}
+
+/* Slogan debajo de la línea */
+.login-brand-tagline {
+    -fx-font-size: 12px;
+    -fx-text-fill: rgba(240, 237, 232, 0.30);
+    -fx-font-style: italic;
+}
+
+/* Panel derecho: papel claro */
+.login-panel-right {
+    -fx-background-color: #F5F6FA;
+}
+
+/* Nombre de la tienda (título del formulario) */
+.login-store-name {
+    -fx-font-size: 20px;
     -fx-font-weight: 700;
     -fx-text-fill: #1E2A3A;
-    -fx-letter-spacing: 1.5px;
 }
 
-.login-store-name {
-    -fx-font-size: 13px;
-    -fx-text-fill: #78716C;
+/* Hint de bienvenida */
+.login-form-hint {
+    -fx-font-size: 12px;
+    -fx-text-fill: #A0AEC0;
 }
 
-.login-footer {
-    -fx-text-fill: rgba(240,237,232,0.20);
-    -fx-font-size: 11px;
+/* Logo de la tienda (si está configurado) */
+.login-logo {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 8, 0, 0, 2);
 }
 
 .login-error {
@@ -88,20 +142,150 @@
     -fx-min-height: 18px;
 }
 
+/* Campos de entrada — paleta cool (misma que el wizard) */
 .login-field {
-    -fx-background-color: #EDE9E2;
-    -fx-border-color: rgba(26,31,46,0.12);
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-padding: 10 14 10 14;
-    -fx-font-size: 14px;
-    -fx-text-fill: #1A1F2E;
-    -fx-prompt-text-fill: #A8A29E;
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 7px;
+    -fx-background-radius: 7px;
+    -fx-padding: 11 14 11 14;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2D3748;
+    -fx-prompt-text-fill: #A0AEC0;
 }
 
 .login-field:focused {
     -fx-border-color: #3B82F6;
     -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.18), 6, 0, 0, 0);
+}
+
+/* Campo de login con espacio para el botón de visibilidad */
+.login-field-with-toggle {
+    -fx-padding: 11 38 11 14;
+}
+
+/* Botón de mostrar/ocultar contraseña (ojo) */
+.btn-ojo {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #A0AEC0;
+    -fx-font-size: 15px;
+    -fx-padding: 2 4 2 4;
+    -fx-cursor: hand;
+    -fx-effect: none;
+    -fx-min-width: 28px;
+    -fx-max-width: 28px;
+}
+
+.btn-ojo:hover {
+    -fx-text-fill: #4B5563;
+}
+
+/* ── Recuperación de contraseña ─────────────────────────────────── */
+
+/* Card blanca flotante sobre el fondo claro */
+.recovery-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 14px;
+    -fx-border-color: #CBD5E0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 20, 0, 0, 4);
+}
+
+/* Campo del código de verificación: fuente grande y centrada */
+.recovery-code-field {
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-alignment: CENTER;
+}
+
+/* Icono ✓ de éxito al cambiar contraseña */
+.recovery-success-icon {
+    -fx-font-size: 44px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #15803D;
+    -fx-alignment: CENTER;
+    -fx-max-width: Infinity;
+}
+
+/* Botón de enlace — discreto, sin fondo */
+.btn-enlace {
+    -fx-background-color: transparent;
+    -fx-text-fill: #A0AEC0;
+    -fx-font-size: 12px;
+    -fx-border-color: transparent;
+    -fx-padding: 4 0 4 0;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.btn-enlace:hover {
+    -fx-text-fill: #4B5563;
+}
+
+/* ── Dashboard ──────────────────────────────────────────────────── */
+.dashboard-scroll {
+    -fx-background-color: #F5F1EB;
+    -fx-background: #F5F1EB;
+    -fx-border-color: transparent;
+}
+
+.dashboard-scroll > .viewport {
+    -fx-background-color: #F5F1EB;
+}
+
+.dashboard-root {
+    -fx-background-color: #F5F1EB;
+}
+
+.dashboard-welcome {
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+}
+
+.dashboard-stat-card {
+    -fx-min-width: 140px;
+}
+
+.dashboard-stat-value {
+    -fx-font-size: 30px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+}
+
+.dashboard-stat-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #78716C;
+}
+
+.dashboard-section-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+}
+
+.dashboard-notif-row {
+    -fx-background-color: #FDFCFA;
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(26,31,46,0.08);
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 10 14 10 14;
+}
+
+.dashboard-notif-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: #4B5563;
+}
+
+.dashboard-empty {
+    -fx-font-size: 13px;
+    -fx-text-fill: #A8A29E;
+    -fx-font-style: italic;
+    -fx-padding: 8 0 0 0;
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────── */

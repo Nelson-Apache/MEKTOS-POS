@@ -28,7 +28,23 @@ public class Launcher extends Application {
     public void init() throws Exception {
         // Garantiza que el directorio de datos exista antes de que Spring
         // intente conectarse a la BD (SQLite no crea directorios padres).
-        Files.createDirectories(Paths.get(System.getProperty("user.home"), ".nappos"));
+        var napposDir = Paths.get(System.getProperty("user.home"), ".nappos");
+        Files.createDirectories(napposDir);
+
+        // Crea mail.properties si no existe — el operador/instalador debe
+        // llenar spring.mail.username y spring.mail.password con las
+        // credenciales reales. Spring Boot lo carga automáticamente al inicio.
+        var mailConfig = napposDir.resolve("mail.properties");
+        if (!Files.exists(mailConfig)) {
+            Files.writeString(mailConfig,
+                "# NAP POS — Configuracion SMTP para recuperacion de contrasena\n" +
+                "# Complete con las credenciales de su proveedor de correo.\n" +
+                "# Este archivo NUNCA debe compartirse ni subirse a repositorios.\n" +
+                "#\n" +
+                "spring.mail.username=\n" +
+                "spring.mail.password=\n");
+        }
+
         context = SpringApplication.run(Launcher.class);
     }
 
@@ -75,7 +91,8 @@ public class Launcher extends Application {
         Scene scene = new Scene(loader.load(), 900, 620);
         stage.setTitle(nombreTienda + " — NAP POS");
         stage.setScene(scene);
-        stage.setResizable(false);
+        stage.setMinWidth(520);
+        stage.setMinHeight(480);
         stage.centerOnScreen();
         stage.show();
     }

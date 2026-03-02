@@ -155,20 +155,36 @@ Inputs son más oscuros que su contenedor (mek-input #EDE9E2 sobre mek-card #FDF
 - Rows: alternate mek-card / mek-base
 - Selected: blue-tint (#EFF6FF), border-left blue
 
+### Login Window
+
+- **Estructura:** HBox raíz — split panel horizontal
+- **Panel izquierdo (login-panel-left):** `#1E2A3A`, `prefWidth=340`, `minWidth=240`. Dos círculos decorativos (`login-deco-1` azul tenue, `login-deco-2` blanco muy tenue) + marca centrada ("NAP POS" 30px bold blanco, subtítulo dim, línea azul, tagline itálico)
+- **Panel derecho (login-panel-right):** `#F5F6FA`, `HBox.hgrow=ALWAYS`. Formulario centrado sin card: store name 20px bold `#1E2A3A`, hint `#A0AEC0`, campos `login-field`
+- **Inputs (login-field):** `#FFFFFF` + borde `#CBD5E0` — misma paleta cool que wizard
+- **Resizabilidad:** `setMinWidth(520)`, `setMinHeight(480)`. **No usar** `setResizable(false)`
+
 ### Wizard
+
 - Separate stylesheet (setup_wizard.css) with cooler palette (white bg, #CBD5E0 borders)
-- Shared via importacion.css for import wizard
+- Login también usa esta paleta (ver Login Window)
 - Step indicators: numbered circles, active → blue
+
+### Resizabilidad de Ventanas
+
+- **Wizard:** `setMinWidth(700)`, `setMinHeight(560)` — sin `setResizable(false)`
+- **Login:** `setMinWidth(520)`, `setMinHeight(480)` — sin `setResizable(false)`
+- **Main window:** `setMinWidth(1100)`, `setMinHeight(700)` — sin `setResizable(false)`
+- Regla: ninguna ventana usa `setResizable(false)`
 
 ---
 
 ## Stylesheets
 
-| File              | Scope                                  |
-|-------------------|----------------------------------------|
-| `styles.css`      | Global — login, main window, all views |
-| `setup_wizard.css`| Setup wizard + importación wizard      |
-| `importacion.css` | Import-specific overrides              |
+| File              | Scope                                        |
+|-------------------|----------------------------------------------|
+| `styles.css`      | Global — login, main window, all views       |
+| `setup_wizard.css`| Setup wizard + importación wizard + login    |
+| `importacion.css` | Import-specific overrides                    |
 
 ---
 

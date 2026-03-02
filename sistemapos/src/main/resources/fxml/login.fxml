@@ -1,77 +1,141 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-<StackPane
+<HBox
     xmlns:fx="http://javafx.com/fxml/1"
     xmlns="http://javafx.com/javafx/21"
     fx:controller="com.nap.pos.ui.controller.LoginController"
-    styleClass="login-root"
     stylesheets="@../css/styles.css">
 
-    <VBox alignment="CENTER" spacing="0">
+    <!-- ── Panel izquierdo: marca + decoración ─────────────────── -->
+    <StackPane styleClass="login-panel-left" alignment="CENTER">
 
-        <!-- ── Tarjeta de login ───────────────────────────────── -->
-        <VBox styleClass="login-card">
+        <!-- Círculos decorativos de fondo -->
+        <Region styleClass="login-deco-1" StackPane.alignment="TOP_LEFT"/>
+        <Region styleClass="login-deco-2" StackPane.alignment="BOTTOM_LEFT"/>
 
-            <!-- Cabecera / Brand -->
-            <VBox alignment="CENTER" spacing="6">
-                <padding><Insets top="40" right="48" bottom="28" left="48"/></padding>
+        <!-- Contenido de marca, encima de los decorativos -->
+        <VBox alignment="CENTER" spacing="14" mouseTransparent="true">
+            <VBox spacing="4" alignment="CENTER">
+                <Label text="NAP POS" styleClass="login-brand-title"/>
+                <Label text="Punto de Venta Local" styleClass="login-brand-sub"/>
+            </VBox>
+            <Region styleClass="login-brand-rule"
+                    minWidth="40" maxWidth="40"
+                    minHeight="2" maxHeight="2"/>
+            <Label text="Tu negocio, bajo control."
+                   styleClass="login-brand-tagline"
+                   wrapText="true" maxWidth="200"
+                   textAlignment="CENTER"/>
+        </VBox>
 
-                <Label text="NAP POS" styleClass="login-brand"/>
+    </StackPane>
+
+    <!-- ── Panel derecho: formulario ──────────────────────────── -->
+    <!--
+        VBox con alignment=CENTER es la forma correcta de centrar
+        verticalmente en JavaFX: cuando ningún hijo tiene vgrow=ALWAYS,
+        el bloque de contenido se ubica en el centro del espacio disponible.
+    -->
+    <VBox HBox.hgrow="ALWAYS" styleClass="login-panel-right" alignment="CENTER">
+
+        <VBox maxWidth="360" minWidth="280" spacing="0">
+            <padding><Insets top="0" right="16" bottom="0" left="16"/></padding>
+
+            <!-- Encabezado centrado: logo + nombre de tienda + hint -->
+            <VBox alignment="CENTER" spacing="0">
+                <ImageView fx:id="imgLogo"
+                           fitWidth="72" fitHeight="72"
+                           preserveRatio="true"
+                           smooth="true"
+                           visible="false" managed="false"
+                           styleClass="login-logo"/>
+                <Region fx:id="logoSpace" minHeight="16" maxHeight="16"
+                        visible="false" managed="false"/>
                 <Label fx:id="lblNombreTienda"
                        text="Sistema de Punto de Venta"
-                       styleClass="login-store-name"/>
+                       styleClass="login-store-name"
+                       maxWidth="Infinity"
+                       textAlignment="CENTER"
+                       wrapText="true"/>
+                <Region minHeight="6" maxHeight="6"/>
+                <Label text="Ingresa tus credenciales para continuar"
+                       styleClass="login-form-hint"
+                       maxWidth="Infinity"
+                       textAlignment="CENTER"/>
             </VBox>
 
-            <!-- Línea divisora -->
-            <Separator/>
+            <Region minHeight="36" maxHeight="36"/>
 
-            <!-- ── Formulario ─────────────────────────────────── -->
-            <VBox spacing="14">
-                <padding><Insets top="28" right="48" bottom="40" left="48"/></padding>
+            <!-- Usuario -->
+            <VBox spacing="5">
+                <Label text="USUARIO" styleClass="form-label"/>
+                <TextField
+                    fx:id="txtUsuario"
+                    promptText="Nombre de usuario"
+                    styleClass="login-field"
+                    onAction="#onLogin"/>
+            </VBox>
 
-                <!-- Usuario -->
-                <VBox spacing="5">
-                    <Label text="USUARIO" styleClass="form-label"/>
-                    <TextField
-                        fx:id="txtUsuario"
-                        promptText="Nombre de usuario"
-                        styleClass="login-field"
-                        onAction="#onLogin"/>
-                </VBox>
+            <Region minHeight="16" maxHeight="16"/>
 
-                <!-- Contraseña -->
-                <VBox spacing="5">
-                    <Label text="CONTRASEÑA" styleClass="form-label"/>
+            <!-- Contraseña -->
+            <VBox spacing="5">
+                <Label text="CONTRASEÑA" styleClass="form-label"/>
+                <StackPane>
                     <PasswordField
                         fx:id="txtPassword"
                         promptText="••••••••"
-                        styleClass="login-field"
+                        styleClass="login-field login-field-with-toggle"
                         onAction="#onLogin"/>
-                </VBox>
-
-                <!-- Mensaje de error / info -->
-                <Label fx:id="lblMensaje"
-                       text=""
-                       styleClass="login-error"
-                       wrapText="true"
-                       maxWidth="Infinity"/>
-
-                <!-- Botón Ingresar -->
-                <Button
-                    text="Ingresar"
-                    styleClass="btn-primario"
-                    maxWidth="Infinity"
-                    onAction="#onLogin"
-                    style="-fx-padding: 12 0 12 0;"/>
+                    <TextField
+                        fx:id="txtPasswordVisible"
+                        promptText="••••••••"
+                        styleClass="login-field login-field-with-toggle"
+                        visible="false" managed="false"
+                        onAction="#onLogin"/>
+                    <HBox alignment="CENTER_RIGHT" pickOnBounds="false">
+                        <padding><Insets right="6"/></padding>
+                        <Button fx:id="btnTogglePassword" text="👁"
+                                styleClass="btn-ojo"
+                                onAction="#onTogglePassword"/>
+                    </HBox>
+                </StackPane>
             </VBox>
+
+            <!-- Mostrar/ocultar (izq) + Recuperar contraseña (der) -->
+            <HBox alignment="CENTER_RIGHT">
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="¿Olvidaste tu contraseña?"
+                        styleClass="btn-enlace"
+                        onAction="#onRecuperarPassword"/>
+            </HBox>
+
+            <Region minHeight="4" maxHeight="4"/>
+
+            <!-- Mensaje de error / info -->
+            <Label fx:id="lblMensaje"
+                   text=""
+                   styleClass="login-error"
+                   wrapText="true"
+                   maxWidth="Infinity"
+                   minHeight="18"/>
+
+            <Region minHeight="16" maxHeight="16"/>
+
+            <!-- Botón Ingresar -->
+            <Button
+                text="Ingresar"
+                styleClass="btn-primario"
+                maxWidth="Infinity"
+                onAction="#onLogin"
+                style="-fx-padding: 12 0 12 0;"/>
+
         </VBox>
 
-        <!-- Pie de pantalla -->
-        <Label text="NAP POS  ·  Punto de Venta Local"
-               styleClass="login-footer"
-               style="-fx-padding: 18 0 0 0;"/>
     </VBox>
-</StackPane>
+
+</HBox>

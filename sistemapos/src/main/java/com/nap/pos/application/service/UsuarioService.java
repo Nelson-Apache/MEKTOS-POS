@@ -55,7 +55,29 @@ public class UsuarioService {
                 .orElseThrow(() -> new BusinessException("Usuario con ID " + id + " no encontrado."));
     }
 
+    public Usuario buscarPorUsername(String username) {
+        return usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException("Usuario no encontrado."));
+    }
+
     public List<Usuario> findAll() {
         return usuarioRepository.findAll();
+    }
+
+    /**
+     * Reemplaza la contraseña de un usuario por una nueva (post-verificación
+     * de código de recuperación). No requiere la contraseña actual.
+     */
+    @Transactional
+    public void actualizarPassword(String username, String newRawPassword) {
+        Usuario existente = buscarPorUsername(username);
+        Usuario actualizado = Usuario.builder()
+                .id(existente.getId())
+                .username(existente.getUsername())
+                .passwordHash(passwordEncoder.encode(newRawPassword))
+                .rol(existente.getRol())
+                .activo(existente.isActivo())
+                .build();
+        usuarioRepository.save(actualizado);
     }
 }

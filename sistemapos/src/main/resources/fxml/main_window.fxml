@@ -11,81 +11,102 @@
     stylesheets="@../css/styles.css">
 
     <!-- ══════════════════════════════════════════════════════
-         SIDEBAR — navegación lateral
+         SIDEBAR — navegación lateral (colapsable)
          ══════════════════════════════════════════════════════ -->
     <left>
-        <VBox styleClass="sidebar">
+        <VBox fx:id="sidebar" styleClass="sidebar">
 
             <!-- Brand / nombre tienda -->
-            <VBox styleClass="sidebar-brand-area">
-                <Label text="NAP POS" styleClass="sidebar-app-name"/>
+            <VBox fx:id="brandArea" styleClass="sidebar-brand-area">
+                <Label fx:id="lblAppName" text="NAP POS" styleClass="sidebar-app-name"/>
                 <Label fx:id="lblNombreTienda" text="" styleClass="sidebar-store-name"/>
             </VBox>
 
             <!-- Separador -->
-            <Region styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
+            <Region fx:id="sepBrand" styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
 
             <!-- Grupo: Principal -->
-            <Label text="PRINCIPAL" styleClass="sidebar-group-label"/>
+            <Label fx:id="lblGrupoPrincipal" text="PRINCIPAL" styleClass="sidebar-group-label"/>
+
+            <Button fx:id="btnDashboard"
+                    text="Resumen"
+                    styleClass="nav-item"
+                    onAction="#navDashboard"
+                    maxWidth="Infinity">
+                <graphic><FontIcon iconLiteral="fas-chart-line" iconSize="14" styleClass="icon-on-dark"/></graphic>
+            </Button>
 
             <Button fx:id="btnVentas"
                     text="Punto de Venta"
                     styleClass="nav-item"
                     onAction="#navVentas"
-                    maxWidth="Infinity"/>
+                    maxWidth="Infinity">
+                <graphic><FontIcon iconLiteral="fas-cash-register" iconSize="14" styleClass="icon-on-dark"/></graphic>
+            </Button>
 
             <Button fx:id="btnInventario"
                     text="Inventario"
                     styleClass="nav-item"
                     onAction="#navInventario"
-                    maxWidth="Infinity"/>
+                    maxWidth="Infinity">
+                <graphic><FontIcon iconLiteral="fas-boxes" iconSize="14" styleClass="icon-on-dark"/></graphic>
+            </Button>
 
             <Button fx:id="btnCompras"
                     text="Compras"
                     styleClass="nav-item"
                     onAction="#navCompras"
-                    maxWidth="Infinity"/>
+                    maxWidth="Infinity">
+                <graphic><FontIcon iconLiteral="fas-shopping-basket" iconSize="14" styleClass="icon-on-dark"/></graphic>
+            </Button>
 
             <Button fx:id="btnClientes"
                     text="Clientes"
                     styleClass="nav-item"
                     onAction="#navClientes"
-                    maxWidth="Infinity"/>
+                    maxWidth="Infinity">
+                <graphic><FontIcon iconLiteral="fas-users" iconSize="14" styleClass="icon-on-dark"/></graphic>
+            </Button>
 
             <!-- Grupo: Análisis -->
-            <Label text="ANÁLISIS" styleClass="sidebar-group-label"/>
+            <Label fx:id="lblGrupoAnalisis" text="ANÁLISIS" styleClass="sidebar-group-label"/>
 
             <Button fx:id="btnReportes"
                     text="Reportes"
                     styleClass="nav-item"
                     onAction="#navReportes"
-                    maxWidth="Infinity"/>
+                    maxWidth="Infinity">
+                <graphic><FontIcon iconLiteral="fas-chart-bar" iconSize="14" styleClass="icon-on-dark"/></graphic>
+            </Button>
 
             <!-- Relleno para empujar lo siguiente al fondo -->
             <Region VBox.vgrow="ALWAYS"/>
 
             <!-- Separador -->
-            <Region styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
+            <Region fx:id="sepBottom" styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
 
-            <!-- Grupo: Gestión (solo ADMIN) -->
+            <!-- Gestión (solo ADMIN) -->
             <Button fx:id="btnConfiguracion"
                     text="Configuración"
                     styleClass="nav-item"
                     onAction="#navConfiguracion"
                     maxWidth="Infinity"
                     visible="false"
-                    managed="false"/>
+                    managed="false">
+                <graphic><FontIcon iconLiteral="fas-cog" iconSize="14" styleClass="icon-on-dark"/></graphic>
+            </Button>
 
             <!-- Separador -->
             <Region styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
 
             <!-- Usuario activo -->
-            <VBox styleClass="sidebar-user-area">
+            <VBox fx:id="userArea" styleClass="sidebar-user-area">
                 <Label fx:id="lblUsername" text="" styleClass="sidebar-username"/>
                 <HBox spacing="6" alignment="CENTER_LEFT">
                     <Label fx:id="lblRol" text="" styleClass="sidebar-rol"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="Cerrar sesión"
+                    <Button fx:id="btnCerrarSesion"
+                            text="Cerrar sesión"
                             styleClass="sidebar-logout"
                             onAction="#onCerrarSesion"/>
                 </HBox>
@@ -101,7 +122,14 @@
         <VBox>
 
             <!-- Barra superior -->
-            <HBox styleClass="topbar" alignment="CENTER_LEFT">
+            <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="8">
+
+                <!-- Toggle sidebar -->
+                <Button fx:id="btnToggleSidebar"
+                        styleClass="topbar-action-btn"
+                        onAction="#onToggleSidebar">
+                    <graphic><FontIcon iconLiteral="fas-bars" iconSize="16"/></graphic>
+                </Button>
 
                 <Label fx:id="lblSeccion" text="" styleClass="topbar-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
@@ -118,12 +146,10 @@
                         styleClass="topbar-action-btn"
                         onAction="#onNotificaciones">
                     <graphic><FontIcon iconLiteral="fas-bell" iconSize="16"/></graphic>
-                    <HBox.margin><Insets left="8"/></HBox.margin>
                 </Button>
 
                 <!-- Chip de usuario -->
                 <HBox styleClass="user-chip" alignment="CENTER">
-                    <HBox.margin><Insets left="4"/></HBox.margin>
                     <Label fx:id="lblUserChip" text="" styleClass="user-chip-text"/>
                 </HBox>
 

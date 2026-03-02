@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox
+    xmlns:fx="http://javafx.com/fxml/1"
+    xmlns="http://javafx.com/javafx/21"
+    fx:controller="com.nap.pos.ui.controller.RecuperarContrasenaController"
+    styleClass="login-panel-right"
+    stylesheets="@../css/styles.css"
+    alignment="CENTER">
+
+    <VBox styleClass="recovery-card" maxWidth="400" minWidth="300">
+        <padding><Insets top="40" right="40" bottom="40" left="40"/></padding>
+
+        <!-- ── Paso 1: Ingresar usuario ──────────────────────────── -->
+        <VBox fx:id="paso1" spacing="0">
+
+            <Label text="¿Olvidaste tu contraseña?"
+                   styleClass="login-store-name"/>
+            <Region minHeight="8" maxHeight="8"/>
+            <Label text="Ingresa tu usuario. Enviaremos un código de 6 dígitos al correo configurado en la tienda."
+                   styleClass="login-form-hint"
+                   wrapText="true" maxWidth="Infinity"/>
+
+            <Region minHeight="28" maxHeight="28"/>
+
+            <VBox spacing="5">
+                <Label text="USUARIO" styleClass="form-label"/>
+                <TextField
+                    fx:id="txtUsernameRec"
+                    promptText="Nombre de usuario"
+                    styleClass="login-field"
+                    onAction="#onEnviarCodigo"/>
+            </VBox>
+
+            <Region minHeight="10" maxHeight="10"/>
+            <Label fx:id="lblErrorP1" text="" styleClass="login-error"
+                   wrapText="true" maxWidth="Infinity" minHeight="32"/>
+            <Region minHeight="10" maxHeight="10"/>
+
+            <Button text="Enviar código"
+                    styleClass="btn-primario"
+                    maxWidth="Infinity"
+                    onAction="#onEnviarCodigo"
+                    style="-fx-padding: 12 0 12 0;"/>
+            <Region minHeight="10" maxHeight="10"/>
+            <Button text="Volver al inicio de sesión"
+                    styleClass="btn-enlace"
+                    maxWidth="Infinity"
+                    onAction="#onVolver"/>
+        </VBox>
+
+        <!-- ── Paso 2: Ingresar código ───────────────────────────── -->
+        <VBox fx:id="paso2" spacing="0" visible="false" managed="false">
+
+            <Label text="Código de verificación"
+                   styleClass="login-store-name"/>
+            <Region minHeight="8" maxHeight="8"/>
+            <Label fx:id="lblInfoCodigo"
+                   text="Ingresa el código de 6 dígitos enviado al correo de la tienda."
+                   styleClass="login-form-hint"
+                   wrapText="true" maxWidth="Infinity"/>
+
+            <Region minHeight="28" maxHeight="28"/>
+
+            <VBox spacing="5">
+                <Label text="CÓDIGO" styleClass="form-label"/>
+                <TextField
+                    fx:id="txtCodigo"
+                    promptText="_ _ _ _ _ _"
+                    styleClass="login-field recovery-code-field"
+                    maxWidth="Infinity"
+                    onAction="#onVerificarCodigo"/>
+            </VBox>
+
+            <Region minHeight="10" maxHeight="10"/>
+            <Label fx:id="lblErrorP2" text="" styleClass="login-error"
+                   wrapText="true" maxWidth="Infinity" minHeight="32"/>
+            <Region minHeight="10" maxHeight="10"/>
+
+            <Button text="Verificar código"
+                    styleClass="btn-primario"
+                    maxWidth="Infinity"
+                    onAction="#onVerificarCodigo"
+                    style="-fx-padding: 12 0 12 0;"/>
+            <Region minHeight="10" maxHeight="10"/>
+            <Button text="Reenviar código"
+                    styleClass="btn-enlace"
+                    maxWidth="Infinity"
+                    onAction="#onReenviarCodigo"/>
+        </VBox>
+
+        <!-- ── Paso 3: Nueva contraseña ─────────────────────────── -->
+        <VBox fx:id="paso3" spacing="0" visible="false" managed="false">
+
+            <Label text="Nueva contraseña"
+                   styleClass="login-store-name"/>
+            <Region minHeight="8" maxHeight="8"/>
+            <Label text="Elige una contraseña segura de al menos 6 caracteres."
+                   styleClass="login-form-hint"
+                   wrapText="true" maxWidth="Infinity"/>
+
+            <Region minHeight="28" maxHeight="28"/>
+
+            <!-- Nueva contraseña con toggle -->
+            <VBox spacing="5">
+                <Label text="NUEVA CONTRASEÑA" styleClass="form-label"/>
+                <StackPane>
+                    <PasswordField
+                        fx:id="txtNuevaPassword"
+                        promptText="Mínimo 6 caracteres"
+                        styleClass="login-field login-field-with-toggle"
+                        onAction="#onCambiarPassword"/>
+                    <TextField
+                        fx:id="txtNuevaPasswordVisible"
+                        promptText="Mínimo 6 caracteres"
+                        styleClass="login-field login-field-with-toggle"
+                        visible="false" managed="false"
+                        onAction="#onCambiarPassword"/>
+                    <HBox alignment="CENTER_RIGHT" pickOnBounds="false">
+                        <padding><Insets right="6"/></padding>
+                        <Button fx:id="btnToggleNueva" text="👁"
+                                styleClass="btn-ojo"
+                                onAction="#onToggleNuevaPassword"/>
+                    </HBox>
+                </StackPane>
+            </VBox>
+
+            <Region minHeight="16" maxHeight="16"/>
+
+            <!-- Confirmar contraseña con toggle -->
+            <VBox spacing="5">
+                <Label text="CONFIRMAR CONTRASEÑA" styleClass="form-label"/>
+                <StackPane>
+                    <PasswordField
+                        fx:id="txtConfirmarPassword"
+                        promptText="Repite la contraseña"
+                        styleClass="login-field login-field-with-toggle"
+                        onAction="#onCambiarPassword"/>
+                    <TextField
+                        fx:id="txtConfirmarPasswordVisible"
+                        promptText="Repite la contraseña"
+                        styleClass="login-field login-field-with-toggle"
+                        visible="false" managed="false"
+                        onAction="#onCambiarPassword"/>
+                    <HBox alignment="CENTER_RIGHT" pickOnBounds="false">
+                        <padding><Insets right="6"/></padding>
+                        <Button fx:id="btnToggleConfirmar" text="👁"
+                                styleClass="btn-ojo"
+                                onAction="#onToggleConfirmarPassword"/>
+                    </HBox>
+                </StackPane>
+            </VBox>
+
+            <Region minHeight="10" maxHeight="10"/>
+            <Label fx:id="lblErrorP3" text="" styleClass="login-error"
+                   wrapText="true" maxWidth="Infinity" minHeight="32"/>
+            <Region minHeight="10" maxHeight="10"/>
+
+            <Button text="Cambiar contraseña"
+                    styleClass="btn-primario"
+                    maxWidth="Infinity"
+                    onAction="#onCambiarPassword"
+                    style="-fx-padding: 12 0 12 0;"/>
+        </VBox>
+
+        <!-- ── Paso 4: Éxito ─────────────────────────────────────── -->
+        <VBox fx:id="paso4" spacing="16" alignment="CENTER"
+              visible="false" managed="false">
+
+            <Label text="✓" styleClass="recovery-success-icon"/>
+            <Label text="¡Contraseña actualizada!"
+                   styleClass="login-store-name"
+                   maxWidth="Infinity" textAlignment="CENTER"/>
+            <Label text="Tu contraseña ha sido cambiada exitosamente. Ya puedes iniciar sesión."
+                   styleClass="login-form-hint"
+                   wrapText="true" maxWidth="Infinity" textAlignment="CENTER"/>
+            <Region minHeight="8" maxHeight="8"/>
+            <Button text="Volver al inicio de sesión"
+                    styleClass="btn-primario"
+                    maxWidth="Infinity"
+                    onAction="#onVolver"
+                    style="-fx-padding: 12 0 12 0;"/>
+        </VBox>
+
+    </VBox>
+
+</VBox>
