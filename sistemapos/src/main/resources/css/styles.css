@@ -40,10 +40,52 @@
      rgba(240,237,232,0.10) — border sobre oscuro
    ================================================================ */
 
-/* ── Base ──────────────────────────────────────────────────────── */
+/* ── Tokens de color — JavaFX looked-up colors ─────────────────── */
+/*    Definidos aquí para que todos los nodos hijos puedan usarlos. */
+/*    Uso: -fx-background-color: mek-primary;                       */
 .root {
     -fx-font-family: "Segoe UI", "Arial", sans-serif;
     -fx-font-size: 13px;
+
+    /* Superficies */
+    mek-dark:  #1E2A3A;
+    mek-base:  #F5F1EB;
+    mek-card:  #FDFCFA;
+    mek-input: #EDE9E2;
+
+    /* Tinta / jerarquía de texto */
+    ink-1: #1A1F2E;
+    ink-2: #4B5563;
+    ink-3: #78716C;
+    ink-4: #A8A29E;
+
+    /* Sobre superficie oscura */
+    on-dark-1: #F0EDE8;
+    on-dark-2: rgba(240,237,232,0.62);
+    on-dark-3: rgba(240,237,232,0.35);
+
+    /* Primary */
+    mek-primary:         #3B82F6;
+    mek-primary-hover:   #2563EB;
+    mek-primary-pressed: #1D4ED8;
+    mek-primary-tint:    #EFF6FF;
+
+    /* Semánticos */
+    mek-success: #15803D;
+    mek-danger:  #DC2626;
+    mek-warning: #D97706;
+
+    /* Navegación lateral */
+    nav-default-text:    rgba(240,237,232,0.60);
+    nav-hover-bg:        rgba(240,237,232,0.06);
+    nav-active-bg:       rgba(59,130,246,0.14);
+    nav-active-bg-hover: rgba(59,130,246,0.20);
+
+    /* Bordes */
+    border-standard: rgba(26,31,46,0.12);
+    border-soft:     rgba(26,31,46,0.06);
+    border-emphasis: rgba(26,31,46,0.28);
+    border-on-dark:  rgba(240,237,232,0.10);
 }
 
 /* ── Pantalla de login — split panel ────────────────────────────── */
@@ -164,21 +206,30 @@
     -fx-padding: 11 38 11 14;
 }
 
-/* Botón de mostrar/ocultar contraseña (ojo) */
-.btn-ojo {
+/* Botón de mostrar/ocultar contraseña — con FontIcon */
+.btn-toggle-password {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-text-fill: #A0AEC0;
-    -fx-font-size: 15px;
-    -fx-padding: 2 4 2 4;
+    -fx-padding: 4 6 4 6;
     -fx-cursor: hand;
     -fx-effect: none;
-    -fx-min-width: 28px;
-    -fx-max-width: 28px;
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
 }
 
-.btn-ojo:hover {
-    -fx-text-fill: #4B5563;
+.btn-toggle-password:hover {
+    -fx-background-color: rgba(0,0,0,0.05);
+    -fx-background-radius: 6;
+}
+
+.toggle-pw-icon {
+    -fx-icon-color: #A0AEC0;
+    -fx-fill: #A0AEC0;
+}
+
+.btn-toggle-password:hover .toggle-pw-icon {
+    -fx-icon-color: #4B5563;
+    -fx-fill: #4B5563;
 }
 
 /* ── Recuperación de contraseña ─────────────────────────────────── */
@@ -338,6 +389,7 @@
     -fx-font-weight: 500;
     -fx-padding: 10 20 10 20;
     -fx-alignment: CENTER_LEFT;
+    -fx-graphic-text-gap: 10;
     -fx-background-radius: 0;
     -fx-border-radius: 0;
     -fx-border-color: transparent;
@@ -356,16 +408,36 @@
     -fx-background-color: rgba(240,237,232,0.04);
 }
 
+/* Estado activo — pill shape, token-based, sin border-left ──────── */
 .nav-item-active {
-    -fx-background-color: rgba(59,130,246,0.14);
-    -fx-text-fill: #93C5FD;
-    -fx-border-color: transparent transparent transparent #3B82F6;
-    -fx-border-width: 0 0 0 3px;
-    -fx-padding: 10 20 10 17px;
+    -fx-background-color: nav-active-bg;
+    -fx-background-radius: 14px;
+    -fx-background-insets: 2 6 2 6;
+    -fx-text-fill: mek-primary;
+    -fx-font-weight: 600;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 10 20 10 20;
 }
 
 .nav-item-active:hover {
-    -fx-background-color: rgba(59,130,246,0.20);
+    -fx-background-color: nav-active-bg-hover;
+}
+
+/* Icono de navegación — sigue el estado del ítem ────────────────── */
+.nav-icon {
+    -fx-icon-color: nav-default-text;
+    -fx-fill: nav-default-text;
+}
+
+.nav-item:hover .nav-icon {
+    -fx-icon-color: on-dark-1;
+    -fx-fill: on-dark-1;
+}
+
+.nav-item-active .nav-icon {
+    -fx-icon-color: mek-primary;
+    -fx-fill: mek-primary;
 }
 
 /* Área de usuario al pie del sidebar */

@@ -3,6 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <HBox
     xmlns:fx="http://javafx.com/fxml/1"
@@ -98,10 +99,17 @@
                         visible="false" managed="false"
                         onAction="#onLogin"/>
                     <HBox alignment="CENTER_RIGHT" pickOnBounds="false">
-                        <padding><Insets right="6"/></padding>
-                        <Button fx:id="btnTogglePassword" text="👁"
-                                styleClass="btn-ojo"
-                                onAction="#onTogglePassword"/>
+                        <padding><Insets right="4"/></padding>
+                        <Button fx:id="btnTogglePassword"
+                                styleClass="btn-toggle-password"
+                                onAction="#onTogglePassword">
+                            <graphic>
+                                <FontIcon fx:id="icoTogglePassword"
+                                          iconLiteral="fas-eye"
+                                          iconSize="14"
+                                          styleClass="toggle-pw-icon"/>
+                            </graphic>
+                        </Button>
                     </HBox>
                 </StackPane>
             </VBox>

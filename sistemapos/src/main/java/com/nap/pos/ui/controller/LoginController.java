@@ -17,6 +17,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import org.kordamp.ikonli.javafx.FontIcon;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import java.io.File;
@@ -34,6 +35,7 @@ public class LoginController {
     @FXML private PasswordField txtPassword;
     @FXML private TextField     txtPasswordVisible;
     @FXML private Button        btnTogglePassword;
+    @FXML private FontIcon      icoTogglePassword;
     @FXML private Label         lblNombreTienda;
     @FXML private Label         lblMensaje;
     @FXML private ImageView     imgLogo;
@@ -101,7 +103,7 @@ public class LoginController {
         txtPassword.setManaged(!mostrar);
         txtPasswordVisible.setVisible(mostrar);
         txtPasswordVisible.setManaged(mostrar);
-        btnTogglePassword.setText(mostrar ? "🔒" : "👁");
+        icoTogglePassword.setIconLiteral(mostrar ? "fas-eye-slash" : "fas-eye");
     }
 
     @FXML

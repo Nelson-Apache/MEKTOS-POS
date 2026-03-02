@@ -13,6 +13,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.javafx.FontIcon;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -50,9 +51,11 @@ public class RecuperarContrasenaController {
     @FXML private PasswordField txtNuevaPassword;
     @FXML private TextField     txtNuevaPasswordVisible;
     @FXML private Button        btnToggleNueva;
+    @FXML private FontIcon      icoToggleNueva;
     @FXML private PasswordField txtConfirmarPassword;
     @FXML private TextField     txtConfirmarPasswordVisible;
     @FXML private Button        btnToggleConfirmar;
+    @FXML private FontIcon      icoToggleConfirmar;
     @FXML private Label         lblErrorP3;
 
     // Paso 4 (éxito)
@@ -204,7 +207,7 @@ public class RecuperarContrasenaController {
         txtNuevaPassword.setManaged(!mostrar);
         txtNuevaPasswordVisible.setVisible(mostrar);
         txtNuevaPasswordVisible.setManaged(mostrar);
-        btnToggleNueva.setText(mostrar ? "🔒" : "👁");
+        icoToggleNueva.setIconLiteral(mostrar ? "fas-eye-slash" : "fas-eye");
     }
 
     @FXML
@@ -214,7 +217,7 @@ public class RecuperarContrasenaController {
         txtConfirmarPassword.setManaged(!mostrar);
         txtConfirmarPasswordVisible.setVisible(mostrar);
         txtConfirmarPasswordVisible.setManaged(mostrar);
-        btnToggleConfirmar.setText(mostrar ? "🔒" : "👁");
+        icoToggleConfirmar.setIconLiteral(mostrar ? "fas-eye-slash" : "fas-eye");
     }
 
     // ── Navegación ───────────────────────────────────────────────

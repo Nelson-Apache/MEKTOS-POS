@@ -33,7 +33,7 @@
                     styleClass="nav-item"
                     onAction="#navDashboard"
                     maxWidth="Infinity">
-                <graphic><FontIcon iconLiteral="fas-chart-line" iconSize="14" styleClass="icon-on-dark"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-chart-line" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
             <Button fx:id="btnVentas"
@@ -41,7 +41,7 @@
                     styleClass="nav-item"
                     onAction="#navVentas"
                     maxWidth="Infinity">
-                <graphic><FontIcon iconLiteral="fas-cash-register" iconSize="14" styleClass="icon-on-dark"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-cash-register" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
             <Button fx:id="btnInventario"
@@ -49,7 +49,7 @@
                     styleClass="nav-item"
                     onAction="#navInventario"
                     maxWidth="Infinity">
-                <graphic><FontIcon iconLiteral="fas-boxes" iconSize="14" styleClass="icon-on-dark"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-boxes" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
             <Button fx:id="btnCompras"
@@ -57,7 +57,7 @@
                     styleClass="nav-item"
                     onAction="#navCompras"
                     maxWidth="Infinity">
-                <graphic><FontIcon iconLiteral="fas-shopping-basket" iconSize="14" styleClass="icon-on-dark"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-shopping-basket" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
             <Button fx:id="btnClientes"
@@ -65,7 +65,7 @@
                     styleClass="nav-item"
                     onAction="#navClientes"
                     maxWidth="Infinity">
-                <graphic><FontIcon iconLiteral="fas-users" iconSize="14" styleClass="icon-on-dark"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-users" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
             <!-- Grupo: Análisis -->
@@ -76,7 +76,7 @@
                     styleClass="nav-item"
                     onAction="#navReportes"
                     maxWidth="Infinity">
-                <graphic><FontIcon iconLiteral="fas-chart-bar" iconSize="14" styleClass="icon-on-dark"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-chart-bar" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
             <!-- Relleno para empujar lo siguiente al fondo -->
@@ -93,7 +93,7 @@
                     maxWidth="Infinity"
                     visible="false"
                     managed="false">
-                <graphic><FontIcon iconLiteral="fas-cog" iconSize="14" styleClass="icon-on-dark"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-cog" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
             <!-- Separador -->
