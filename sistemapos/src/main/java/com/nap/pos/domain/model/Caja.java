@@ -22,6 +22,8 @@ public class Caja {
     private BigDecimal montoInicial;
     private BigDecimal montoFinal;
     private EstadoCaja estado;
+    /** Usuario que abrió esta caja. */
+    private Usuario usuario;
 
     public boolean estaAbierta() {
         return EstadoCaja.ABIERTA.equals(this.estado);

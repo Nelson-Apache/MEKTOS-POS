@@ -2,6 +2,7 @@ package com.nap.pos.application.service;
 
 import com.nap.pos.domain.exception.BusinessException;
 import com.nap.pos.domain.model.Caja;
+import com.nap.pos.domain.model.Usuario;
 import com.nap.pos.domain.model.enums.EstadoCaja;
 import com.nap.pos.domain.repository.CajaRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +22,11 @@ public class CajaService {
     /**
      * Abre una nueva caja registradora con el monto inicial en efectivo.
      * Regla del PRD: solo puede existir una caja ABIERTA a la vez.
+     *
+     * @param usuario el usuario que está abriendo la caja (ADMIN o CAJERO)
      */
     @Transactional
-    public Caja abrirCaja(BigDecimal montoInicial) {
+    public Caja abrirCaja(BigDecimal montoInicial, Usuario usuario) {
         cajaRepository.findCajaAbierta()
                 .ifPresent(c -> {
                     throw new BusinessException("Ya existe una caja abierta. Ciérrela antes de abrir una nueva.");
@@ -32,6 +35,7 @@ public class CajaService {
                 .fechaApertura(LocalDateTime.now())
                 .montoInicial(montoInicial)
                 .estado(EstadoCaja.ABIERTA)
+                .usuario(usuario)
                 .build();
         return cajaRepository.save(caja);
     }

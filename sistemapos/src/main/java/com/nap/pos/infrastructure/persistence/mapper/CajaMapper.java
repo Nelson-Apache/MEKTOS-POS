@@ -2,10 +2,14 @@ package com.nap.pos.infrastructure.persistence.mapper;
 
 import com.nap.pos.domain.model.Caja;
 import com.nap.pos.infrastructure.persistence.entity.CajaEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class CajaMapper {
+
+    private final UsuarioMapper usuarioMapper;
 
     /** Entity (DB) → Domain model */
     public Caja toDomain(CajaEntity entity) {
@@ -17,6 +21,7 @@ public class CajaMapper {
                 .montoInicial(entity.getMontoInicial())
                 .montoFinal(entity.getMontoFinal())
                 .estado(entity.getEstado())
+                .usuario(usuarioMapper.toDomain(entity.getUsuario()))
                 .build();
     }
 
@@ -30,6 +35,8 @@ public class CajaMapper {
         entity.setMontoInicial(domain.getMontoInicial());
         entity.setMontoFinal(domain.getMontoFinal());
         entity.setEstado(domain.getEstado());
+        entity.setUsuario(domain.getUsuario() != null
+                ? usuarioMapper.toRef(domain.getUsuario().getId()) : null);
         return entity;
     }
 

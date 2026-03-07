@@ -301,10 +301,18 @@ public class SetupWizardController {
     public void onFinalizar() {
         if (!validarPasoActual()) return;
 
-        // Crear usuario administrador primero (la config lo referencia)
+        // Crear usuario administrador con su nombre real desde el inicio
         String username = txtUsername.getText().trim();
         String password = txtPassword.getText();
-        var admin = usuarioService.crear(username, password, Rol.ADMIN);
+        String adminNombre   = (tipoSeleccionado == TipoPersona.NATURAL)
+                ? txtNombre.getText().trim()
+                : txtRepLegalNombre.getText().trim();
+        String adminApellido = (tipoSeleccionado == TipoPersona.NATURAL)
+                ? txtApellido.getText().trim()
+                : txtRepLegalApellido.getText().trim();
+        var admin = usuarioService.crear(username, password, Rol.ADMIN,
+                adminNombre.isEmpty() ? null : adminNombre,
+                adminApellido.isEmpty() ? null : adminApellido);
 
         ConfiguracionTienda config = ConfiguracionTienda.builder()
                 .id(1L)

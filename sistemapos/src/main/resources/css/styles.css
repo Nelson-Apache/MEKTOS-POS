@@ -1,12 +1,14 @@
 /* ================================================================
    NAP POS — Sistema de diseño global
    Paleta: mostrador oscuro + papel de recibo cálido
+   Referencia visual: Stitch project "Login - NAP POS"
    ================================================================
 
    Tokens de color
    ─────────────────────────────────────────────────────────────────
    Superficies:
-     #1E2A3A  — mek-dark    : sidebar / headers (carbón mostrador)
+     #192030  — mek-dark    : sidebar / headers (carbón mostrador)
+     #FFFFFF  — mek-sidebar-active : ítem activo del sidebar (píldora blanca)
      #F5F1EB  — mek-base    : fondo app (papel de recibo)
      #FDFCFA  — mek-card    : cards, paneles elevados
      #EDE9E2  — mek-input   : campos de entrada (hundidos)
@@ -22,11 +24,12 @@
      rgba 0.62     — on-dark-2 : texto secundario
      rgba 0.35     — on-dark-3 : texto desactivado
 
-   Acentos de marca:
-     #3B82F6  — blue         : acción primaria
-     #2563EB  — blue-hover
-     #1D4ED8  — blue-pressed
-     #EFF6FF  — blue-tint
+   Acentos de marca (paleta Stitch):
+     #5A6ACF  — mek-primary      : acción primaria (azul-violeta)
+     #7A88DB  — mek-primary-light: acento / iconos activos nav
+     #4A58BF  — mek-primary-hover
+     #3C48AA  — mek-primary-pressed
+     #ECEEF7  — mek-primary-tint
 
    Semánticos:
      #15803D / #DCFCE7  — success (sello aprobado)
@@ -41,17 +44,16 @@
    ================================================================ */
 
 /* ── Tokens de color — JavaFX looked-up colors ─────────────────── */
-/*    Definidos aquí para que todos los nodos hijos puedan usarlos. */
-/*    Uso: -fx-background-color: mek-primary;                       */
 .root {
-    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-family: "Inter", "Segoe UI", "Arial", sans-serif;
     -fx-font-size: 13px;
 
     /* Superficies */
-    mek-dark:  #1E2A3A;
-    mek-base:  #F5F1EB;
-    mek-card:  #FDFCFA;
-    mek-input: #EDE9E2;
+    mek-dark:          #192030;
+    mek-sidebar-active: #FFFFFF;
+    mek-base:          #F5F1EB;
+    mek-card:          #FDFCFA;
+    mek-input:         #EDE9E2;
 
     /* Tinta / jerarquía de texto */
     ink-1: #1A1F2E;
@@ -64,11 +66,12 @@
     on-dark-2: rgba(240,237,232,0.62);
     on-dark-3: rgba(240,237,232,0.35);
 
-    /* Primary */
-    mek-primary:         #3B82F6;
-    mek-primary-hover:   #2563EB;
-    mek-primary-pressed: #1D4ED8;
-    mek-primary-tint:    #EFF6FF;
+    /* Primary — paleta Stitch */
+    mek-primary:         #5A6ACF;
+    mek-primary-light:   #7A88DB;
+    mek-primary-hover:   #4A58BF;
+    mek-primary-pressed: #3C48AA;
+    mek-primary-tint:    #ECEEF7;
 
     /* Semánticos */
     mek-success: #15803D;
@@ -78,8 +81,9 @@
     /* Navegación lateral */
     nav-default-text:    rgba(240,237,232,0.60);
     nav-hover-bg:        rgba(240,237,232,0.06);
-    nav-active-bg:       rgba(59,130,246,0.14);
-    nav-active-bg-hover: rgba(59,130,246,0.20);
+    nav-active-bg:       #FFFFFF;
+    nav-active-bg-hover: #F6F7FC;
+    nav-active-border:   #5A6ACF;
 
     /* Bordes */
     border-standard: rgba(26,31,46,0.12);
@@ -92,15 +96,15 @@
 
 /* Panel izquierdo: carbón mostrador */
 .login-panel-left {
-    -fx-background-color: #1E2A3A;
+    -fx-background-color: #192030;
     -fx-pref-width: 340px;
     -fx-min-width: 240px;
     -fx-max-width: 400px;
 }
 
-/* Círculo decorativo superior-izquierdo (azul tenue) */
+/* Círculo decorativo superior-izquierdo (violeta tenue) */
 .login-deco-1 {
-    -fx-background-color: rgba(59, 130, 246, 0.14);
+    -fx-background-color: rgba(90, 106, 207, 0.18);
     -fx-background-radius: 150;
     -fx-min-width: 300px;
     -fx-max-width: 300px;
@@ -136,9 +140,9 @@
     -fx-text-fill: rgba(240, 237, 232, 0.50);
 }
 
-/* Línea azul separadora entre nombre y tagline */
+/* Línea separadora entre nombre y tagline */
 .login-brand-rule {
-    -fx-background-color: rgba(59, 130, 246, 0.55);
+    -fx-background-color: rgba(90, 106, 207, 0.55);
     -fx-background-radius: 1;
 }
 
@@ -158,7 +162,7 @@
 .login-store-name {
     -fx-font-size: 20px;
     -fx-font-weight: 700;
-    -fx-text-fill: #1E2A3A;
+    -fx-text-fill: #192030;
 }
 
 /* Hint de bienvenida */
@@ -197,8 +201,8 @@
 }
 
 .login-field:focused {
-    -fx-border-color: #3B82F6;
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.18), 6, 0, 0, 0);
+    -fx-border-color: #5A6ACF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.20), 6, 0, 0, 0);
 }
 
 /* Campo de login con espacio para el botón de visibilidad */
@@ -297,19 +301,30 @@
 }
 
 .dashboard-stat-card {
-    -fx-min-width: 140px;
+    -fx-min-width: 160px;
+    -fx-pref-width: 200px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
 }
 
 .dashboard-stat-value {
-    -fx-font-size: 30px;
+    -fx-font-size: 28px;
     -fx-font-weight: 700;
-    -fx-text-fill: #1A1F2E;
+    -fx-text-fill: ink-1;
 }
 
 .dashboard-stat-label {
     -fx-font-size: 12px;
     -fx-font-weight: 500;
-    -fx-text-fill: #78716C;
+    -fx-text-fill: ink-3;
+}
+
+.dashboard-icon-box {
+    -fx-background-radius: 12px;
+    -fx-min-width: 44px;
+    -fx-min-height: 44px;
+    -fx-max-width: 44px;
+    -fx-max-height: 44px;
+    -fx-alignment: CENTER;
 }
 
 .dashboard-section-title {
@@ -341,7 +356,7 @@
 
 /* ── Sidebar ────────────────────────────────────────────────────── */
 .sidebar {
-    -fx-background-color: #1E2A3A;
+    -fx-background-color: linear-gradient(to bottom, #192030, #303441);
     -fx-border-color: transparent rgba(240,237,232,0.10) transparent transparent;
     -fx-border-width: 0 1 0 0;
     -fx-pref-width: 220px;
@@ -408,16 +423,17 @@
     -fx-background-color: rgba(240,237,232,0.04);
 }
 
-/* Estado activo — pill shape, token-based, sin border-left ──────── */
+/* Estado activo — píldora blanca sobre sidebar oscuro ───────────── */
 .nav-item-active {
     -fx-background-color: nav-active-bg;
-    -fx-background-radius: 14px;
-    -fx-background-insets: 2 6 2 6;
-    -fx-text-fill: mek-primary;
-    -fx-font-weight: 600;
+    -fx-background-radius: 10;
+    -fx-background-insets: 4 10;
     -fx-border-color: transparent;
     -fx-border-width: 0;
-    -fx-padding: 10 20 10 20;
+    -fx-border-radius: 10;
+    -fx-text-fill: #192030;
+    -fx-font-weight: 700;
+    -fx-padding: 10 16 10 16;
 }
 
 .nav-item-active:hover {
@@ -598,8 +614,8 @@
 }
 
 .text-field:focused, .password-field:focused, .text-area:focused {
-    -fx-border-color: #3B82F6;
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.16), 5, 0, 0, 0);
+    -fx-border-color: #5A6ACF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 5, 0, 0, 0);
 }
 
 /* ── ComboBox ───────────────────────────────────────────────────── */
@@ -617,8 +633,8 @@
 }
 
 .combo-box:focused {
-    -fx-border-color: #3B82F6;
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.16), 5, 0, 0, 0);
+    -fx-border-color: #5A6ACF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 5, 0, 0, 0);
 }
 
 .combo-box .list-cell {
@@ -655,12 +671,12 @@
 }
 
 .combo-box-popup .list-view .list-cell:hover {
-    -fx-background-color: #EFF6FF;
+    -fx-background-color: #ECEEF7;
 }
 
 .combo-box-popup .list-view .list-cell:selected {
-    -fx-background-color: #DBEAFE;
-    -fx-text-fill: #1D4ED8;
+    -fx-background-color: #D0D4F2;
+    -fx-text-fill: #3C48AA;
     -fx-font-weight: 600;
 }
 
@@ -677,8 +693,8 @@
 }
 
 .spinner:focused {
-    -fx-border-color: #3B82F6;
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.16), 5, 0, 0, 0);
+    -fx-border-color: #5A6ACF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 5, 0, 0, 0);
 }
 
 .spinner .text-field {
@@ -725,8 +741,8 @@
 }
 
 .date-picker:focused {
-    -fx-border-color: #3B82F6;
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.16), 5, 0, 0, 0);
+    -fx-border-color: #5A6ACF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 5, 0, 0, 0);
 }
 
 .date-picker .text-field {
@@ -759,7 +775,7 @@
 }
 
 .date-picker-popup .month-year-pane {
-    -fx-background-color: #1E2A3A;
+    -fx-background-color: #192030;
     -fx-padding: 8 12 8 12;
 }
 
@@ -781,17 +797,17 @@
 }
 
 .date-picker-popup .day-cell:hover {
-    -fx-background-color: #EFF6FF;
+    -fx-background-color: #ECEEF7;
 }
 
 .date-picker-popup .selected {
-    -fx-background-color: #3B82F6;
+    -fx-background-color: #5A6ACF;
     -fx-text-fill: #FDFCFA;
     -fx-font-weight: 700;
 }
 
 .date-picker-popup .today {
-    -fx-border-color: #3B82F6;
+    -fx-border-color: #5A6ACF;
     -fx-border-width: 1px;
     -fx-border-radius: 4px;
 }
@@ -820,8 +836,8 @@
 }
 
 .check-box:selected .box {
-    -fx-background-color: #3B82F6;
-    -fx-border-color: #3B82F6;
+    -fx-background-color: #5A6ACF;
+    -fx-border-color: #5A6ACF;
 }
 
 .check-box:selected .box .mark {
@@ -830,7 +846,7 @@
 
 /* ── Botones compartidos ────────────────────────────────────────── */
 .btn-primario {
-    -fx-background-color: #3B82F6;
+    -fx-background-color: #5A6ACF;
     -fx-text-fill: white;
     -fx-font-weight: 700;
     -fx-font-size: 13px;
@@ -842,11 +858,11 @@
 }
 
 .btn-primario:hover {
-    -fx-background-color: #2563EB;
+    -fx-background-color: #4A58BF;
 }
 
 .btn-primario:pressed {
-    -fx-background-color: #1D4ED8;
+    -fx-background-color: #3C48AA;
 }
 
 .btn-secundario {
@@ -903,8 +919,13 @@
 }
 
 .icon-accent {
-    -fx-icon-color: #3B82F6;
-    -fx-fill: #3B82F6;
+    -fx-icon-color: #5A6ACF;
+    -fx-fill: #5A6ACF;
+}
+
+.icon-accent-light {
+    -fx-icon-color: #7A88DB;
+    -fx-fill: #7A88DB;
 }
 
 .icon-success {
@@ -941,15 +962,15 @@
 }
 
 .table-view .column-header {
-    -fx-background-color: #F5F1EB;
-    -fx-border-color: transparent transparent rgba(26,31,46,0.08) transparent;
+    -fx-background-color: #192030;
+    -fx-border-color: transparent transparent rgba(240,237,232,0.10) transparent;
     -fx-padding: 8 12 8 12;
 }
 
 .table-view .column-header .label {
     -fx-font-size: 11px;
     -fx-font-weight: 700;
-    -fx-text-fill: #78716C;
+    -fx-text-fill: #F0EDE8;
 }
 
 .table-view .table-row-cell {
@@ -959,11 +980,11 @@
 }
 
 .table-view .table-row-cell:selected {
-    -fx-background-color: #EFF6FF;
+    -fx-background-color: #ECEEF7;
 }
 
 .table-view .table-row-cell:hover {
-    -fx-background-color: rgba(26,31,46,0.03);
+    -fx-background-color: #F0EDE7;
 }
 
 .table-view .table-cell {
@@ -1003,7 +1024,7 @@
 
 /* ── Tooltip ────────────────────────────────────────────────────── */
 .tooltip {
-    -fx-background-color: #1E2A3A;
+    -fx-background-color: #192030;
     -fx-text-fill: #F0EDE8;
     -fx-background-radius: 6px;
     -fx-padding: 6 10 6 10;

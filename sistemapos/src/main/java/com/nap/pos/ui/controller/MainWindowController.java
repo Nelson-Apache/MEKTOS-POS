@@ -11,6 +11,11 @@ import com.nap.pos.domain.model.ConfiguracionTienda;
 import com.nap.pos.domain.model.Notificacion;
 import com.nap.pos.domain.model.Usuario;
 import com.nap.pos.domain.model.enums.Rol;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -25,12 +30,17 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import lombok.RequiredArgsConstructor;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -77,7 +87,12 @@ public class MainWindowController {
 
     // ── Estado ───────────────────────────────────────────────────
     private Usuario usuarioActual;
-    private Button  navActivo;
+    private Button                  navActivo;
+    private final Map<Button, Timeline> navAnimaciones = new HashMap<>();
+
+    // Color de fondo del nav-item activo: #FFFFFF (píldora blanca sobre sidebar oscuro)
+    private static final Color NAV_ACTIVE_COLOR   = Color.color(1.0, 1.0, 1.0, 1.0);
+    private static final Color NAV_TRANSPARENT    = Color.color(1.0, 1.0, 1.0, 0.0);
     private boolean sidebarCollapsed = false;
 
     private static final String[] NAV_TEXTS = {
@@ -247,11 +262,12 @@ public class MainWindowController {
     // ── Helpers privados ──────────────────────────────────────────
 
     private void configurarDatosUsuario() {
-        lblUsername.setText(usuarioActual.getUsername());
+        String nombreCompleto = usuarioActual.getNombreCompleto();
+        lblUsername.setText(nombreCompleto);
         lblRol.setText(formatearRol(usuarioActual.getRol()));
         lblUserChip.setText(
-                usuarioActual.getUsername().substring(0, 1).toUpperCase()
-                + "  " + usuarioActual.getUsername());
+                nombreCompleto.substring(0, 1).toUpperCase()
+                + "  " + nombreCompleto);
 
         try {
             ConfiguracionTienda config = configuracionService.obtener();
@@ -280,13 +296,62 @@ public class MainWindowController {
         }
     }
 
-    private void activarNav(Button btn, String titulo) {
+    private void activarNav(Button entrante, String titulo) {
+        if (navActivo == entrante) return;
+
+        // ── Saliente: quitar clase, fade-out de la píldora blanca (160 ms) ──
         if (navActivo != null) {
-            navActivo.getStyleClass().remove("nav-item-active");
+            Button saliente = navActivo;
+            saliente.getStyleClass().remove("nav-item-active");
+            animarFondoNav(saliente, NAV_ACTIVE_COLOR, NAV_TRANSPARENT, 160,
+                    () -> saliente.setStyle(""));
         }
-        navActivo = btn;
-        btn.getStyleClass().add("nav-item-active");
+
+        // ── Entrante: añadir clase, fade-in de la píldora blanca (220 ms) ───
+        navActivo = entrante;
+        entrante.getStyleClass().add("nav-item-active");
+        animarFondoNav(entrante, NAV_TRANSPARENT, NAV_ACTIVE_COLOR, 220,
+                () -> entrante.setStyle(""));
+
         lblSeccion.setText(titulo);
+    }
+
+    /**
+     * Interpola el color de fondo del botón via inline-style.
+     * Al terminar limpia el inline-style para ceder control al CSS.
+     * Cancela cualquier animación previa sobre el mismo botón.
+     */
+    private void animarFondoNav(Button btn, Color desde, Color hasta,
+                                 int duracionMs, Runnable alTerminar) {
+        Timeline anterior = navAnimaciones.remove(btn);
+        if (anterior != null) anterior.stop();
+
+        SimpleObjectProperty<Color> colorProp = new SimpleObjectProperty<>(desde);
+        colorProp.addListener((obs, o, n) -> {
+            if (n == null) return;
+            btn.setStyle(String.format(Locale.US,
+                    "-fx-background-color: rgba(%d,%d,%d,%.4f);" +
+                    "-fx-background-radius: 10;" +
+                    "-fx-background-insets: 4 10;" +
+                    "-fx-text-fill: #192030;",
+                    (int) Math.round(n.getRed()   * 255),
+                    (int) Math.round(n.getGreen() * 255),
+                    (int) Math.round(n.getBlue()  * 255),
+                    n.getOpacity()));
+        });
+
+        Timeline tl = new Timeline(
+                new KeyFrame(Duration.ZERO,                new KeyValue(colorProp, desde)),
+                new KeyFrame(Duration.millis(duracionMs), new KeyValue(colorProp, hasta,
+                        Interpolator.EASE_BOTH))
+        );
+        tl.setOnFinished(e -> {
+            navAnimaciones.remove(btn);
+            if (alTerminar != null) alTerminar.run();
+        });
+
+        navAnimaciones.put(btn, tl);
+        tl.play();
     }
 
     private List<Button> navButtons() {
@@ -317,8 +382,7 @@ public class MainWindowController {
         root.getStyleClass().add("dashboard-root");
 
         // Saludo
-        String nombre = usuarioActual.getUsername();
-        Label lblBienvenido = new Label("Bienvenido, " + nombre + "!");
+        Label lblBienvenido = new Label("Bienvenido, " + usuarioActual.getNombreCompleto() + ".");
         lblBienvenido.getStyleClass().add("dashboard-welcome");
 
         // Fila de stat cards
@@ -326,16 +390,18 @@ public class MainWindowController {
         cardsRow.setAlignment(Pos.TOP_LEFT);
 
         VBox cardProductos = crearStatCard("Productos activos",
-                String.valueOf(totalProductos), "fas-boxes", "#3B82F6");
+                String.valueOf(totalProductos), "fas-boxes",
+                Color.web("#5A6ACF"));
         VBox cardSinStock  = crearStatCard("Sin stock",
                 String.valueOf(sinStock), "fas-exclamation-triangle",
-                sinStock > 0 ? "#DC2626" : "#15803D");
+                Color.web(sinStock > 0 ? "#DC2626" : "#15803D"));
         VBox cardClientes  = crearStatCard("Clientes",
-                String.valueOf(totalClientes), "fas-users", "#3B82F6");
+                String.valueOf(totalClientes), "fas-users",
+                Color.web("#5A6ACF"));
         VBox cardCaja      = crearStatCard("Caja",
                 cajaAbierta ? "Abierta" : "Cerrada",
                 cajaAbierta ? "fas-lock-open" : "fas-lock",
-                cajaAbierta ? "#15803D" : "#D97706");
+                Color.web(cajaAbierta ? "#15803D" : "#D97706"));
 
         for (VBox c : List.of(cardProductos, cardSinStock, cardClientes, cardCaja)) {
             HBox.setHgrow(c, Priority.ALWAYS);
@@ -381,14 +447,25 @@ public class MainWindowController {
         contenido.getChildren().setAll(scroll);
     }
 
-    private VBox crearStatCard(String titulo, String valor, String icono, String iconColor) {
-        VBox card = new VBox(10);
+    private VBox crearStatCard(String titulo, String valor, String icoLiteral, Color icoColor) {
+        VBox card = new VBox(12);
         card.getStyleClass().addAll("card", "dashboard-stat-card");
-        card.setPadding(new Insets(20));
 
-        FontIcon icon = new FontIcon(icono);
-        icon.setIconSize(20);
-        icon.setStyle("-fx-icon-color: " + iconColor + ";");
+        // Contenedor del ícono: fondo tintado con el color semántico
+        int r = (int) Math.round(icoColor.getRed()   * 255);
+        int g = (int) Math.round(icoColor.getGreen() * 255);
+        int b = (int) Math.round(icoColor.getBlue()  * 255);
+
+        StackPane icoBox = new StackPane();
+        icoBox.getStyleClass().add("dashboard-icon-box");
+        icoBox.setStyle(String.format(Locale.US,
+                "-fx-background-color: rgba(%d,%d,%d,0.10);", r, g, b));
+
+        FontIcon icon = new FontIcon(icoLiteral);
+        icon.setIconSize(22);
+        icon.setStyle(String.format(Locale.US,
+                "-fx-icon-color: rgb(%d,%d,%d);", r, g, b));
+        icoBox.getChildren().add(icon);
 
         Label lValor  = new Label(valor);
         lValor.getStyleClass().add("dashboard-stat-value");
@@ -396,7 +473,7 @@ public class MainWindowController {
         Label lTitulo = new Label(titulo);
         lTitulo.getStyleClass().add("dashboard-stat-label");
 
-        card.getChildren().addAll(icon, lValor, lTitulo);
+        card.getChildren().addAll(icoBox, lValor, lTitulo);
         return card;
     }
 

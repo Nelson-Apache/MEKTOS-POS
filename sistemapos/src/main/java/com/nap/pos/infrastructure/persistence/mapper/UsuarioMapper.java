@@ -16,6 +16,9 @@ public class UsuarioMapper {
                 .passwordHash(entity.getPasswordHash())
                 .rol(entity.getRol())
                 .activo(entity.isActivo())
+                .nombre(entity.getNombre())
+                .apellido(entity.getApellido())
+                .creadoPorId(entity.getCreadoPor() != null ? entity.getCreadoPor().getId() : null)
                 .build();
     }
 
@@ -28,6 +31,9 @@ public class UsuarioMapper {
         entity.setPasswordHash(domain.getPasswordHash());
         entity.setRol(domain.getRol());
         entity.setActivo(domain.isActivo());
+        entity.setNombre(domain.getNombre());
+        entity.setApellido(domain.getApellido());
+        entity.setCreadoPor(toRef(domain.getCreadoPorId()));
         return entity;
     }
 

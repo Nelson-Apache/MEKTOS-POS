@@ -38,6 +38,26 @@ public class UsuarioService {
      */
     @Transactional
     public Usuario crear(String username, String rawPassword, Rol rol) {
+        return crear(username, rawPassword, rol, null, null, null);
+    }
+
+    /**
+     * Crea un usuario con nombre y apellido explícitos (usado desde el wizard
+     * para que el admin quede identificado con su nombre real desde el inicio).
+     */
+    @Transactional
+    public Usuario crear(String username, String rawPassword, Rol rol,
+                         String nombre, String apellido) {
+        return crear(username, rawPassword, rol, nombre, apellido, null);
+    }
+
+    /**
+     * Crea un usuario con todos los campos. creadoPorId identifica al admin que
+     * registró la cuenta; null cuando el propio sistema crea el primer usuario (wizard).
+     */
+    @Transactional
+    public Usuario crear(String username, String rawPassword, Rol rol,
+                         String nombre, String apellido, Long creadoPorId) {
         if (usuarioRepository.findByUsername(username).isPresent()) {
             throw new BusinessException("Ya existe un usuario con el nombre '" + username + "'.");
         }
@@ -46,6 +66,9 @@ public class UsuarioService {
                 .passwordHash(passwordEncoder.encode(rawPassword))
                 .rol(rol)
                 .activo(true)
+                .nombre(nombre)
+                .apellido(apellido)
+                .creadoPorId(creadoPorId)
                 .build();
         return usuarioRepository.save(usuario);
     }
@@ -77,6 +100,9 @@ public class UsuarioService {
                 .passwordHash(passwordEncoder.encode(newRawPassword))
                 .rol(existente.getRol())
                 .activo(existente.isActivo())
+                .nombre(existente.getNombre())
+                .apellido(existente.getApellido())
+                .creadoPorId(existente.getCreadoPorId())
                 .build();
         usuarioRepository.save(actualizado);
     }

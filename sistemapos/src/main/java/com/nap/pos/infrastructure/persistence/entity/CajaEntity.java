@@ -37,4 +37,9 @@ public class CajaEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private EstadoCaja estado;
+
+    /** Usuario que abrió esta caja. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private UsuarioEntity usuario;
 }

@@ -30,4 +30,15 @@ public class UsuarioEntity {
 
     @Column(nullable = false)
     private boolean activo;
+
+    @Column(nullable = true, length = 60)
+    private String nombre;
+
+    @Column(nullable = true, length = 60)
+    private String apellido;
+
+    /** Quién creó este usuario. Null para el primer admin (se auto-creó en el wizard). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creado_por")
+    private UsuarioEntity creadoPor;
 }
