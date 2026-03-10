@@ -2,10 +2,8 @@ package com.nap.pos.ui.controller;
 
 import com.nap.pos.Launcher;
 import com.nap.pos.application.service.CajaService;
-import com.nap.pos.application.service.ClienteService;
 import com.nap.pos.application.service.ConfiguracionService;
 import com.nap.pos.application.service.NotificacionService;
-import com.nap.pos.application.service.ProductoService;
 import com.nap.pos.domain.exception.BusinessException;
 import com.nap.pos.domain.model.ConfiguracionTienda;
 import com.nap.pos.domain.model.Notificacion;
@@ -24,9 +22,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -34,13 +30,13 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.RequiredArgsConstructor;
-import org.kordamp.ikonli.javafx.FontIcon;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 
 @Component
 @RequiredArgsConstructor
@@ -49,8 +45,8 @@ public class MainWindowController {
     private final ConfiguracionService configuracionService;
     private final CajaService          cajaService;
     private final NotificacionService  notificacionService;
-    private final ProductoService      productoService;
-    private final ClienteService       clienteService;
+    private final DashboardController  dashboardController;
+    private final VentasController     ventasController;
 
     // ── Sidebar ───────────────────────────────────────────────────
     @FXML private VBox   sidebar;
@@ -82,6 +78,7 @@ public class MainWindowController {
     @FXML private HBox   hboxCajaBadge;
     @FXML private Label  lblCaja;
     @FXML private Button btnNotificaciones;
+    @FXML private Label  lblUserAvatar;
     @FXML private Label  lblUserChip;
 
     // ── Contenido central ─────────────────────────────────────────
@@ -126,8 +123,7 @@ public class MainWindowController {
     @FXML
     public void navVentas() {
         activarNav(btnVentas, "Ventas");
-        mostrarPlaceholder("Ventas",
-                "Escanea o busca un producto para comenzar la venta");
+        contenido.getChildren().setAll(ventasController.buildView(usuarioActual));
     }
 
     @FXML
@@ -185,6 +181,7 @@ public class MainWindowController {
     public void onToggleSidebar() {
         sidebarCollapsed = !sidebarCollapsed;
         if (sidebarCollapsed) {
+            sidebar.setMinWidth(60);
             sidebar.setPrefWidth(60);
             sidebar.setMaxWidth(60);
 
@@ -206,6 +203,7 @@ public class MainWindowController {
             });
 
         } else {
+            sidebar.setMinWidth(220);
             sidebar.setPrefWidth(220);
             sidebar.setMaxWidth(Double.MAX_VALUE);
 
@@ -283,9 +281,10 @@ public class MainWindowController {
         String nombreCompleto = usuarioActual.getNombreCompleto();
         lblUsername.setText(nombreCompleto);
         lblRol.setText(formatearRol(usuarioActual.getRol()));
-        lblUserChip.setText(
-                nombreCompleto.substring(0, 1).toUpperCase()
-                + "  " + nombreCompleto);
+        lblUserAvatar.setText(nombreCompleto.substring(0, 1).toUpperCase());
+        // Solo el primer nombre para mantener el chip compacto
+        String primerNombre = nombreCompleto.split(" ")[0];
+        lblUserChip.setText(primerNombre);
 
         try {
             ConfiguracionTienda config = configuracionService.obtener();
@@ -306,11 +305,11 @@ public class MainWindowController {
             cajaService.getCajaAbierta();
             hboxCajaBadge.getStyleClass().setAll("caja-badge", "caja-abierta");
             lblCaja.getStyleClass().setAll("caja-badge-text-abierta");
-            lblCaja.setText("Caja abierta");
+            lblCaja.setText("Abierta");
         } catch (BusinessException e) {
             hboxCajaBadge.getStyleClass().setAll("caja-badge", "caja-cerrada");
             lblCaja.getStyleClass().setAll("caja-badge-text-cerrada");
-            lblCaja.setText("Sin caja abierta");
+            lblCaja.setText("Cerrada");
         }
     }
 
@@ -378,122 +377,10 @@ public class MainWindowController {
                        btnCaja, btnReportes, btnConfiguracion);
     }
 
-    // ── Dashboard ─────────────────────────────────────────────────
+    // ── Dashboard — delegado a DashboardController ───────────────
 
     private void mostrarDashboard() {
-        int totalProductos = 0;
-        int sinStock       = 0;
-        int totalClientes  = 0;
-        boolean cajaAbierta = false;
-        List<Notificacion> notifs = List.of();
-
-        try { totalProductos = productoService.findAllActivos().size(); } catch (Exception ignored) {}
-        try {
-            sinStock = (int) productoService.findAllActivos().stream()
-                    .filter(p -> p.getStock() == 0).count();
-        } catch (Exception ignored) {}
-        try { totalClientes = clienteService.findAll().size(); } catch (Exception ignored) {}
-        try { cajaService.getCajaAbierta(); cajaAbierta = true; } catch (Exception ignored) {}
-        try { notifs = notificacionService.getNotificaciones(); } catch (Exception ignored) {}
-
-        VBox root = new VBox(28);
-        root.setPadding(new Insets(28));
-        root.getStyleClass().add("dashboard-root");
-
-        // Saludo
-        Label lblBienvenido = new Label("Bienvenido, " + usuarioActual.getNombreCompleto() + ".");
-        lblBienvenido.getStyleClass().add("dashboard-welcome");
-
-        // Fila de stat cards
-        HBox cardsRow = new HBox(16);
-        cardsRow.setAlignment(Pos.TOP_LEFT);
-
-        VBox cardProductos = crearStatCard("Productos activos",
-                String.valueOf(totalProductos), "fas-boxes",
-                Color.web("#5A6ACF"));
-        VBox cardSinStock  = crearStatCard("Sin stock",
-                String.valueOf(sinStock), "fas-exclamation-triangle",
-                Color.web(sinStock > 0 ? "#DC2626" : "#15803D"));
-        VBox cardClientes  = crearStatCard("Clientes",
-                String.valueOf(totalClientes), "fas-users",
-                Color.web("#5A6ACF"));
-        VBox cardCaja      = crearStatCard("Caja",
-                cajaAbierta ? "Abierta" : "Cerrada",
-                cajaAbierta ? "fas-lock-open" : "fas-lock",
-                Color.web(cajaAbierta ? "#15803D" : "#D97706"));
-
-        for (VBox c : List.of(cardProductos, cardSinStock, cardClientes, cardCaja)) {
-            HBox.setHgrow(c, Priority.ALWAYS);
-            cardsRow.getChildren().add(c);
-        }
-
-        // Notificaciones
-        VBox notifSection = new VBox(10);
-        Label lblNotifTitle = new Label("Alertas");
-        lblNotifTitle.getStyleClass().add("dashboard-section-title");
-        notifSection.getChildren().add(lblNotifTitle);
-
-        if (notifs.isEmpty()) {
-            Label lblVacio = new Label("Sin alertas pendientes.");
-            lblVacio.getStyleClass().add("dashboard-empty");
-            notifSection.getChildren().add(lblVacio);
-        } else {
-            for (Notificacion n : notifs) {
-                HBox row = new HBox(10);
-                row.setAlignment(Pos.CENTER_LEFT);
-                row.getStyleClass().add("dashboard-notif-row");
-
-                FontIcon ico = new FontIcon("fas-circle");
-                ico.setIconSize(8);
-                ico.getStyleClass().add("icon-accent");
-
-                Label lbl = new Label(n.titulo() + ": " + n.mensaje());
-                lbl.getStyleClass().add("dashboard-notif-text");
-                lbl.setWrapText(true);
-
-                row.getChildren().addAll(ico, lbl);
-                notifSection.getChildren().add(row);
-            }
-        }
-
-        root.getChildren().addAll(lblBienvenido, cardsRow, notifSection);
-
-        ScrollPane scroll = new ScrollPane(root);
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.getStyleClass().add("dashboard-scroll");
-
-        contenido.getChildren().setAll(scroll);
-    }
-
-    private VBox crearStatCard(String titulo, String valor, String icoLiteral, Color icoColor) {
-        VBox card = new VBox(12);
-        card.getStyleClass().addAll("card", "dashboard-stat-card");
-
-        // Contenedor del ícono: fondo tintado con el color semántico
-        int r = (int) Math.round(icoColor.getRed()   * 255);
-        int g = (int) Math.round(icoColor.getGreen() * 255);
-        int b = (int) Math.round(icoColor.getBlue()  * 255);
-
-        StackPane icoBox = new StackPane();
-        icoBox.getStyleClass().add("dashboard-icon-box");
-        icoBox.setStyle(String.format(Locale.US,
-                "-fx-background-color: rgba(%d,%d,%d,0.10);", r, g, b));
-
-        FontIcon icon = new FontIcon(icoLiteral);
-        icon.setIconSize(22);
-        icon.setStyle(String.format(Locale.US,
-                "-fx-icon-color: rgb(%d,%d,%d);", r, g, b));
-        icoBox.getChildren().add(icon);
-
-        Label lValor  = new Label(valor);
-        lValor.getStyleClass().add("dashboard-stat-value");
-
-        Label lTitulo = new Label(titulo);
-        lTitulo.getStyleClass().add("dashboard-stat-label");
-
-        card.getChildren().addAll(icoBox, lValor, lTitulo);
-        return card;
+        contenido.getChildren().setAll(dashboardController.buildView(this::navReportes));
     }
 
     private void mostrarPlaceholder(String titulo, String subtitulo) {

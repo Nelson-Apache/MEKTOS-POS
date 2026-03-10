@@ -12,6 +12,7 @@ public class CategoriaMapper {
         return Categoria.builder()
                 .id(entity.getId())
                 .nombre(entity.getNombre())
+                .icono(entity.getIcono())
                 .activo(entity.isActivo())
                 .build();
     }
@@ -21,6 +22,7 @@ public class CategoriaMapper {
         CategoriaEntity entity = new CategoriaEntity();
         entity.setId(domain.getId());
         entity.setNombre(domain.getNombre());
+        entity.setIcono(domain.getIcono());
         entity.setActivo(domain.isActivo());
         return entity;
     }

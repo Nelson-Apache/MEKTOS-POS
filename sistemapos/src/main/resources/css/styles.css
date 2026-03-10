@@ -294,20 +294,15 @@
     -fx-background-color: #F5F1EB;
 }
 
-.dashboard-welcome {
-    -fx-font-size: 22px;
-    -fx-font-weight: 700;
-    -fx-text-fill: #1A1F2E;
-}
-
+/* Stat cards — layout horizontal */
 .dashboard-stat-card {
-    -fx-min-width: 160px;
-    -fx-pref-width: 200px;
+    -fx-min-width: 150px;
+    -fx-pref-width: 190px;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
 }
 
 .dashboard-stat-value {
-    -fx-font-size: 28px;
+    -fx-font-size: 26px;
     -fx-font-weight: 700;
     -fx-text-fill: ink-1;
 }
@@ -318,13 +313,168 @@
     -fx-text-fill: ink-3;
 }
 
+.dashboard-stat-sub {
+    -fx-font-size: 11px;
+    -fx-text-fill: ink-4;
+}
+
 .dashboard-icon-box {
-    -fx-background-radius: 12px;
-    -fx-min-width: 44px;
-    -fx-min-height: 44px;
-    -fx-max-width: 44px;
-    -fx-max-height: 44px;
+    -fx-background-radius: 10px;
+    -fx-min-width: 42px;
+    -fx-min-height: 42px;
+    -fx-max-width: 42px;
+    -fx-max-height: 42px;
     -fx-alignment: CENTER;
+}
+
+/* Badges genéricos */
+.dash-badge {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 5px;
+}
+
+.dash-badge-success {
+    -fx-background-color: #DCFCE7;
+    -fx-text-fill: #15803D;
+}
+
+.dash-badge-danger {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #DC2626;
+}
+
+.dash-badge-credito {
+    -fx-background-color: #FEF3C7;
+    -fx-text-fill: #D97706;
+}
+
+.dash-badge-caja-abierta {
+    -fx-background-color: #15803D;
+    -fx-text-fill: #FFFFFF;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 7px;
+}
+
+.dash-badge-caja-cerrada {
+    -fx-background-color: #D97706;
+    -fx-text-fill: #FFFFFF;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 7px;
+}
+
+/* Chart card — ventas del día */
+.dashboard-chart-card {
+    -fx-min-height: 240px;
+}
+
+.dashboard-chart-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-text-fill: ink-3;
+    -fx-letter-spacing: 0.8px;
+}
+
+.dashboard-chart-total {
+    -fx-font-size: 26px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Consolas", monospace;
+    -fx-text-fill: ink-1;
+}
+
+/* Estilos del AreaChart */
+.dashboard-chart {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+.dashboard-chart .chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.dashboard-chart .chart-content {
+    -fx-padding: 4 0 0 0;
+}
+
+.dashboard-chart .chart-vertical-grid-lines,
+.dashboard-chart .chart-horizontal-grid-lines,
+.dashboard-chart .chart-alternative-column-fill,
+.dashboard-chart .chart-alternative-row-fill {
+    -fx-stroke: transparent;
+    -fx-fill: transparent;
+}
+
+.dashboard-chart .default-color0.chart-series-area-line {
+    -fx-stroke: #5A6ACF;
+    -fx-stroke-width: 2.5px;
+}
+
+.dashboard-chart .default-color0.chart-series-area-fill {
+    -fx-fill: rgba(90,106,207,0.12);
+    -fx-stroke: transparent;
+}
+
+.dashboard-chart .y-axis {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+}
+
+.dashboard-chart .x-axis .tick-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: ink-4;
+}
+
+.dashboard-chart .x-axis .axis-tick-mark,
+.dashboard-chart .x-axis .minor-tick-mark,
+.dashboard-chart .axis-label {
+    -fx-stroke: transparent;
+    -fx-text-fill: transparent;
+}
+
+/* Alertas de stock */
+.dashboard-alert-row {
+    -fx-padding: 10 4 10 4;
+    -fx-spacing: 10;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.07) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.dashboard-alert-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: ink-1;
+}
+
+.dashboard-alert-msg {
+    -fx-font-size: 11px;
+    -fx-text-fill: ink-4;
+}
+
+.dashboard-alert-stock {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #DC2626;
+    -fx-background-color: #FEE2E2;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 5px;
+}
+
+/* Tabla de últimas ventas */
+.dashboard-table-card {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.10);
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+}
+
+.dashboard-table-header {
+    -fx-padding: 16 20 16 20;
+    -fx-background-color: rgba(26,31,46,0.02);
+    -fx-border-color: transparent transparent rgba(26,31,46,0.07) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-spacing: 12;
 }
 
 .dashboard-section-title {
@@ -333,6 +483,22 @@
     -fx-text-fill: #1A1F2E;
 }
 
+.dashboard-link-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: mek-primary;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-padding: 4 0 4 0;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-effect: none;
+}
+
+.dashboard-link-btn:hover {
+    -fx-text-fill: mek-primary-hover;
+}
+
+/* Notificaciones (legacy — aún usadas en el panel de campana) */
 .dashboard-notif-row {
     -fx-background-color: #FDFCFA;
     -fx-background-radius: 8px;
@@ -520,51 +686,85 @@
     -fx-background-color: rgba(26,31,46,0.06);
 }
 
-/* Badge de estado de caja */
+/* Badge de estado de caja — chip compacto estilo Ant Design */
 .caja-badge {
-    -fx-background-radius: 20px;
-    -fx-border-radius: 20px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
     -fx-border-width: 1px;
-    -fx-padding: 4 12 4 12;
+    -fx-padding: 3 8 3 6;
     -fx-spacing: 5;
     -fx-alignment: CENTER_LEFT;
+    -fx-pref-height: 26px;
+    -fx-max-height: 26px;
 }
 
 .caja-abierta {
-    -fx-background-color: #DCFCE7;
-    -fx-border-color: #15803D;
+    -fx-background-color: #F0FDF4;
+    -fx-border-color: #BBF7D0;
 }
 
 .caja-cerrada {
-    -fx-background-color: #FEF3C7;
-    -fx-border-color: #D97706;
+    -fx-background-color: #FFFBEB;
+    -fx-border-color: #FDE68A;
+}
+
+/* Dot indicador */
+.caja-dot {
+    -fx-background-radius: 50%;
+}
+
+.caja-abierta .caja-dot {
+    -fx-background-color: #16A34A;
+}
+
+.caja-cerrada .caja-dot {
+    -fx-background-color: #D97706;
 }
 
 .caja-badge-text-abierta {
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
     -fx-font-weight: 600;
     -fx-text-fill: #15803D;
 }
 
 .caja-badge-text-cerrada {
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
     -fx-font-weight: 600;
-    -fx-text-fill: #D97706;
+    -fx-text-fill: #B45309;
 }
 
 /* Chip de usuario en topbar */
 .user-chip {
-    -fx-background-color: rgba(26,31,46,0.07);
+    -fx-background-color: rgba(26,31,46,0.06);
     -fx-background-radius: 20px;
-    -fx-padding: 5 14 5 14;
-    -fx-spacing: 6;
+    -fx-padding: 3 10 3 3;
+    -fx-spacing: 7;
+    -fx-alignment: CENTER_LEFT;
+    -fx-pref-height: 30px;
+    -fx-max-height: 30px;
+}
+
+/* Avatar circular con inicial */
+.user-avatar {
+    -fx-background-color: #5A6ACF;
+    -fx-background-radius: 50%;
+    -fx-min-width: 22px;
+    -fx-min-height: 22px;
+    -fx-max-width: 22px;
+    -fx-max-height: 22px;
     -fx-alignment: CENTER;
+}
+
+.user-avatar-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #FFFFFF;
 }
 
 .user-chip-text {
     -fx-font-size: 12px;
-    -fx-font-weight: 600;
-    -fx-text-fill: #4B5563;
+    -fx-font-weight: 500;
+    -fx-text-fill: #374151;
 }
 
 /* ── Área de contenido ─────────────────────────────────────────── */
@@ -1020,6 +1220,334 @@
 .scroll-bar .decrement-arrow {
     -fx-shape: "";
     -fx-padding: 0;
+}
+
+/* ── Pantalla de Ventas ─────────────────────────────────────────── */
+
+/* Layout principal: split izquierda/derecha */
+.venta-panel-izq {
+    -fx-background-color: #F5F1EB;
+}
+
+.venta-panel-der {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: transparent transparent transparent rgba(26,31,46,0.10);
+    -fx-border-width: 0 0 0 1;
+}
+
+/* Barra superior de la pantalla de ventas */
+.venta-topbar {
+    -fx-background-color: #F5F1EB;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.08) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* Campo de búsqueda de productos */
+.venta-search-field {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.12);
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 9 12 9 34;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1A1F2E;
+    -fx-prompt-text-fill: #A8A29E;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 4, 0, 0, 1);
+}
+
+.venta-search-field:focused {
+    -fx-border-color: #5A6ACF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 6, 0, 0, 0);
+}
+
+/* ScrollPane de chips de categoría */
+.venta-cat-scroll {
+    -fx-background-color: #F5F1EB;
+    -fx-background: #F5F1EB;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.venta-cat-scroll > .viewport {
+    -fx-background-color: #F5F1EB;
+}
+
+/* Chips de categoría */
+.venta-cat-chip {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.12);
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+    -fx-border-width: 1px;
+    -fx-padding: 5 14 5 14;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #4B5563;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.venta-cat-chip:hover {
+    -fx-background-color: #ECEEF7;
+    -fx-border-color: #5A6ACF;
+    -fx-text-fill: #3C48AA;
+}
+
+.venta-cat-chip-active {
+    -fx-background-color: #5A6ACF;
+    -fx-border-color: #5A6ACF;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: 700;
+}
+
+.venta-cat-chip-active:hover {
+    -fx-background-color: #4A58BF;
+    -fx-border-color: #4A58BF;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* ScrollPane del grid de productos */
+.venta-grid-scroll {
+    -fx-background-color: #F5F1EB;
+    -fx-background: #F5F1EB;
+    -fx-border-color: transparent;
+}
+
+.venta-grid-scroll > .viewport {
+    -fx-background-color: #F5F1EB;
+}
+
+/* Tarjeta de producto */
+.venta-producto-card {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.09);
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-border-width: 1px;
+    -fx-padding: 12;
+}
+
+.venta-producto-card:hover {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #5A6ACF;
+}
+
+/* Área del ícono del producto */
+.venta-producto-icon {
+    -fx-background-color: #ECEEF7;
+    -fx-background-radius: 8px;
+}
+
+/* Nombre del producto en la card */
+.venta-producto-nombre {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1A1F2E;
+}
+
+/* Precio del producto */
+.venta-producto-precio {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+    -fx-font-family: "Consolas", monospace;
+}
+
+/* Botón "+" de agregar al carrito */
+.venta-btn-add {
+    -fx-background-color: #5A6ACF;
+    -fx-background-radius: 6px;
+    -fx-border-color: transparent;
+    -fx-min-width: 26px;
+    -fx-min-height: 26px;
+    -fx-max-width: 26px;
+    -fx-max-height: 26px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.venta-btn-add:hover {
+    -fx-background-color: #4A58BF;
+}
+
+.venta-btn-add:disabled {
+    -fx-background-color: rgba(26,31,46,0.10);
+}
+
+/* Badge de stock sobre la card */
+.venta-stock-badge {
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-padding: 2 6 2 6;
+    -fx-background-radius: 5px;
+}
+
+.venta-stock-ok {
+    -fx-background-color: #DCFCE7;
+    -fx-text-fill: #15803D;
+}
+
+.venta-stock-agotado {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #DC2626;
+}
+
+/* ── Panel derecho — Carrito ────────────────────────────────────── */
+
+/* Contador de ítems en el header */
+.venta-cart-count {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #78716C;
+    -fx-background-color: rgba(26,31,46,0.06);
+    -fx-background-radius: 20px;
+    -fx-padding: 3 9 3 9;
+}
+
+/* ScrollPane del carrito */
+.venta-cart-scroll {
+    -fx-background-color: #FDFCFA;
+    -fx-background: #FDFCFA;
+    -fx-border-color: transparent;
+}
+
+.venta-cart-scroll > .viewport {
+    -fx-background-color: #FDFCFA;
+}
+
+/* Fila de ítem del carrito */
+.venta-cart-item {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.06) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.venta-cart-item:hover {
+    -fx-background-color: #F5F1EB;
+}
+
+/* Avatar circular del producto en el carrito */
+.venta-cart-avatar {
+    -fx-background-color: #ECEEF7;
+    -fx-background-radius: 50%;
+}
+
+/* Nombre y precio en el carrito */
+.venta-cart-nombre {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1A1F2E;
+}
+
+.venta-cart-precio-unit {
+    -fx-font-size: 11px;
+    -fx-text-fill: #78716C;
+}
+
+/* Controles de cantidad −/+ */
+.venta-qty-btn {
+    -fx-background-color: rgba(26,31,46,0.07);
+    -fx-border-color: transparent;
+    -fx-background-radius: 5px;
+    -fx-min-width: 24px;
+    -fx-min-height: 24px;
+    -fx-max-width: 24px;
+    -fx-max-height: 24px;
+    -fx-padding: 0;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+    -fx-cursor: hand;
+    -fx-effect: none;
+    -fx-alignment: CENTER;
+}
+
+.venta-qty-btn:hover {
+    -fx-background-color: rgba(26,31,46,0.14);
+}
+
+.venta-qty-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+    -fx-alignment: CENTER;
+}
+
+/* Subtotal por ítem */
+.venta-cart-subtotal {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+    -fx-font-family: "Consolas", monospace;
+    -fx-min-width: 72px;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+/* Botón eliminar ítem (×) */
+.venta-btn-del {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 4;
+    -fx-effect: none;
+    -fx-min-width: 24px;
+    -fx-min-height: 24px;
+}
+
+.venta-btn-del:hover {
+    -fx-background-color: #FEE2E2;
+    -fx-background-radius: 5px;
+}
+
+/* Footer del carrito — total */
+.venta-total-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #4B5563;
+}
+
+.venta-total-valor {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+    -fx-font-family: "Consolas", monospace;
+}
+
+/* Valor del cambio */
+.venta-cambio-valor {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Consolas", monospace;
+    -fx-text-fill: #1A1F2E;
+}
+
+/* ── Botones de método de pago (ToggleButton) ───────────────────── */
+.venta-metodo-btn {
+    -fx-background-color: rgba(26,31,46,0.06);
+    -fx-border-color: rgba(26,31,46,0.12);
+    -fx-border-radius: 7px;
+    -fx-background-radius: 7px;
+    -fx-border-width: 1px;
+    -fx-padding: 8 14 8 14;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #4B5563;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.venta-metodo-btn:hover {
+    -fx-background-color: #ECEEF7;
+    -fx-border-color: #5A6ACF;
+    -fx-text-fill: #3C48AA;
+}
+
+.venta-metodo-btn:selected {
+    -fx-background-color: #5A6ACF;
+    -fx-border-color: #5A6ACF;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: 700;
 }
 
 /* ── Tooltip ────────────────────────────────────────────────────── */

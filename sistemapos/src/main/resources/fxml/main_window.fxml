@@ -151,8 +151,10 @@
 
                 <!-- Badge de estado de caja -->
                 <HBox fx:id="hboxCajaBadge" styleClass="caja-badge caja-cerrada"
-                      alignment="CENTER_LEFT" spacing="5">
-                    <Label fx:id="lblCaja" text="Sin caja abierta"
+                      alignment="CENTER_LEFT" spacing="6">
+                    <Region styleClass="caja-dot" minWidth="7" minHeight="7"
+                            maxWidth="7" maxHeight="7"/>
+                    <Label fx:id="lblCaja" text="Cerrada"
                            styleClass="caja-badge-text-cerrada"/>
                 </HBox>
 
@@ -164,7 +166,10 @@
                 </Button>
 
                 <!-- Chip de usuario -->
-                <HBox styleClass="user-chip" alignment="CENTER">
+                <HBox styleClass="user-chip" alignment="CENTER_LEFT" spacing="8">
+                    <StackPane styleClass="user-avatar">
+                        <Label fx:id="lblUserAvatar" text="" styleClass="user-avatar-label"/>
+                    </StackPane>
                     <Label fx:id="lblUserChip" text="" styleClass="user-chip-text"/>
                 </HBox>
 

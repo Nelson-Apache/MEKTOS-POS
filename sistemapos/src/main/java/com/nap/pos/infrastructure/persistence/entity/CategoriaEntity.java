@@ -19,6 +19,10 @@ public class CategoriaEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String nombre;
 
+    /** Literal Ikonli, ej. "fas-tshirt". Nullable — categorías sin ícono usan solo texto. */
+    @Column(length = 60)
+    private String icono;
+
     @Column(nullable = false)
     private boolean activo;
 }
