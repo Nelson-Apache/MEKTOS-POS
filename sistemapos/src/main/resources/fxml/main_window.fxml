@@ -25,23 +25,23 @@
             <!-- Separador -->
             <Region fx:id="sepBrand" styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
 
-            <!-- Grupo: Principal -->
-            <Label fx:id="lblGrupoPrincipal" text="PRINCIPAL" styleClass="sidebar-group-label"/>
+            <!-- Grupo: Menú Principal -->
+            <Label fx:id="lblGrupoPrincipal" text="MENÚ PRINCIPAL" styleClass="sidebar-group-label"/>
 
             <Button fx:id="btnDashboard"
-                    text="Resumen"
+                    text="Dashboard"
                     styleClass="nav-item"
                     onAction="#navDashboard"
                     maxWidth="Infinity">
-                <graphic><FontIcon iconLiteral="fas-chart-line" iconSize="14" styleClass="nav-icon"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-th-large" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
             <Button fx:id="btnVentas"
-                    text="Punto de Venta"
+                    text="Ventas"
                     styleClass="nav-item"
                     onAction="#navVentas"
                     maxWidth="Infinity">
-                <graphic><FontIcon iconLiteral="fas-cash-register" iconSize="14" styleClass="nav-icon"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-receipt" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
             <Button fx:id="btnInventario"
@@ -65,11 +65,27 @@
                     styleClass="nav-item"
                     onAction="#navClientes"
                     maxWidth="Infinity">
-                <graphic><FontIcon iconLiteral="fas-users" iconSize="14" styleClass="nav-icon"/></graphic>
+                <graphic><FontIcon iconLiteral="fas-user-friends" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
-            <!-- Grupo: Análisis -->
-            <Label fx:id="lblGrupoAnalisis" text="ANÁLISIS" styleClass="sidebar-group-label"/>
+            <Button fx:id="btnProveedores"
+                    text="Proveedores"
+                    styleClass="nav-item"
+                    onAction="#navProveedores"
+                    maxWidth="Infinity">
+                <graphic><FontIcon iconLiteral="fas-truck" iconSize="14" styleClass="nav-icon"/></graphic>
+            </Button>
+
+            <!-- Grupo: Administración -->
+            <Label fx:id="lblGrupoAdmin" text="ADMINISTRACIÓN" styleClass="sidebar-group-label"/>
+
+            <Button fx:id="btnCaja"
+                    text="Caja"
+                    styleClass="nav-item"
+                    onAction="#navCaja"
+                    maxWidth="Infinity">
+                <graphic><FontIcon iconLiteral="fas-cash-register" iconSize="14" styleClass="nav-icon"/></graphic>
+            </Button>
 
             <Button fx:id="btnReportes"
                     text="Reportes"
@@ -79,13 +95,6 @@
                 <graphic><FontIcon iconLiteral="fas-chart-bar" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
-            <!-- Relleno para empujar lo siguiente al fondo -->
-            <Region VBox.vgrow="ALWAYS"/>
-
-            <!-- Separador -->
-            <Region fx:id="sepBottom" styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
-
-            <!-- Gestión (solo ADMIN) -->
             <Button fx:id="btnConfiguracion"
                     text="Configuración"
                     styleClass="nav-item"
@@ -95,6 +104,12 @@
                     managed="false">
                 <graphic><FontIcon iconLiteral="fas-cog" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
+
+            <!-- Relleno para empujar usuario al fondo -->
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Separador -->
+            <Region fx:id="sepBottom" styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>
 
             <!-- Separador -->
             <Region styleClass="sidebar-sep" maxHeight="1" minHeight="1"/>

@@ -13,6 +13,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
@@ -44,11 +45,27 @@ public class SetupWizardController {
     @FXML private VBox paso3;
     @FXML private VBox paso4;
 
-    // ── Indicadores de paso ──────────────────────────────────────────────
+    // ── Sidebar stepper ──────────────────────────────────────────────────
+    @FXML private HBox hboxStep1;
+    @FXML private HBox hboxStep2;
+    @FXML private HBox hboxStep3;
+    @FXML private HBox hboxStep4;
+
     @FXML private Label indicador1;
     @FXML private Label indicador2;
     @FXML private Label indicador3;
     @FXML private Label indicador4;
+
+    @FXML private Label lblStep1Title;
+    @FXML private Label lblStep2Title;
+    @FXML private Label lblStep3Title;
+    @FXML private Label lblStep4Title;
+
+    @FXML private Label lblStep1Sub;
+
+    @FXML private Label lblProgreso;
+    @FXML private Label lblPorcentaje;
+    @FXML private ProgressBar pbProgreso;
 
     // ── Botones de navegación ────────────────────────────────────────────
     @FXML private Button btnAnterior;
@@ -592,10 +609,36 @@ public class SetupWizardController {
     }
 
     private void actualizarIndicadores(int paso) {
-        indicador1.getStyleClass().setAll(paso >= 0 ? "indicador-activo" : "indicador-inactivo");
-        indicador2.getStyleClass().setAll(paso >= 1 ? "indicador-activo" : "indicador-inactivo");
-        indicador3.getStyleClass().setAll(paso >= 2 ? "indicador-activo" : "indicador-inactivo");
-        indicador4.getStyleClass().setAll(paso >= 3 ? "indicador-activo" : "indicador-inactivo");
+        Label[] indicadores = {indicador1, indicador2, indicador3, indicador4};
+        Label[] titulos = {lblStep1Title, lblStep2Title, lblStep3Title, lblStep4Title};
+
+        for (int i = 0; i < 4; i++) {
+            if (i < paso) {
+                // Completado
+                indicadores[i].getStyleClass().setAll("indicador-completado");
+                indicadores[i].setText("\u2713");
+                titulos[i].getStyleClass().setAll("wiz-step-title-completed");
+            } else if (i == paso) {
+                // Activo
+                indicadores[i].getStyleClass().setAll("indicador-activo");
+                indicadores[i].setText(String.valueOf(i + 1));
+                titulos[i].getStyleClass().setAll("wiz-step-title-active");
+            } else {
+                // Inactivo
+                indicadores[i].getStyleClass().setAll("indicador-inactivo");
+                indicadores[i].setText(String.valueOf(i + 1));
+                titulos[i].getStyleClass().setAll("wiz-step-title");
+            }
+        }
+
+        // Subtítulo "PASO ACTUAL" solo en el paso actual
+        lblStep1Sub.setVisible(paso == 0);
+        lblStep1Sub.setManaged(paso == 0);
+
+        // Progreso
+        double progreso = (paso + 1) * 0.25;
+        pbProgreso.setProgress(progreso);
+        lblPorcentaje.setText((int) (progreso * 100) + "%");
     }
 
     private void actualizarTarjetas() {

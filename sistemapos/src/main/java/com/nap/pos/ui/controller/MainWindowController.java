@@ -60,7 +60,7 @@ public class MainWindowController {
     @FXML private Region sepBrand;
     @FXML private Region sepBottom;
     @FXML private Label  lblGrupoPrincipal;
-    @FXML private Label  lblGrupoAnalisis;
+    @FXML private Label  lblGrupoAdmin;
     @FXML private VBox   userArea;
     @FXML private Label  lblUsername;
     @FXML private Label  lblRol;
@@ -71,6 +71,8 @@ public class MainWindowController {
     @FXML private Button btnInventario;
     @FXML private Button btnCompras;
     @FXML private Button btnClientes;
+    @FXML private Button btnProveedores;
+    @FXML private Button btnCaja;
     @FXML private Button btnReportes;
     @FXML private Button btnConfiguracion;
 
@@ -96,8 +98,9 @@ public class MainWindowController {
     private boolean sidebarCollapsed = false;
 
     private static final String[] NAV_TEXTS = {
-        "Resumen", "Punto de Venta", "Inventario",
-        "Compras", "Clientes", "Reportes", "Configuración"
+        "Dashboard", "Ventas", "Inventario",
+        "Compras", "Clientes", "Proveedores",
+        "Caja", "Reportes", "Configuración"
     };
 
     /**
@@ -116,14 +119,14 @@ public class MainWindowController {
 
     @FXML
     public void navDashboard() {
-        activarNav(btnDashboard, "Resumen");
+        activarNav(btnDashboard, "Dashboard");
         mostrarDashboard();
     }
 
     @FXML
     public void navVentas() {
-        activarNav(btnVentas, "Punto de Venta");
-        mostrarPlaceholder("Punto de Venta",
+        activarNav(btnVentas, "Ventas");
+        mostrarPlaceholder("Ventas",
                 "Escanea o busca un producto para comenzar la venta");
     }
 
@@ -146,6 +149,20 @@ public class MainWindowController {
         activarNav(btnClientes, "Clientes");
         mostrarPlaceholder("Clientes",
                 "Gestión de clientes y créditos");
+    }
+
+    @FXML
+    public void navProveedores() {
+        activarNav(btnProveedores, "Proveedores");
+        mostrarPlaceholder("Proveedores",
+                "Gestión de proveedores y márgenes");
+    }
+
+    @FXML
+    public void navCaja() {
+        activarNav(btnCaja, "Caja");
+        mostrarPlaceholder("Caja",
+                "Apertura, cierre e historial de caja");
     }
 
     @FXML
@@ -173,7 +190,7 @@ public class MainWindowController {
 
             lblNombreTienda.setVisible(false);   lblNombreTienda.setManaged(false);
             lblGrupoPrincipal.setVisible(false); lblGrupoPrincipal.setManaged(false);
-            lblGrupoAnalisis.setVisible(false);  lblGrupoAnalisis.setManaged(false);
+            lblGrupoAdmin.setVisible(false);      lblGrupoAdmin.setManaged(false);
             sepBrand.setVisible(false);          sepBrand.setManaged(false);
             lblUsername.setVisible(false);       lblUsername.setManaged(false);
             lblRol.setVisible(false);            lblRol.setManaged(false);
@@ -194,7 +211,7 @@ public class MainWindowController {
 
             lblNombreTienda.setVisible(true);   lblNombreTienda.setManaged(true);
             lblGrupoPrincipal.setVisible(true); lblGrupoPrincipal.setManaged(true);
-            lblGrupoAnalisis.setVisible(true);  lblGrupoAnalisis.setManaged(true);
+            lblGrupoAdmin.setVisible(true);      lblGrupoAdmin.setManaged(true);
             sepBrand.setVisible(true);          sepBrand.setManaged(true);
             lblUsername.setVisible(true);       lblUsername.setManaged(true);
             lblRol.setVisible(true);            lblRol.setManaged(true);
@@ -205,7 +222,8 @@ public class MainWindowController {
             brandArea.setPadding(new Insets(24, 20, 18, 20));
 
             Button[] btns = { btnDashboard, btnVentas, btnInventario,
-                              btnCompras, btnClientes, btnReportes, btnConfiguracion };
+                              btnCompras, btnClientes, btnProveedores,
+                              btnCaja, btnReportes, btnConfiguracion };
             for (int i = 0; i < btns.length; i++) {
                 btns[i].setContentDisplay(ContentDisplay.LEFT);
                 btns[i].setAlignment(Pos.CENTER_LEFT);
@@ -356,7 +374,8 @@ public class MainWindowController {
 
     private List<Button> navButtons() {
         return List.of(btnDashboard, btnVentas, btnInventario,
-                       btnCompras, btnClientes, btnReportes, btnConfiguracion);
+                       btnCompras, btnClientes, btnProveedores,
+                       btnCaja, btnReportes, btnConfiguracion);
     }
 
     // ── Dashboard ─────────────────────────────────────────────────

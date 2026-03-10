@@ -10,30 +10,72 @@
             fx:controller="com.nap.pos.ui.controller.SetupWizardController"
             stylesheets="@../css/setup_wizard.css"
             styleClass="wizard-root"
-            prefWidth="820" prefHeight="660">
+            prefWidth="900" prefHeight="660">
 
-    <!-- ═══════════════════════════════════════════════ CABECERA ══ -->
-    <top>
-        <VBox styleClass="wizard-header" spacing="12">
-            <padding><Insets top="20" right="32" bottom="16" left="32"/></padding>
+    <!-- ═══════════════════════════════════════════════ SIDEBAR ══ -->
+    <left>
+        <VBox styleClass="wiz-sidebar" prefWidth="240" minWidth="240" maxWidth="240">
 
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="NAP POS" styleClass="wizard-brand"/>
-                <Label text="—  Configuración inicial" styleClass="wizard-subtitle"/>
+            <!-- Brand -->
+            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="wiz-sidebar-brand">
+                <padding><Insets top="28" right="24" bottom="20" left="24"/></padding>
+                <FontIcon iconLiteral="fas-cog" iconSize="20" styleClass="wiz-sidebar-brand-icon"/>
+                <Label text="Configuración" styleClass="wiz-sidebar-brand-text"/>
             </HBox>
 
-            <!-- Indicadores de paso: ① — ② — ③ — ④ -->
-            <HBox alignment="CENTER" spacing="8">
-                <Label fx:id="indicador1" text="1" styleClass="indicador-activo"/>
-                <Label text="────" styleClass="indicador-linea"/>
-                <Label fx:id="indicador2" text="2" styleClass="indicador-inactivo"/>
-                <Label text="────" styleClass="indicador-linea"/>
-                <Label fx:id="indicador3" text="3" styleClass="indicador-inactivo"/>
-                <Label text="────" styleClass="indicador-linea"/>
-                <Label fx:id="indicador4" text="4" styleClass="indicador-inactivo"/>
-            </HBox>
+            <!-- Stepper vertical -->
+            <VBox styleClass="wiz-stepper" spacing="24">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+
+                <!-- Paso 1 -->
+                <HBox alignment="TOP_LEFT" spacing="12" styleClass="wiz-step" fx:id="hboxStep1">
+                    <Label fx:id="indicador1" text="1" styleClass="indicador-activo"/>
+                    <VBox spacing="2">
+                        <Label fx:id="lblStep1Title" text="Tipo de Persona" styleClass="wiz-step-title-active"/>
+                        <Label fx:id="lblStep1Sub" text="PASO ACTUAL" styleClass="wiz-step-sub-active"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Paso 2 -->
+                <HBox alignment="TOP_LEFT" spacing="12" styleClass="wiz-step" fx:id="hboxStep2">
+                    <Label fx:id="indicador2" text="2" styleClass="indicador-inactivo"/>
+                    <VBox spacing="2">
+                        <Label fx:id="lblStep2Title" text="Datos del Negocio" styleClass="wiz-step-title"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Paso 3 -->
+                <HBox alignment="TOP_LEFT" spacing="12" styleClass="wiz-step" fx:id="hboxStep3">
+                    <Label fx:id="indicador3" text="3" styleClass="indicador-inactivo"/>
+                    <VBox spacing="2">
+                        <Label fx:id="lblStep3Title" text="Configuración Operativa" styleClass="wiz-step-title" wrapText="true"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Paso 4 -->
+                <HBox alignment="TOP_LEFT" spacing="12" styleClass="wiz-step" fx:id="hboxStep4">
+                    <Label fx:id="indicador4" text="4" styleClass="indicador-inactivo"/>
+                    <VBox spacing="2">
+                        <Label fx:id="lblStep4Title" text="Credenciales Admin" styleClass="wiz-step-title" wrapText="true"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- Espaciador -->
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Progress footer -->
+            <VBox styleClass="wiz-sidebar-footer" spacing="8">
+                <padding><Insets top="16" right="24" bottom="24" left="24"/></padding>
+                <HBox alignment="CENTER_LEFT">
+                    <Label fx:id="lblProgreso" text="PROGRESO" styleClass="wiz-progress-label"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblPorcentaje" text="25%" styleClass="wiz-progress-pct"/>
+                </HBox>
+                <ProgressBar fx:id="pbProgreso" progress="0.25" maxWidth="Infinity" styleClass="wiz-progress-bar"/>
+            </VBox>
         </VBox>
-    </top>
+    </left>
 
     <!-- ═══════════════════════════════════════════════ CONTENIDO ══ -->
     <center>
