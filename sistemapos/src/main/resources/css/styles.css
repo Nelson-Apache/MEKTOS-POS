@@ -1559,3 +1559,501 @@
     -fx-font-size: 12px;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 8, 0, 0, 2);
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ██ Módulo de Inventario — Enhanced UI
+   ══════════════════════════════════════════════════════════════════ */
+
+.inventario-root-stack {
+    -fx-background-color: transparent;
+}
+
+.inventario-root {
+    -fx-background-color: #F5F1EB;
+}
+
+/* ── Tab bar de navegación interna ─────────────────────────────── */
+.inventario-tab-bar {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.08) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 4, 0, 0, 1);
+}
+
+.inventario-tab {
+    -fx-background-color: transparent;
+    -fx-text-fill: #78716C;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 8 20 8 20;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-effect: none;
+    -fx-graphic-text-gap: 8;
+}
+
+.inventario-tab:hover {
+    -fx-background-color: rgba(90,106,207,0.07);
+    -fx-text-fill: #5A6ACF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.08), 4, 0, 0, 0);
+}
+
+.inventario-tab:pressed {
+    -fx-background-color: rgba(90,106,207,0.14);
+    -fx-text-fill: #3C48AA;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+.inventario-tab-active {
+    -fx-background-color: #ECEEF7;
+    -fx-text-fill: #5A6ACF;
+    -fx-font-weight: 700;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.12), 6, 0, 0, 1);
+}
+
+.inventario-tab-active:hover {
+    -fx-background-color: #D0D4F2;
+    -fx-text-fill: #3C48AA;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 8, 0, 0, 1);
+}
+
+.inventario-tab-active:pressed {
+    -fx-background-color: #BFC5ED;
+    -fx-text-fill: #2D3880;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* ── Stat cards con hover lift ─────────────────────────────────── */
+.inventario-stat-card {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.10);
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 20;
+    -fx-min-width: 150px;
+    -fx-pref-width: 190px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+}
+
+.inventario-stat-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.16), 16, 0, 0, 4);
+    -fx-border-color: rgba(90,106,207,0.18);
+    -fx-translate-y: -3;
+}
+
+.inventario-stat-card:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0, 0, 1);
+    -fx-translate-y: 0;
+}
+
+.inventario-stat-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+}
+
+.inventario-stat-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #78716C;
+    -fx-text-transform: uppercase;
+}
+
+.inventario-stat-sub {
+    -fx-font-size: 11px;
+    -fx-text-fill: #A8A29E;
+}
+
+.inventario-icon-box {
+    -fx-background-radius: 12px;
+    -fx-min-width: 44px;
+    -fx-min-height: 44px;
+    -fx-max-width: 44px;
+    -fx-max-height: 44px;
+    -fx-alignment: CENTER;
+}
+
+/* ── Dashboard cards genéricas (chart, stock, proveedores) ─────── */
+.inventario-card {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.10);
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 22;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+}
+
+.inventario-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.14), 14, 0, 0, 4);
+    -fx-border-color: rgba(90,106,207,0.15);
+}
+
+.inventario-card-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #78716C;
+    -fx-letter-spacing: 0.5;
+}
+
+.inventario-section-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+}
+
+/* ── Vista de productos ────────────────────────────────────────── */
+.inventario-productos-view {
+    -fx-background-color: #F5F1EB;
+}
+
+.inventario-toolbar {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.06) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 4, 0, 0, 1);
+}
+
+/* Search field con transición suave de borde y sombra */
+.inventario-search-field {
+    -fx-background-color: #EDE9E2;
+    -fx-border-color: rgba(26,31,46,0.10);
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 10 14 10 36;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1A1F2E;
+    -fx-prompt-text-fill: #A8A29E;
+    -fx-effect: none;
+}
+
+.inventario-search-field:hover {
+    -fx-border-color: rgba(90,106,207,0.30);
+    -fx-background-color: #E8E4DD;
+}
+
+.inventario-search-field:focused {
+    -fx-border-color: #5A6ACF;
+    -fx-background-color: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.22), 10, 0, 0, 0);
+}
+
+.inventario-count-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #78716C;
+    -fx-padding: 0 8 0 0;
+}
+
+/* Botón Nuevo Producto con efecto hover/active */
+.inventario-btn-nuevo {
+    -fx-background-color: #5A6ACF;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 22 10 22;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+    -fx-graphic-text-gap: 8;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.25), 8, 0, 0, 2);
+}
+
+.inventario-btn-nuevo:hover {
+    -fx-background-color: #4A58BF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.35), 14, 0, 0, 4);
+    -fx-translate-y: -1;
+}
+
+.inventario-btn-nuevo:pressed {
+    -fx-background-color: #3C48AA;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.20), 6, 0, 0, 1);
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+    -fx-translate-y: 0;
+}
+
+/* ── Filtros ComboBox ──────────────────────────────────────────── */
+.inventario-filter {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.12);
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 6 12 6 12;
+    -fx-font-size: 13px;
+}
+
+.inventario-filter:hover {
+    -fx-border-color: rgba(90,106,207,0.25);
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.08), 4, 0, 0, 0);
+}
+
+.inventario-filter:focused {
+    -fx-border-color: #5A6ACF;
+}
+
+/* ── Modal overlay con blur oscuro ─────────────────────────────── */
+.inventario-modal-overlay {
+    -fx-background-color: rgba(25, 32, 48, 0.60);
+    -fx-alignment: CENTER;
+}
+
+/* Modal card con sombra premium */
+.inventario-modal {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.10);
+    -fx-border-radius: 16px;
+    -fx-background-radius: 16px;
+    -fx-padding: 30;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 36, 0, 0, 10);
+}
+
+.inventario-modal-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+}
+
+.inventario-modal-close {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 7;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.inventario-modal-close:hover {
+    -fx-background-color: rgba(220,38,38,0.08);
+}
+
+.inventario-modal-close:pressed {
+    -fx-background-color: rgba(220,38,38,0.16);
+    -fx-scale-x: 0.92;
+    -fx-scale-y: 0.92;
+}
+
+/* ── Previsualización de precio ────────────────────────────────── */
+.inventario-price-preview {
+    -fx-background-color: #ECEEF7;
+    -fx-background-radius: 10px;
+    -fx-padding: 12 16 12 16;
+    -fx-border-color: rgba(90,106,207,0.12);
+    -fx-border-radius: 10px;
+}
+
+.inventario-preview-text {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #5A6ACF;
+}
+
+/* ── Label de error en modal ───────────────────────────────────── */
+.inventario-error-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #DC2626;
+    -fx-background-color: #FEE2E2;
+    -fx-background-radius: 8px;
+    -fx-padding: 10 14 10 14;
+    -fx-border-color: rgba(220,38,38,0.15);
+    -fx-border-radius: 8px;
+}
+
+/* ── Filas de proveedor y alert con hover ──────────────────────── */
+.inventario-proveedor-row {
+    -fx-padding: 10 8 10 8;
+    -fx-spacing: 10;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.06) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-background-radius: 6px;
+}
+
+.inventario-proveedor-row:hover {
+    -fx-background-color: rgba(90,106,207,0.05);
+}
+
+.inventario-alert-row {
+    -fx-padding: 10 8 10 8;
+    -fx-spacing: 8;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.06) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-background-radius: 6px;
+}
+
+.inventario-alert-row:hover {
+    -fx-background-color: rgba(220,38,38,0.04);
+}
+
+.inventario-alert-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1A1F2E;
+}
+
+.inventario-alert-cat {
+    -fx-font-size: 11px;
+    -fx-text-fill: #A8A29E;
+}
+
+.inventario-alert-stock {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #DC2626;
+    -fx-background-color: #FEE2E2;
+    -fx-background-radius: 6px;
+    -fx-padding: 3 8 3 8;
+    -fx-min-width: 32;
+    -fx-alignment: CENTER;
+}
+
+/* ── Stock progress bar ────────────────────────────────────────── */
+.inventario-stock-bar-bg {
+    -fx-background-color: rgba(26,31,46,0.06);
+    -fx-background-radius: 3px;
+    -fx-pref-height: 4;
+    -fx-min-height: 4;
+    -fx-max-height: 4;
+}
+
+.inventario-stock-bar-fill {
+    -fx-background-radius: 3px;
+    -fx-pref-height: 4;
+    -fx-min-height: 4;
+    -fx-max-height: 4;
+}
+
+/* ── Table card ────────────────────────────────────────────────── */
+.inventario-table-card {
+    -fx-background-color: #FDFCFA;
+    -fx-border-color: rgba(26,31,46,0.10);
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+}
+
+.inventario-table-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.14), 14, 0, 0, 4);
+    -fx-border-color: rgba(90,106,207,0.15);
+}
+
+.inventario-table-header {
+    -fx-padding: 18 22 14 22;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.07) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* ── BarChart de inventario ────────────────────────────────────── */
+.inventario-bar-chart {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+.inventario-bar-chart .chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.inventario-bar-chart .chart-vertical-grid-lines,
+.inventario-bar-chart .chart-alternative-column-fill,
+.inventario-bar-chart .chart-alternative-row-fill {
+    -fx-stroke: transparent;
+    -fx-fill: transparent;
+}
+
+.inventario-bar-chart .chart-horizontal-grid-lines {
+    -fx-stroke: rgba(26,31,46,0.06);
+}
+
+.inventario-bar-chart .default-color0.chart-bar {
+    -fx-background-color: #5A6ACF;
+    -fx-background-radius: 5 5 0 0;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+}
+
+.inventario-bar-chart .default-color0.chart-bar:hover {
+    -fx-background-color: #4A58BF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.30), 6, 0, 0, 2);
+}
+
+.inventario-bar-chart .x-axis .tick-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #78716C;
+}
+
+.inventario-bar-chart .y-axis .tick-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #A8A29E;
+}
+
+.inventario-bar-chart .axis-tick-mark,
+.inventario-bar-chart .minor-tick-mark {
+    -fx-stroke: transparent;
+}
+
+.inventario-bar-chart .axis-label {
+    -fx-text-fill: transparent;
+}
+
+/* ── Botones de acción modal ───────────────────────────────────── */
+.inventario-btn-cancelar {
+    -fx-background-color: #EDE9E2;
+    -fx-text-fill: #4B5563;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 10 22 10 22;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.inventario-btn-cancelar:hover {
+    -fx-background-color: #E0DCD4;
+    -fx-text-fill: #1A1F2E;
+}
+
+.inventario-btn-cancelar:pressed {
+    -fx-background-color: #D4D0C8;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+.inventario-btn-guardar {
+    -fx-background-color: #5A6ACF;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 24 10 24;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+    -fx-graphic-text-gap: 8;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.25), 8, 0, 0, 2);
+}
+
+.inventario-btn-guardar:hover {
+    -fx-background-color: #4A58BF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.35), 14, 0, 0, 4);
+    -fx-translate-y: -1;
+}
+
+.inventario-btn-guardar:pressed {
+    -fx-background-color: #3C48AA;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 6, 0, 0, 1);
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+    -fx-translate-y: 0;
+}
+
+/* ── Empty state ───────────────────────────────────────────────── */
+.inventario-empty {
+    -fx-font-size: 12px;
+    -fx-text-fill: #A8A29E;
+    -fx-padding: 12 0 4 0;
+}

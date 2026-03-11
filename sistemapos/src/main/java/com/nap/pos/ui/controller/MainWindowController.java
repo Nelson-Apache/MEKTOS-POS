@@ -45,8 +45,9 @@ public class MainWindowController {
     private final ConfiguracionService configuracionService;
     private final CajaService          cajaService;
     private final NotificacionService  notificacionService;
-    private final DashboardController  dashboardController;
-    private final VentasController     ventasController;
+    private final DashboardController   dashboardController;
+    private final VentasController      ventasController;
+    private final InventarioController  inventarioController;
 
     // ── Sidebar ───────────────────────────────────────────────────
     @FXML private VBox   sidebar;
@@ -129,8 +130,7 @@ public class MainWindowController {
     @FXML
     public void navInventario() {
         activarNav(btnInventario, "Inventario");
-        mostrarPlaceholder("Inventario",
-                "Gestión de productos, categorías y stock");
+        contenido.getChildren().setAll(inventarioController.buildView());
     }
 
     @FXML
