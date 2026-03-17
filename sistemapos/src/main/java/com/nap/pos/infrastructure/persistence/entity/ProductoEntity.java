@@ -49,4 +49,7 @@ public class ProductoEntity {
 
     @Column(nullable = false)
     private boolean activo;
+
+    @Column(name = "imagen_path", nullable = true, length = 500)
+    private String imagenPath;
 }

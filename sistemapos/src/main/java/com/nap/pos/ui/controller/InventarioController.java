@@ -28,27 +28,41 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import lombok.RequiredArgsConstructor;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -72,6 +86,7 @@ public class InventarioController {
     private VBox           contentArea;
     private Button         tabResumen;
     private Button         tabProductos;
+    private Button         tabAjuste;
     private TableView<Producto> tablaProductos;
     private Label          lblTotalFiltrados;
 
@@ -135,28 +150,35 @@ public class InventarioController {
             mostrarProductos();
         });
 
+        FontIcon icoAjuste = new FontIcon("fas-sliders-h");
+        icoAjuste.setIconSize(14);
+        icoAjuste.setIconColor(Paint.valueOf("#78716C"));
+
+        tabAjuste = new Button("Ajuste de Stock", icoAjuste);
+        tabAjuste.getStyleClass().add("inventario-tab");
+        tabAjuste.setOnAction(e -> {
+            animarClickTab(tabAjuste);
+            mostrarAjusteStock();
+        });
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        bar.getChildren().addAll(tabResumen, tabProductos, spacer);
+        bar.getChildren().addAll(tabResumen, tabProductos, tabAjuste, spacer);
         return bar;
     }
 
     private void activarTab(Button activo) {
         tabResumen.getStyleClass().remove("inventario-tab-active");
         tabProductos.getStyleClass().remove("inventario-tab-active");
+        tabAjuste.getStyleClass().remove("inventario-tab-active");
         activo.getStyleClass().add("inventario-tab-active");
 
-        // Actualizar colores de iconos
-        FontIcon icoRes = (FontIcon) tabResumen.getGraphic();
-        FontIcon icoProd = (FontIcon) tabProductos.getGraphic();
-        if (activo == tabResumen) {
-            icoRes.setIconColor(Paint.valueOf("#5A6ACF"));
-            icoProd.setIconColor(Paint.valueOf("#78716C"));
-        } else {
-            icoRes.setIconColor(Paint.valueOf("#78716C"));
-            icoProd.setIconColor(Paint.valueOf("#5A6ACF"));
-        }
+        String inactivo = "#78716C";
+        String activo_  = "#5A6ACF";
+        ((FontIcon) tabResumen.getGraphic()) .setIconColor(Paint.valueOf(activo == tabResumen  ? activo_ : inactivo));
+        ((FontIcon) tabProductos.getGraphic()).setIconColor(Paint.valueOf(activo == tabProductos ? activo_ : inactivo));
+        ((FontIcon) tabAjuste.getGraphic())  .setIconColor(Paint.valueOf(activo == tabAjuste   ? activo_ : inactivo));
     }
 
     private void animarClickTab(Button tab) {
@@ -360,7 +382,22 @@ public class InventarioController {
             abrirModalCrearProducto();
         });
 
-        toolbar.getChildren().addAll(searchBox, cmbCategoria, cmbEstado, spacer, lblTotalFiltrados, btnNuevo);
+        // Botón subida masiva
+        FontIcon icoUpload = new FontIcon("fas-file-upload");
+        icoUpload.setIconSize(14);
+        icoUpload.setIconColor(Paint.valueOf("#5A6ACF"));
+
+        Button btnSubidaMasiva = new Button("Subida Masiva", icoUpload);
+        btnSubidaMasiva.getStyleClass().add("inventario-btn-masiva");
+        btnSubidaMasiva.setOnAction(e -> {
+            animarClickBtn(btnSubidaMasiva);
+            abrirModalSubidaMasiva();
+        });
+
+        HBox botonesAccion = new HBox(10, btnSubidaMasiva, btnNuevo);
+        botonesAccion.setAlignment(Pos.CENTER_RIGHT);
+
+        toolbar.getChildren().addAll(searchBox, cmbCategoria, cmbEstado, spacer, lblTotalFiltrados, botonesAccion);
 
         // ── Tabla de productos ────────────────────────────────────
         tablaProductos = buildTablaProductos();
@@ -391,18 +428,71 @@ public class InventarioController {
 
     private TableView<Producto> buildTablaProductos() {
         TableView<Producto> tabla = new TableView<>();
-        tabla.getStyleClass().add("table-view");
+        tabla.getStyleClass().addAll("table-view", "prod-table-clickable");
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tabla.setPlaceholder(new Label("No hay productos para mostrar."));
+
+        // Placeholder con estilo mejorado
+        VBox placeholder = new VBox(10);
+        placeholder.setAlignment(Pos.CENTER);
+        FontIcon icoEmpty = new FontIcon("fas-box-open");
+        icoEmpty.setIconSize(36);
+        icoEmpty.setIconColor(Paint.valueOf("#A8A29E"));
+        Label lblEmpty = new Label("No hay productos para mostrar");
+        lblEmpty.getStyleClass().add("inventario-empty");
+        placeholder.getChildren().addAll(icoEmpty, lblEmpty);
+        tabla.setPlaceholder(placeholder);
+
+        // ── Row factory: hover cursor + click → detalle ───────────
+        tabla.setRowFactory(tv -> {
+            TableRow<Producto> row = new TableRow<>();
+            row.getStyleClass().add("prod-table-row");
+            row.setCursor(javafx.scene.Cursor.HAND);
+            row.setOnMouseClicked(e -> {
+                if (!row.isEmpty() && e.getClickCount() == 1) {
+                    mostrarDetalleProducto(row.getItem());
+                }
+            });
+            return row;
+        });
+
+        // ── Columna: miniatura ─────────────────────────────────────
+        TableColumn<Producto, String> colImg = new TableColumn<>("");
+        colImg.setCellValueFactory(d -> new SimpleStringProperty(""));
+        colImg.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(buildThumbnailCell(getTableRow().getItem().getImagenPath()));
+                    setAlignment(Pos.CENTER);
+                }
+            }
+        });
+        colImg.setMinWidth(60);
+        colImg.setMaxWidth(60);
+        colImg.setSortable(false);
 
         TableColumn<Producto, String> colCodigo = new TableColumn<>("Código");
         colCodigo.setCellValueFactory(d -> new SimpleStringProperty(
                 d.getValue().getCodigoBarras() != null ? d.getValue().getCodigoBarras() : "—"));
-        colCodigo.setMinWidth(120);
-        colCodigo.setMaxWidth(160);
+        colCodigo.setMinWidth(110);
+        colCodigo.setMaxWidth(150);
 
         TableColumn<Producto, String> colNombre = new TableColumn<>("Nombre");
         colNombre.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombre()));
+        colNombre.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); setGraphic(null); return; }
+                Label lbl = new Label(item);
+                lbl.getStyleClass().add("prod-nombre-cell");
+                setGraphic(lbl);
+                setText(null);
+            }
+        });
 
         TableColumn<Producto, String> colCategoria = new TableColumn<>("Categoría");
         colCategoria.setCellValueFactory(d -> {
@@ -412,29 +502,30 @@ public class InventarioController {
             }
             return new SimpleStringProperty("—");
         });
-        colCategoria.setMinWidth(120);
-        colCategoria.setMaxWidth(180);
+        colCategoria.setMinWidth(110);
+        colCategoria.setMaxWidth(170);
 
         TableColumn<Producto, String> colSubcategoria = new TableColumn<>("Subcategoría");
         colSubcategoria.setCellValueFactory(d -> {
             Subcategoria sub = d.getValue().getSubcategoria();
             return new SimpleStringProperty(sub != null ? sub.getNombre() : "—");
         });
-        colSubcategoria.setMinWidth(120);
-        colSubcategoria.setMaxWidth(180);
-
-        TableColumn<Producto, String> colPrecioCompra = new TableColumn<>("P. Compra");
-        colPrecioCompra.setCellValueFactory(d -> {
-            BigDecimal pc = d.getValue().getPrecioCompra();
-            return new SimpleStringProperty(pc != null ? FMT_MONEDA.format(pc) : "—");
-        });
-        colPrecioCompra.setMinWidth(100);
-        colPrecioCompra.setMaxWidth(140);
+        colSubcategoria.setMinWidth(110);
+        colSubcategoria.setMaxWidth(170);
 
         TableColumn<Producto, String> colPrecioVenta = new TableColumn<>("P. Venta");
         colPrecioVenta.setCellValueFactory(d -> {
             BigDecimal pv = d.getValue().getPrecioVenta();
             return new SimpleStringProperty(pv != null ? FMT_MONEDA.format(pv) : "—");
+        });
+        colPrecioVenta.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); return; }
+                setText(item);
+                getStyleClass().add("prod-precio-cell");
+            }
         });
         colPrecioVenta.setMinWidth(100);
         colPrecioVenta.setMaxWidth(140);
@@ -459,11 +550,12 @@ public class InventarioController {
                         lbl.getStyleClass().addAll("dash-badge", "dash-badge-success");
                     }
                     setGraphic(lbl);
+                    setText(null);
                 }
             }
         });
-        colStock.setMinWidth(80);
-        colStock.setMaxWidth(100);
+        colStock.setMinWidth(76);
+        colStock.setMaxWidth(96);
 
         TableColumn<Producto, String> colEstado = new TableColumn<>("Estado");
         colEstado.setCellValueFactory(d -> new SimpleStringProperty(""));
@@ -479,16 +571,82 @@ public class InventarioController {
                     badge.getStyleClass().addAll("dash-badge",
                             p.isActivo() ? "dash-badge-success" : "dash-badge-danger");
                     setGraphic(badge);
+                    setText(null);
                 }
             }
         });
-        colEstado.setMinWidth(90);
-        colEstado.setMaxWidth(110);
+        colEstado.setMinWidth(86);
+        colEstado.setMaxWidth(106);
 
-        tabla.getColumns().addAll(colCodigo, colNombre, colCategoria, colSubcategoria,
-                colPrecioCompra, colPrecioVenta, colStock, colEstado);
+        // Columna de acción rápida (ver detalle)
+        TableColumn<Producto, String> colAccion = new TableColumn<>("");
+        colAccion.setCellValueFactory(d -> new SimpleStringProperty(""));
+        colAccion.setCellFactory(col -> new TableCell<>() {
+            private final Button btn = new Button();
+            {
+                FontIcon ico = new FontIcon("fas-eye");
+                ico.setIconSize(13);
+                ico.setIconColor(Paint.valueOf("#5A6ACF"));
+                btn.setGraphic(ico);
+                btn.getStyleClass().add("prod-row-arrow");
+                btn.setOnAction(e -> {
+                    if (getTableRow() != null && getTableRow().getItem() != null)
+                        mostrarDetalleProducto(getTableRow().getItem());
+                });
+                setAlignment(Pos.CENTER);
+            }
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btn);
+                setText(null);
+            }
+        });
+        colAccion.setMinWidth(44);
+        colAccion.setMaxWidth(44);
+        colAccion.setSortable(false);
+
+        tabla.getColumns().addAll(colImg, colCodigo, colNombre, colCategoria, colSubcategoria,
+                colPrecioVenta, colStock, colEstado, colAccion);
 
         return tabla;
+    }
+
+    /** Miniatura para celda de tabla — imagen o placeholder */
+    private StackPane buildThumbnailCell(String ruta) {
+        StackPane wrap = new StackPane();
+        wrap.getStyleClass().add("prod-thumbnail-cell");
+        if (ruta != null && !ruta.isBlank()) {
+            try {
+                ImageView iv = new ImageView();
+                iv.setFitWidth(40);
+                iv.setFitHeight(40);
+                iv.setPreserveRatio(true);
+                iv.setSmooth(true);
+                iv.getStyleClass().add("prod-thumbnail");
+                Image img = new Image(Paths.get(ruta).toUri().toString(), 40, 40, true, true);
+                iv.setImage(img);
+                wrap.getChildren().add(iv);
+            } catch (Exception ex) {
+                wrap.getChildren().add(buildImgPlaceholder(18));
+            }
+        } else {
+            wrap.getChildren().add(buildImgPlaceholder(18));
+        }
+        return wrap;
+    }
+
+    /** Miniatura placeholder cuando el producto no tiene imagen */
+    private Node buildImgPlaceholder(int iconSize) {
+        StackPane ph = new StackPane();
+        ph.getStyleClass().add("prod-thumbnail-placeholder");
+        ph.setMinSize(40, 40);
+        ph.setMaxSize(40, 40);
+        FontIcon ico = new FontIcon("fas-image");
+        ico.setIconSize(iconSize);
+        ico.setIconColor(Paint.valueOf("#C4BEB7"));
+        ph.getChildren().add(ico);
+        return ph;
     }
 
     private void filtrarProductos(String texto, Categoria categoria, String estado) {
@@ -1364,6 +1522,1133 @@ public class InventarioController {
         ParallelTransition entrada = new ParallelTransition(fade, slide, scale);
         entrada.setDelay(Duration.millis(delayMs));
         entrada.play();
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  Wizard de Importación Masiva (CSV / Excel)
+    // ══════════════════════════════════════════════════════════════════
+
+    private void abrirModalSubidaMasiva() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/importacion.fxml"));
+            loader.setControllerFactory(com.nap.pos.Launcher.getContext()::getBean);
+
+            javafx.scene.Parent root = loader.load();
+            Scene scene = new Scene(root);
+
+            Stage stage = new Stage();
+            stage.setTitle("NAP POS — Importación Masiva");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(rootStack.getScene().getWindow());
+            stage.setScene(scene);
+            stage.setWidth(940);
+            stage.setHeight(680);
+            stage.setMinWidth(860);
+            stage.setMinHeight(580);
+            stage.centerOnScreen();
+            stage.showAndWait();
+
+            // Refrescar inventario si se importaron registros
+            recargarDatos();
+            productosFiltrados = new ArrayList<>(todosProductos);
+            actualizarTabla();
+
+        } catch (Exception e) {
+            Alert alerta = new Alert(Alert.AlertType.ERROR);
+            alerta.setTitle("Error");
+            alerta.setHeaderText(null);
+            alerta.setContentText("No se pudo abrir el wizard de importación:\n" + e.getMessage());
+            alerta.showAndWait();
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  PANTALLA 3 — Detalle de Producto (View Switching)
+    // ══════════════════════════════════════════════════════════════
+
+    private void mostrarDetalleProducto(Producto productoIn) {
+        // Refrescar el producto desde la BD para tener datos actualizados
+        Producto producto;
+        try { producto = productoService.findById(productoIn.getId()); }
+        catch (Exception e) { producto = productoIn; }
+        final Producto p = producto;
+
+        activarTab(tabProductos);
+
+        VBox view = new VBox(0);
+        view.getStyleClass().add("prod-detalle-root");
+        VBox.setVgrow(view, Priority.ALWAYS);
+
+        // ── Header ────────────────────────────────────────────────
+        HBox header = new HBox(12);
+        header.getStyleClass().add("prod-detalle-header");
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnVolver = new Button("Productos");
+        FontIcon icoBack = new FontIcon("fas-arrow-left");
+        icoBack.setIconSize(13);
+        icoBack.setIconColor(Paint.valueOf("#5A6ACF"));
+        btnVolver.setGraphic(icoBack);
+        btnVolver.getStyleClass().add("prod-detalle-back-btn");
+        btnVolver.setOnAction(e -> mostrarProductos());
+
+        Label lblSep = new Label("›");
+        lblSep.getStyleClass().add("prod-detalle-breadcrumb-sep");
+
+        Label lblNombre = new Label(p.getNombre());
+        lblNombre.getStyleClass().add("prod-detalle-title");
+        HBox.setHgrow(lblNombre, Priority.ALWAYS);
+
+        Label badgeEstado = new Label(p.isActivo() ? "Activo" : "Inactivo");
+        badgeEstado.getStyleClass().addAll("dash-badge",
+                p.isActivo() ? "dash-badge-success" : "dash-badge-danger");
+
+        header.getChildren().addAll(btnVolver, lblSep, lblNombre, badgeEstado);
+
+        // ── Cuerpo ────────────────────────────────────────────────
+        HBox body = new HBox(20);
+        body.getStyleClass().add("prod-detalle-body");
+        body.setPadding(new Insets(24, 28, 0, 28));
+        VBox.setVgrow(body, Priority.ALWAYS);
+
+        // ── Panel izquierdo: imagen ───────────────────────────────
+        VBox panelImagen = new VBox(14);
+        panelImagen.getStyleClass().add("prod-detalle-image-panel");
+        panelImagen.setAlignment(Pos.TOP_CENTER);
+        panelImagen.setMinWidth(220);
+        panelImagen.setMaxWidth(220);
+
+        // Título sección
+        Label lblSecImg = new Label("IMAGEN DEL PRODUCTO");
+        lblSecImg.getStyleClass().add("prod-detalle-section-label");
+
+        // Contenedor de imagen
+        StackPane imgBox = new StackPane();
+        imgBox.getStyleClass().add("prod-detalle-img-box");
+        imgBox.setMinSize(190, 190);
+        imgBox.setMaxSize(190, 190);
+
+        ImageView imgView = new ImageView();
+        imgView.setFitWidth(178);
+        imgView.setFitHeight(178);
+        imgView.setPreserveRatio(true);
+        imgView.setSmooth(true);
+
+        if (p.getImagenPath() != null && !p.getImagenPath().isBlank()) {
+            try {
+                imgView.setImage(new Image(Paths.get(p.getImagenPath()).toUri().toString(),
+                        178, 178, true, true));
+                imgBox.getChildren().add(imgView);
+            } catch (Exception ex) {
+                imgBox.getChildren().add(buildImgBoxPlaceholder());
+            }
+        } else {
+            imgBox.getChildren().add(buildImgBoxPlaceholder());
+        }
+
+        // Botón cambiar imagen
+        FontIcon icoCamera = new FontIcon("fas-camera");
+        icoCamera.setIconSize(13);
+        icoCamera.setIconColor(Paint.valueOf("#5A6ACF"));
+        Button btnCambiarImg = new Button("Cambiar imagen", icoCamera);
+        btnCambiarImg.getStyleClass().add("inventario-btn-masiva");
+        btnCambiarImg.setMaxWidth(Double.MAX_VALUE);
+        btnCambiarImg.setOnAction(e -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Seleccionar imagen del producto");
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg", "*.webp", "*.gif"));
+            File origen = chooser.showOpenDialog(rootStack.getScene().getWindow());
+            if (origen == null) return;
+            try {
+                String ext = obtenerExtensionImg(origen.getName());
+                Path carpeta = Paths.get(System.getProperty("user.home"), ".nappos", "assets", "products");
+                Files.createDirectories(carpeta);
+                Path destino = carpeta.resolve("producto_" + p.getId() + "." + ext);
+                Files.copy(origen.toPath(), destino, StandardCopyOption.REPLACE_EXISTING);
+                String rutaNueva = destino.toAbsolutePath().toString();
+
+                productoService.actualizarImagen(p.getId(), rutaNueva);
+
+                // Actualizar imagen en pantalla
+                Image nuevaImg = new Image(destino.toUri().toString(), 178, 178, true, true);
+                imgView.setImage(nuevaImg);
+                imgBox.getChildren().setAll(imgView);
+
+                actualizarTabla(); // refrescar thumbnails de la tabla
+
+                animarPulse(imgBox);
+            } catch (Exception ex) {
+                Alert err = new Alert(Alert.AlertType.ERROR);
+                err.setTitle("Error");
+                err.setHeaderText(null);
+                err.setContentText("No se pudo guardar la imagen: " + ex.getMessage());
+                err.showAndWait();
+            }
+        });
+
+        panelImagen.getChildren().addAll(lblSecImg, imgBox, btnCambiarImg);
+
+        // ── Panel derecho: especificaciones ───────────────────────
+        VBox panelInfo = new VBox(16);
+        HBox.setHgrow(panelInfo, Priority.ALWAYS);
+
+        // Sección: Información General
+        VBox secGeneral = crearSeccionDetalle("INFORMACIÓN GENERAL", "fas-tag", "#5A6ACF");
+        VBox gridGeneral = new VBox(0);
+        gridGeneral.getStyleClass().add("prod-detalle-grid");
+
+        String catNombre = (p.getSubcategoria() != null && p.getSubcategoria().getCategoria() != null)
+                ? p.getSubcategoria().getCategoria().getNombre() : "—";
+        String subNombre = p.getSubcategoria() != null ? p.getSubcategoria().getNombre() : "—";
+        String provNombre = p.getProveedorPrincipal() != null ? p.getProveedorPrincipal().getNombre() : "—";
+
+        gridGeneral.getChildren().addAll(
+                crearFilaDetalle("Código de barras", p.getCodigoBarras() != null ? p.getCodigoBarras() : "—"),
+                crearFilaDetalle("Nombre", p.getNombre()),
+                crearFilaDetalle("Categoría", catNombre),
+                crearFilaDetalle("Subcategoría", subNombre),
+                crearFilaDetalle("Proveedor", provNombre)
+        );
+        secGeneral.getChildren().add(gridGeneral);
+
+        // Sección: Precios
+        VBox secPrecios = crearSeccionDetalle("PRECIOS Y MARGEN", "fas-dollar-sign", "#D97706");
+        VBox gridPrecios = new VBox(0);
+        gridPrecios.getStyleClass().add("prod-detalle-grid");
+
+        String pcStr = p.getPrecioCompra() != null ? FMT_MONEDA.format(p.getPrecioCompra()) : "—";
+        String pvStr = p.getPrecioVenta() != null ? FMT_MONEDA.format(p.getPrecioVenta()) : "—";
+        String ajusteStr = p.getAjusteProducto() != null
+                ? (p.getAjusteProducto().compareTo(BigDecimal.ZERO) >= 0
+                ? "+" + p.getAjusteProducto() + "%" : p.getAjusteProducto() + "%") : "0%";
+
+        String margenStr = "—";
+        if (p.getProveedorPrincipal() != null && p.getAjusteProducto() != null) {
+            BigDecimal margen = p.getProveedorPrincipal().getPorcentajeGanancia().add(p.getAjusteProducto());
+            margenStr = margen + "%";
+        }
+
+        gridPrecios.getChildren().addAll(
+                crearFilaDetalle("Precio de compra", pcStr),
+                crearFilaDetalle("Precio de venta", pvStr),
+                crearFilaDetalle("Ajuste del producto", ajusteStr),
+                crearFilaDetalle("Margen efectivo", margenStr)
+        );
+        secPrecios.getChildren().add(gridPrecios);
+
+        // Sección: Stock
+        VBox secStock = crearSeccionDetalle("STOCK", "fas-boxes", p.getStock() == 0 ? "#DC2626" : "#15803D");
+        VBox gridStock = new VBox(0);
+        gridStock.getStyleClass().add("prod-detalle-grid");
+
+        Label lblStockVal = new Label(String.valueOf(p.getStock()));
+        String stockBadge = p.getStock() == 0 ? "dash-badge-danger"
+                : p.getStock() <= 5 ? "dash-badge-credito" : "dash-badge-success";
+        lblStockVal.getStyleClass().addAll("dash-badge", stockBadge);
+
+        HBox filaStock = crearFilaDetalle("Unidades disponibles", "");
+        ((Label) filaStock.getChildren().get(1)).setGraphic(lblStockVal);
+        ((Label) filaStock.getChildren().get(1)).setText(null);
+
+        gridStock.getChildren().addAll(
+                filaStock,
+                crearFilaDetalle("Estado", p.isActivo() ? "Activo — disponible en ventas" : "Inactivo — oculto en ventas")
+        );
+        secStock.getChildren().add(gridStock);
+
+        panelInfo.getChildren().addAll(secGeneral, secPrecios, secStock);
+
+        ScrollPane scrollInfo = new ScrollPane(panelInfo);
+        scrollInfo.setFitToWidth(true);
+        scrollInfo.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollInfo.getStyleClass().add("dashboard-scroll");
+        HBox.setHgrow(scrollInfo, Priority.ALWAYS);
+
+        body.getChildren().addAll(panelImagen, scrollInfo);
+
+        // ── Footer: botones de acción ─────────────────────────────
+        HBox footer = new HBox(12);
+        footer.getStyleClass().add("prod-detalle-footer");
+        footer.setAlignment(Pos.CENTER_RIGHT);
+
+        // Botón editar
+        FontIcon icoEdit = new FontIcon("fas-edit");
+        icoEdit.setIconSize(13);
+        icoEdit.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnEditar = new Button("Editar Producto", icoEdit);
+        btnEditar.getStyleClass().add("inventario-btn-guardar");
+        btnEditar.setOnAction(e -> abrirModalEditarProducto(p, view));
+
+        // Botón activar/desactivar
+        String toggleLabel = p.isActivo() ? "Desactivar" : "Activar";
+        String toggleStyle = p.isActivo() ? "prod-btn-danger" : "prod-btn-success";
+        String toggleIco = p.isActivo() ? "fas-ban" : "fas-check-circle";
+        FontIcon icoToggle = new FontIcon(toggleIco);
+        icoToggle.setIconSize(13);
+        icoToggle.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnToggle = new Button(toggleLabel, icoToggle);
+        btnToggle.getStyleClass().addAll(toggleStyle);
+        btnToggle.setOnAction(e -> {
+            String accion = p.isActivo() ? "desactivar" : "activar";
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Confirmar");
+            confirm.setHeaderText(null);
+            confirm.setContentText("¿Deseas " + accion + " el producto \"" + p.getNombre() + "\"?");
+            confirm.showAndWait().ifPresent(resp -> {
+                if (resp == ButtonType.OK) {
+                    try {
+                        if (p.isActivo()) productoService.desactivar(p.getId());
+                        else productoService.activar(p.getId());
+                        recargarDatos();
+                        // Reabrir detalle con datos actualizados
+                        Producto actualizado = productoService.findById(p.getId());
+                        mostrarDetalleProducto(actualizado);
+                    } catch (BusinessException be) {
+                        Alert err = new Alert(Alert.AlertType.ERROR);
+                        err.setHeaderText(null);
+                        err.setContentText(be.getMessage());
+                        err.showAndWait();
+                    }
+                }
+            });
+        });
+
+        footer.getChildren().addAll(btnToggle, btnEditar);
+
+        view.getChildren().addAll(header, body, footer);
+
+        // Animaciones de entrada
+        animarEntrada(header, 0);
+        animarEntrada(body,   80);
+        animarEntrada(footer, 140);
+
+        contentArea.getChildren().setAll(view);
+    }
+
+    /** Placeholder grande para la caja de imagen en el detalle */
+    private Node buildImgBoxPlaceholder() {
+        VBox ph = new VBox(10);
+        ph.setAlignment(Pos.CENTER);
+        FontIcon ico = new FontIcon("fas-image");
+        ico.setIconSize(48);
+        ico.setIconColor(Paint.valueOf("#C4BEB7"));
+        Label lbl = new Label("Sin imagen");
+        lbl.getStyleClass().add("prod-detalle-img-hint");
+        ph.getChildren().addAll(ico, lbl);
+        return ph;
+    }
+
+    /** Crea el encabezado de una sección en el panel de detalle */
+    private VBox crearSeccionDetalle(String titulo, String icoLiteral, String icoColor) {
+        VBox sec = new VBox(10);
+        sec.getStyleClass().add("prod-detalle-section");
+
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        FontIcon ico = new FontIcon(icoLiteral);
+        ico.setIconSize(13);
+        ico.setIconColor(Paint.valueOf(icoColor));
+
+        Label lbl = new Label(titulo);
+        lbl.getStyleClass().add("prod-detalle-section-label");
+        header.getChildren().addAll(ico, lbl);
+        sec.getChildren().add(header);
+        return sec;
+    }
+
+    /** Fila label → valor para el grid de especificaciones */
+    private HBox crearFilaDetalle(String etiqueta, String valor) {
+        HBox row = new HBox();
+        row.getStyleClass().add("prod-detalle-row");
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        Label lKey = new Label(etiqueta);
+        lKey.getStyleClass().add("prod-detalle-key");
+        lKey.setMinWidth(160);
+
+        Label lVal = new Label(valor);
+        lVal.getStyleClass().add("prod-detalle-val");
+        HBox.setHgrow(lVal, Priority.ALWAYS);
+
+        row.getChildren().addAll(lKey, lVal);
+        return row;
+    }
+
+    private String obtenerExtensionImg(String nombre) {
+        int dot = nombre.lastIndexOf('.');
+        return dot >= 0 ? nombre.substring(dot + 1).toLowerCase() : "png";
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  MODAL — Editar Producto (abre desde el detalle)
+    // ══════════════════════════════════════════════════════════════
+
+    private void abrirModalEditarProducto(Producto producto, VBox detalleView) {
+        StackPane overlay = new StackPane();
+        overlay.getStyleClass().add("inventario-modal-overlay");
+        overlay.setOnMouseClicked(e -> {
+            if (e.getTarget() == overlay) cerrarModal(overlay);
+        });
+
+        VBox modal = new VBox(16);
+        modal.getStyleClass().add("inventario-modal");
+        modal.setMaxWidth(600);
+        modal.setMaxHeight(Region.USE_PREF_SIZE);
+        modal.setAlignment(Pos.TOP_LEFT);
+
+        // Header
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        FontIcon icoModal = new FontIcon("fas-edit");
+        icoModal.setIconSize(20);
+        icoModal.setIconColor(Paint.valueOf("#5A6ACF"));
+        Label lblTitle = new Label("Editar Producto");
+        lblTitle.getStyleClass().add("inventario-modal-title");
+        HBox.setHgrow(lblTitle, Priority.ALWAYS);
+        Button btnCerrar = new Button();
+        FontIcon icoCerrar = new FontIcon("fas-times");
+        icoCerrar.setIconSize(16);
+        icoCerrar.setIconColor(Paint.valueOf("#78716C"));
+        btnCerrar.setGraphic(icoCerrar);
+        btnCerrar.getStyleClass().add("inventario-modal-close");
+        btnCerrar.setOnAction(e -> cerrarModal(overlay));
+        header.getChildren().addAll(icoModal, lblTitle, btnCerrar);
+
+        Separator sep = new Separator();
+
+        // ── Campos ────────────────────────────────────────────────
+        VBox fieldNombre = crearCampo("Nombre del producto *");
+        TextField txtNombre = (TextField) fieldNombre.getChildren().get(1);
+        txtNombre.setText(producto.getNombre());
+
+        VBox fieldCodigo = crearCampo("Código de barras *");
+        TextField txtCodigo = (TextField) fieldCodigo.getChildren().get(1);
+        txtCodigo.setText(producto.getCodigoBarras() != null ? producto.getCodigoBarras() : "");
+
+        HBox row1 = new HBox(14, fieldNombre, fieldCodigo);
+        HBox.setHgrow(fieldNombre, Priority.ALWAYS);
+        HBox.setHgrow(fieldCodigo, Priority.ALWAYS);
+
+        // Categoría
+        VBox fieldCategoria = new VBox(6);
+        Label lblCat = new Label("Categoría *");
+        lblCat.getStyleClass().add("form-label");
+        ComboBox<Categoria> cmbCat = new ComboBox<>();
+        cmbCat.setPromptText("Seleccionar categoría");
+        cmbCat.setMaxWidth(Double.MAX_VALUE);
+        try { cmbCat.setItems(FXCollections.observableArrayList(categoriaService.findAllActivas())); }
+        catch (Exception ignored) {}
+        cmbCat.setConverter(new StringConverter<>() {
+            @Override public String toString(Categoria c) { return c == null ? "" : c.getNombre(); }
+            @Override public Categoria fromString(String s) { return null; }
+        });
+        // Pre-seleccionar
+        if (producto.getSubcategoria() != null && producto.getSubcategoria().getCategoria() != null) {
+            cmbCat.getItems().stream()
+                    .filter(c -> c.getId().equals(producto.getSubcategoria().getCategoria().getId()))
+                    .findFirst().ifPresent(cmbCat::setValue);
+        }
+        fieldCategoria.getChildren().addAll(lblCat, cmbCat);
+
+        // Subcategoría
+        VBox fieldSubcat = new VBox(6);
+        Label lblSubcat = new Label("Subcategoría *");
+        lblSubcat.getStyleClass().add("form-label");
+        ComboBox<Subcategoria> cmbSubcat = new ComboBox<>();
+        cmbSubcat.setPromptText("Seleccionar subcategoría");
+        cmbSubcat.setMaxWidth(Double.MAX_VALUE);
+        cmbSubcat.setConverter(new StringConverter<>() {
+            @Override public String toString(Subcategoria s) { return s == null ? "" : s.getNombre(); }
+            @Override public Subcategoria fromString(String str) { return null; }
+        });
+        // Cargar subcategorías de la categoría actual
+        if (cmbCat.getValue() != null) {
+            try {
+                cmbSubcat.setItems(FXCollections.observableArrayList(
+                        subcategoriaService.findByCategoriaId(cmbCat.getValue().getId())));
+                cmbSubcat.setDisable(false);
+            } catch (Exception ignored) {}
+        } else {
+            cmbSubcat.setDisable(true);
+        }
+        // Pre-seleccionar subcategoría
+        if (producto.getSubcategoria() != null) {
+            cmbSubcat.getItems().stream()
+                    .filter(s -> s.getId().equals(producto.getSubcategoria().getId()))
+                    .findFirst().ifPresent(cmbSubcat::setValue);
+        }
+        fieldSubcat.getChildren().addAll(lblSubcat, cmbSubcat);
+
+        cmbCat.valueProperty().addListener((obs, old, cat) -> {
+            cmbSubcat.getItems().clear();
+            cmbSubcat.setValue(null);
+            if (cat != null) {
+                try {
+                    cmbSubcat.setItems(FXCollections.observableArrayList(
+                            subcategoriaService.findByCategoriaId(cat.getId())));
+                    cmbSubcat.setDisable(false);
+                } catch (Exception ignored) { cmbSubcat.setDisable(true); }
+            } else { cmbSubcat.setDisable(true); }
+        });
+
+        HBox row2 = new HBox(14, fieldCategoria, fieldSubcat);
+        HBox.setHgrow(fieldCategoria, Priority.ALWAYS);
+        HBox.setHgrow(fieldSubcat, Priority.ALWAYS);
+
+        // Proveedor
+        VBox fieldProveedor = new VBox(6);
+        Label lblProv = new Label("Proveedor *");
+        lblProv.getStyleClass().add("form-label");
+        ComboBox<Proveedor> cmbProv = new ComboBox<>();
+        cmbProv.setPromptText("Seleccionar proveedor");
+        cmbProv.setMaxWidth(Double.MAX_VALUE);
+        try { cmbProv.setItems(FXCollections.observableArrayList(proveedorService.findAllActivos())); }
+        catch (Exception ignored) {}
+        cmbProv.setConverter(new StringConverter<>() {
+            @Override public String toString(Proveedor p) {
+                return p == null ? "" : p.getNombre() + " (" + p.getPorcentajeGanancia() + "%)";
+            }
+            @Override public Proveedor fromString(String s) { return null; }
+        });
+        if (producto.getProveedorPrincipal() != null) {
+            cmbProv.getItems().stream()
+                    .filter(pr -> pr.getId().equals(producto.getProveedorPrincipal().getId()))
+                    .findFirst().ifPresent(cmbProv::setValue);
+        }
+        fieldProveedor.getChildren().addAll(lblProv, cmbProv);
+
+        // Precio de compra
+        VBox fieldPrecio = crearCampo("Precio de compra *");
+        TextField txtPrecio = (TextField) fieldPrecio.getChildren().get(1);
+        txtPrecio.setText(producto.getPrecioCompra() != null
+                ? producto.getPrecioCompra().toPlainString() : "");
+
+        HBox row3 = new HBox(14, fieldProveedor, fieldPrecio);
+        HBox.setHgrow(fieldProveedor, Priority.ALWAYS);
+        HBox.setHgrow(fieldPrecio, Priority.ALWAYS);
+
+        // Stock + Ajuste
+        VBox fieldStock = crearCampo("Stock actual *");
+        TextField txtStock = (TextField) fieldStock.getChildren().get(1);
+        txtStock.setText(String.valueOf(producto.getStock()));
+
+        VBox fieldAjuste = crearCampo("Ajuste margen (%)");
+        TextField txtAjuste = (TextField) fieldAjuste.getChildren().get(1);
+        txtAjuste.setText(producto.getAjusteProducto() != null
+                ? producto.getAjusteProducto().toPlainString() : "0");
+
+        HBox row4 = new HBox(14, fieldStock, fieldAjuste);
+        HBox.setHgrow(fieldStock, Priority.ALWAYS);
+        HBox.setHgrow(fieldAjuste, Priority.ALWAYS);
+
+        // Preview precio
+        HBox previewBox = new HBox(10);
+        previewBox.setAlignment(Pos.CENTER_LEFT);
+        previewBox.getStyleClass().add("inventario-price-preview");
+        FontIcon icoInfo = new FontIcon("fas-info-circle");
+        icoInfo.setIconSize(14);
+        icoInfo.setIconColor(Paint.valueOf("#5A6ACF"));
+        Label lblPreview = new Label("El precio de venta se calcula automáticamente");
+        lblPreview.getStyleClass().add("inventario-preview-text");
+        previewBox.getChildren().addAll(icoInfo, lblPreview);
+
+        Runnable calcularPreview = () -> {
+            try {
+                BigDecimal pc = new BigDecimal(txtPrecio.getText().trim());
+                Proveedor prov = cmbProv.getValue();
+                if (prov == null) { lblPreview.setText("Selecciona proveedor para ver el precio"); return; }
+                BigDecimal ajuste = BigDecimal.ZERO;
+                if (!txtAjuste.getText().isBlank()) ajuste = new BigDecimal(txtAjuste.getText().trim());
+                BigDecimal margen = prov.getPorcentajeGanancia().add(ajuste);
+                BigDecimal factor = BigDecimal.ONE.add(margen.divide(new BigDecimal("100"), 10, java.math.RoundingMode.HALF_UP));
+                BigDecimal pv = pc.multiply(factor).setScale(2, java.math.RoundingMode.HALF_UP);
+                lblPreview.setText("Precio de venta estimado: " + FMT_MONEDA.format(pv) + "  (margen " + margen + "%)");
+                animarPulse(previewBox);
+            } catch (Exception ignored) {
+                lblPreview.setText("El precio de venta se calcula automáticamente");
+            }
+        };
+        txtPrecio.textProperty().addListener((obs, o, n) -> calcularPreview.run());
+        txtAjuste.textProperty().addListener((obs, o, n) -> calcularPreview.run());
+        cmbProv.valueProperty().addListener((obs, o, n) -> calcularPreview.run());
+        calcularPreview.run();
+
+        // Error label
+        Label lblError = new Label();
+        lblError.getStyleClass().add("inventario-error-label");
+        lblError.setVisible(false);
+        lblError.setManaged(false);
+
+        Separator sep2 = new Separator();
+
+        HBox actions = new HBox(10);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.getStyleClass().add("inventario-btn-cancelar");
+        btnCancelar.setOnAction(e -> cerrarModal(overlay));
+
+        FontIcon icoGuardar = new FontIcon("fas-save");
+        icoGuardar.setIconSize(14);
+        icoGuardar.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnGuardar = new Button("Guardar Cambios", icoGuardar);
+        btnGuardar.getStyleClass().add("inventario-btn-guardar");
+        btnGuardar.setOnAction(e -> {
+            lblError.setVisible(false);
+            lblError.setManaged(false);
+            try {
+                String nombre = txtNombre.getText().trim();
+                String codigo = txtCodigo.getText().trim();
+                if (nombre.isEmpty() || codigo.isEmpty()) {
+                    mostrarErrorModal(lblError, "El nombre y código de barras son obligatorios."); return;
+                }
+                if (cmbCat.getValue() == null || cmbSubcat.getValue() == null) {
+                    mostrarErrorModal(lblError, "Selecciona una categoría y subcategoría."); return;
+                }
+                if (cmbProv.getValue() == null) {
+                    mostrarErrorModal(lblError, "Selecciona un proveedor."); return;
+                }
+                BigDecimal precioCompra;
+                try {
+                    precioCompra = new BigDecimal(txtPrecio.getText().trim());
+                    if (precioCompra.compareTo(BigDecimal.ZERO) <= 0) throw new NumberFormatException();
+                } catch (NumberFormatException ex) {
+                    mostrarErrorModal(lblError, "El precio de compra debe ser mayor a 0."); return;
+                }
+                int stock;
+                try {
+                    stock = Integer.parseInt(txtStock.getText().trim());
+                    if (stock < 0) throw new NumberFormatException();
+                } catch (NumberFormatException ex) {
+                    mostrarErrorModal(lblError, "El stock debe ser un número entero no negativo."); return;
+                }
+                BigDecimal ajuste = BigDecimal.ZERO;
+                if (!txtAjuste.getText().isBlank()) {
+                    try { ajuste = new BigDecimal(txtAjuste.getText().trim()); }
+                    catch (NumberFormatException ex) {
+                        mostrarErrorModal(lblError, "El ajuste debe ser un número válido."); return;
+                    }
+                }
+
+                Producto actualizado = Producto.builder()
+                        .id(producto.getId())
+                        .nombre(nombre)
+                        .codigoBarras(codigo)
+                        .subcategoria(cmbSubcat.getValue())
+                        .proveedorPrincipal(cmbProv.getValue())
+                        .precioCompra(precioCompra)
+                        .ajusteProducto(ajuste)
+                        .stock(stock)
+                        .activo(producto.isActivo())
+                        .imagenPath(producto.getImagenPath())
+                        .build();
+                actualizado.calcularPrecioVenta();
+
+                productoService.actualizar(actualizado);
+
+                animarExitoModal(modal, () -> {
+                    cerrarModal(overlay);
+                    recargarDatos();
+                    mostrarDetalleProducto(actualizado);
+                });
+
+            } catch (BusinessException be) {
+                mostrarErrorModal(lblError, be.getMessage());
+            } catch (Exception ex) {
+                mostrarErrorModal(lblError, "Error inesperado: " + ex.getMessage());
+            }
+        });
+
+        actions.getChildren().addAll(btnCancelar, btnGuardar);
+
+        modal.getChildren().addAll(header, sep, row1, row2, row3, row4, previewBox, lblError, sep2, actions);
+
+        overlay.getChildren().add(modal);
+        rootStack.getChildren().add(overlay);
+        animarEntradaModal(overlay, modal);
+
+        int delay = 60;
+        for (Node child : List.of(row1, row2, row3, row4, previewBox, actions)) {
+            child.setOpacity(0);
+            child.setTranslateX(-8);
+            FadeTransition ft = new FadeTransition(Duration.millis(250), child);
+            ft.setFromValue(0); ft.setToValue(1);
+            ft.setDelay(Duration.millis(delay));
+            ft.setInterpolator(Interpolator.EASE_OUT);
+            TranslateTransition tt = new TranslateTransition(Duration.millis(250), child);
+            tt.setFromX(-8); tt.setToX(0);
+            tt.setDelay(Duration.millis(delay));
+            tt.setInterpolator(Interpolator.EASE_OUT);
+            new ParallelTransition(ft, tt).play();
+            delay += 50;
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  PANTALLA 4 — Ajuste de Stock
+    // ══════════════════════════════════════════════════════════════
+
+    private void mostrarAjusteStock() {
+        activarTab(tabAjuste);
+        recargarDatos();
+
+        // ── Contenedor raíz ───────────────────────────────────────
+        VBox view = new VBox(0);
+        view.getStyleClass().add("ajuste-root");
+        VBox.setVgrow(view, Priority.ALWAYS);
+
+        // ── Toolbar de búsqueda ───────────────────────────────────
+        HBox toolbar = new HBox(12);
+        toolbar.getStyleClass().add("inventario-toolbar");
+        toolbar.setPadding(new Insets(16, 28, 12, 28));
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane searchBox = new StackPane();
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+        FontIcon icoSearch = new FontIcon("fas-search");
+        icoSearch.setIconSize(14);
+        icoSearch.setIconColor(Paint.valueOf("#A8A29E"));
+        StackPane.setMargin(icoSearch, new Insets(0, 0, 0, 12));
+
+        TextField txtBuscar = new TextField();
+        txtBuscar.setPromptText("Buscar producto por nombre o código de barras…");
+        txtBuscar.getStyleClass().add("inventario-search-field");
+        txtBuscar.setPrefWidth(380);
+        searchBox.getChildren().addAll(txtBuscar, icoSearch);
+        txtBuscar.focusedProperty().addListener((obs, old, focused) ->
+                icoSearch.setIconColor(Paint.valueOf(focused ? "#5A6ACF" : "#A8A29E")));
+
+        // Filtro activos/todos
+        ComboBox<String> cmbFiltro = new ComboBox<>();
+        cmbFiltro.setItems(FXCollections.observableArrayList("Solo activos", "Todos"));
+        cmbFiltro.setValue("Solo activos");
+        cmbFiltro.getStyleClass().addAll("combo-box", "inventario-filter");
+        cmbFiltro.setPrefWidth(150);
+
+        Label lblConteo = new Label(todosProductos.size() + " productos");
+        lblConteo.getStyleClass().add("inventario-count-label");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        toolbar.getChildren().addAll(searchBox, cmbFiltro, spacer, lblConteo);
+
+        // ── Cuerpo: lista izquierda + panel derecho ───────────────
+        HBox body = new HBox(0);
+        VBox.setVgrow(body, Priority.ALWAYS);
+
+        // Lista de productos (panel izquierdo)
+        VBox listaPanel = new VBox(0);
+        listaPanel.getStyleClass().add("ajuste-lista-panel");
+        listaPanel.setMinWidth(380);
+        listaPanel.setMaxWidth(440);
+        HBox.setHgrow(listaPanel, Priority.SOMETIMES);
+
+        ScrollPane scrollLista = new ScrollPane();
+        scrollLista.setFitToWidth(true);
+        scrollLista.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollLista.getStyleClass().add("dashboard-scroll");
+        scrollLista.getStyleClass().add("ajuste-lista-scroll");
+        VBox.setVgrow(scrollLista, Priority.ALWAYS);
+
+        VBox listaRows = new VBox(0);
+        listaRows.getStyleClass().add("ajuste-lista-rows");
+        scrollLista.setContent(listaRows);
+        listaPanel.getChildren().add(scrollLista);
+
+        // Panel derecho (formulario de ajuste)
+        VBox panelDerecho = new VBox(0);
+        HBox.setHgrow(panelDerecho, Priority.ALWAYS);
+        panelDerecho.getStyleClass().add("ajuste-panel-derecho");
+
+        // Estado: ningún producto seleccionado
+        mostrarPlaceholderAjuste(panelDerecho);
+
+        // ── Referencia mutable al row seleccionado ─────────────────
+        final Node[] rowSeleccionado = {null};
+
+        // ── Función que llena la lista con resultados ──────────────
+        Runnable actualizarLista = () -> {
+            listaRows.getChildren().clear();
+            String texto = txtBuscar.getText().toLowerCase().trim();
+            boolean soloActivos = "Solo activos".equals(cmbFiltro.getValue());
+
+            List<Producto> filtrados = todosProductos.stream()
+                    .filter(p -> !soloActivos || p.isActivo())
+                    .filter(p -> {
+                        if (texto.isEmpty()) return true;
+                        boolean matchNombre = p.getNombre() != null
+                                && p.getNombre().toLowerCase().contains(texto);
+                        boolean matchCodigo = p.getCodigoBarras() != null
+                                && p.getCodigoBarras().toLowerCase().contains(texto);
+                        return matchNombre || matchCodigo;
+                    })
+                    .sorted(Comparator.comparing(Producto::getNombre))
+                    .collect(Collectors.toList());
+
+            lblConteo.setText(filtrados.size() + " producto" + (filtrados.size() == 1 ? "" : "s"));
+
+            if (filtrados.isEmpty()) {
+                VBox empty = new VBox(10);
+                empty.setAlignment(Pos.CENTER);
+                empty.setPadding(new Insets(40));
+                FontIcon icoEmpty = new FontIcon("fas-box-open");
+                icoEmpty.setIconSize(32);
+                icoEmpty.setIconColor(Paint.valueOf("#A8A29E"));
+                Label lEmpty = new Label("No se encontraron productos");
+                lEmpty.getStyleClass().add("inventario-empty");
+                empty.getChildren().addAll(icoEmpty, lEmpty);
+                listaRows.getChildren().add(empty);
+                return;
+            }
+
+            for (Producto p : filtrados) {
+                HBox row = buildAjusteRow(p);
+                row.setOnMouseClicked(e -> {
+                    // Deseleccionar fila previa
+                    if (rowSeleccionado[0] != null)
+                        rowSeleccionado[0].getStyleClass().remove("ajuste-row-selected");
+                    row.getStyleClass().add("ajuste-row-selected");
+                    rowSeleccionado[0] = row;
+
+                    // Actualizar panel derecho con el formulario
+                    mostrarFormularioAjuste(p, panelDerecho, () -> {
+                        if (rowSeleccionado[0] != null)
+                            rowSeleccionado[0].getStyleClass().remove("ajuste-row-selected");
+                        rowSeleccionado[0] = null;
+                        recargarDatos();
+                        mostrarPlaceholderAjuste(panelDerecho);
+                        // Refrescar lista
+                        listaRows.getChildren().clear();
+                        txtBuscar.setText(txtBuscar.getText()); // trigger listener
+                    });
+                });
+                listaRows.getChildren().add(row);
+            }
+        };
+
+        txtBuscar.textProperty().addListener((obs, o, n) -> actualizarLista.run());
+        cmbFiltro.valueProperty().addListener((obs, o, n) -> actualizarLista.run());
+        actualizarLista.run();
+
+        body.getChildren().addAll(listaPanel, panelDerecho);
+        view.getChildren().addAll(toolbar, body);
+
+        animarEntrada(toolbar, 0);
+        animarEntrada(body, 80);
+
+        contentArea.getChildren().setAll(view);
+    }
+
+    /** Fila de producto en la lista de ajuste de stock */
+    private HBox buildAjusteRow(Producto p) {
+        HBox row = new HBox(14);
+        row.getStyleClass().add("ajuste-row");
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setCursor(javafx.scene.Cursor.HAND);
+
+        // Miniatura
+        row.getChildren().add(buildThumbnailCell(p.getImagenPath()));
+
+        // Info central
+        VBox info = new VBox(3);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        Label lblNom = new Label(p.getNombre());
+        lblNom.getStyleClass().add("ajuste-row-nombre");
+
+        String catStr = "";
+        if (p.getSubcategoria() != null) {
+            catStr = p.getSubcategoria().getNombre();
+            if (p.getSubcategoria().getCategoria() != null)
+                catStr = p.getSubcategoria().getCategoria().getNombre() + " · " + catStr;
+        }
+        Label lblCat = new Label(catStr.isEmpty() ? "Sin categoría" : catStr);
+        lblCat.getStyleClass().add("ajuste-row-cat");
+
+        if (p.getCodigoBarras() != null && !p.getCodigoBarras().isBlank()) {
+            Label lblCod = new Label(p.getCodigoBarras());
+            lblCod.getStyleClass().add("ajuste-row-cod");
+            info.getChildren().addAll(lblNom, lblCat, lblCod);
+        } else {
+            info.getChildren().addAll(lblNom, lblCat);
+        }
+
+        // Badge de stock
+        Label stockBadge = new Label(String.valueOf(p.getStock()));
+        stockBadge.getStyleClass().addAll("dash-badge",
+                p.getStock() == 0 ? "dash-badge-danger"
+                : p.getStock() <= 5 ? "dash-badge-credito" : "dash-badge-success");
+
+        // Indicador de estado
+        Label estadoBadge = new Label(p.isActivo() ? "Activo" : "Inactivo");
+        estadoBadge.getStyleClass().addAll("dash-badge",
+                p.isActivo() ? "dash-badge-success" : "dash-badge-danger");
+
+        VBox badges = new VBox(5);
+        badges.setAlignment(Pos.CENTER_RIGHT);
+        badges.getChildren().addAll(stockBadge, estadoBadge);
+
+        row.getChildren().addAll(info, badges);
+        return row;
+    }
+
+    /** Placeholder cuando no hay producto seleccionado en el panel derecho */
+    private void mostrarPlaceholderAjuste(VBox panelDerecho) {
+        VBox ph = new VBox(14);
+        ph.setAlignment(Pos.CENTER);
+        ph.getStyleClass().add("ajuste-placeholder");
+        VBox.setVgrow(ph, Priority.ALWAYS);
+
+        StackPane icoBox = new StackPane();
+        icoBox.getStyleClass().add("ajuste-placeholder-ico-box");
+        icoBox.setMinSize(72, 72);
+        icoBox.setMaxSize(72, 72);
+        FontIcon ico = new FontIcon("fas-hand-pointer");
+        ico.setIconSize(28);
+        ico.setIconColor(Paint.valueOf("#5A6ACF"));
+        icoBox.getChildren().add(ico);
+
+        Label lbl = new Label("Selecciona un producto");
+        lbl.getStyleClass().add("ajuste-placeholder-title");
+
+        Label sub = new Label("Haz clic en cualquier producto de la lista\npara ajustar su stock.");
+        sub.getStyleClass().add("ajuste-placeholder-sub");
+        sub.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        ph.getChildren().addAll(icoBox, lbl, sub);
+        panelDerecho.getChildren().setAll(ph);
+    }
+
+    /** Formulario de ajuste para un producto seleccionado */
+    private void mostrarFormularioAjuste(Producto productoIn, VBox panelDerecho, Runnable onSuccess) {
+        // Refrescar desde BD
+        Producto p;
+        try { p = productoService.findById(productoIn.getId()); }
+        catch (Exception e) { p = productoIn; }
+        final Producto producto = p;
+
+        VBox form = new VBox(0);
+        form.getStyleClass().add("ajuste-form");
+        VBox.setVgrow(form, Priority.ALWAYS);
+
+        // ── Cabecera del producto ─────────────────────────────────
+        HBox prodHeader = new HBox(14);
+        prodHeader.getStyleClass().add("ajuste-form-prod-header");
+        prodHeader.setAlignment(Pos.CENTER_LEFT);
+
+        // Imagen
+        StackPane imgWrap = buildThumbnailCell(producto.getImagenPath());
+        imgWrap.setMinSize(56, 56);
+        imgWrap.setMaxSize(56, 56);
+
+        VBox prodInfo = new VBox(4);
+        HBox.setHgrow(prodInfo, Priority.ALWAYS);
+        Label lblProdNombre = new Label(producto.getNombre());
+        lblProdNombre.getStyleClass().add("ajuste-form-prod-nombre");
+        String catStr = "";
+        if (producto.getSubcategoria() != null) {
+            catStr = producto.getSubcategoria().getNombre();
+            if (producto.getSubcategoria().getCategoria() != null)
+                catStr = producto.getSubcategoria().getCategoria().getNombre() + " · " + catStr;
+        }
+        Label lblProdCat = new Label(catStr.isEmpty() ? "Sin categoría" : catStr);
+        lblProdCat.getStyleClass().add("ajuste-form-prod-cat");
+        prodInfo.getChildren().addAll(lblProdNombre, lblProdCat);
+
+        // Stock actual con badge
+        VBox stockBox = new VBox(3);
+        stockBox.setAlignment(Pos.CENTER_RIGHT);
+        Label lblStockTitle = new Label("STOCK ACTUAL");
+        lblStockTitle.getStyleClass().add("ajuste-form-stock-label");
+        Label stockBadge = new Label(String.valueOf(producto.getStock()));
+        stockBadge.getStyleClass().addAll("ajuste-form-stock-value",
+                producto.getStock() == 0 ? "ajuste-stock-cero"
+                : producto.getStock() <= 5 ? "ajuste-stock-bajo" : "ajuste-stock-ok");
+        stockBox.getChildren().addAll(lblStockTitle, stockBadge);
+
+        prodHeader.getChildren().addAll(imgWrap, prodInfo, stockBox);
+
+        Separator sep1 = new Separator();
+        sep1.getStyleClass().add("ajuste-sep");
+
+        // ── Tipo de movimiento ────────────────────────────────────
+        VBox tipoSection = new VBox(10);
+        tipoSection.getStyleClass().add("ajuste-form-section");
+
+        Label lblTipo = new Label("Tipo de movimiento");
+        lblTipo.getStyleClass().add("ajuste-form-section-title");
+
+        HBox toggleBox = new HBox(8);
+        toggleBox.setAlignment(Pos.CENTER_LEFT);
+
+        FontIcon icoEntrada = new FontIcon("fas-arrow-down");
+        icoEntrada.setIconSize(13);
+        icoEntrada.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnEntrada = new Button("Entrada", icoEntrada);
+        btnEntrada.getStyleClass().addAll("ajuste-toggle-btn", "ajuste-toggle-active-entrada");
+
+        FontIcon icoSalida = new FontIcon("fas-arrow-up");
+        icoSalida.setIconSize(13);
+        icoSalida.setIconColor(Paint.valueOf("#78716C"));
+        Button btnSalida = new Button("Salida", icoSalida);
+        btnSalida.getStyleClass().add("ajuste-toggle-btn");
+
+        final boolean[] esEntrada = {true};
+
+        btnEntrada.setOnAction(e -> {
+            esEntrada[0] = true;
+            btnEntrada.getStyleClass().removeAll("ajuste-toggle-inactive");
+            btnEntrada.getStyleClass().add("ajuste-toggle-active-entrada");
+            btnSalida.getStyleClass().removeAll("ajuste-toggle-active-salida", "ajuste-toggle-active-entrada");
+            btnSalida.getStyleClass().add("ajuste-toggle-inactive");
+            icoEntrada.setIconColor(Paint.valueOf("#FFFFFF"));
+            icoSalida.setIconColor(Paint.valueOf("#78716C"));
+        });
+        btnSalida.setOnAction(e -> {
+            esEntrada[0] = false;
+            btnSalida.getStyleClass().removeAll("ajuste-toggle-inactive");
+            btnSalida.getStyleClass().add("ajuste-toggle-active-salida");
+            btnEntrada.getStyleClass().removeAll("ajuste-toggle-active-entrada", "ajuste-toggle-inactive");
+            btnEntrada.getStyleClass().add("ajuste-toggle-inactive");
+            icoSalida.setIconColor(Paint.valueOf("#FFFFFF"));
+            icoEntrada.setIconColor(Paint.valueOf("#78716C"));
+        });
+
+        toggleBox.getChildren().addAll(btnEntrada, btnSalida);
+        tipoSection.getChildren().addAll(lblTipo, toggleBox);
+
+        // ── Cantidad ──────────────────────────────────────────────
+        VBox cantidadSection = new VBox(10);
+        cantidadSection.getStyleClass().add("ajuste-form-section");
+
+        Label lblCantidad = new Label("Cantidad");
+        lblCantidad.getStyleClass().add("ajuste-form-section-title");
+
+        HBox cantidadBox = new HBox(0);
+        cantidadBox.setAlignment(Pos.CENTER_LEFT);
+        cantidadBox.getStyleClass().add("ajuste-cantidad-box");
+
+        Button btnMenos = new Button("−");
+        btnMenos.getStyleClass().add("ajuste-qty-btn");
+
+        TextField txtCantidad = new TextField("1");
+        txtCantidad.getStyleClass().add("ajuste-qty-field");
+        txtCantidad.setPrefWidth(80);
+        txtCantidad.setAlignment(Pos.CENTER);
+
+        // Solo números
+        txtCantidad.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal.matches("\\d*")) txtCantidad.setText(oldVal);
+            if (!newVal.isEmpty() && newVal.startsWith("0"))
+                txtCantidad.setText(newVal.replaceFirst("^0+", ""));
+        });
+
+        Button btnMas = new Button("+");
+        btnMas.getStyleClass().add("ajuste-qty-btn");
+
+        btnMenos.setOnAction(e -> {
+            try {
+                int v = Integer.parseInt(txtCantidad.getText());
+                if (v > 1) txtCantidad.setText(String.valueOf(v - 1));
+            } catch (NumberFormatException ignored) { txtCantidad.setText("1"); }
+        });
+        btnMas.setOnAction(e -> {
+            try {
+                int v = Integer.parseInt(txtCantidad.getText());
+                txtCantidad.setText(String.valueOf(v + 1));
+            } catch (NumberFormatException ignored) { txtCantidad.setText("1"); }
+        });
+
+        cantidadBox.getChildren().addAll(btnMenos, txtCantidad, btnMas);
+        cantidadSection.getChildren().addAll(lblCantidad, cantidadBox);
+
+        // ── Notas (opcional) ──────────────────────────────────────
+        VBox notasSection = new VBox(8);
+        notasSection.getStyleClass().add("ajuste-form-section");
+
+        Label lblNotas = new Label("Motivo / Notas  (opcional)");
+        lblNotas.getStyleClass().add("ajuste-form-section-title");
+
+        TextField txtNotas = new TextField();
+        txtNotas.setPromptText("Ej: recepción de mercancía, corrección de inventario…");
+        txtNotas.getStyleClass().add("inventario-search-field");
+        txtNotas.setMaxWidth(Double.MAX_VALUE);
+        notasSection.getChildren().addAll(lblNotas, txtNotas);
+
+        // ── Error label ───────────────────────────────────────────
+        Label lblError = new Label();
+        lblError.getStyleClass().add("inventario-error-label");
+        lblError.setVisible(false);
+        lblError.setManaged(false);
+
+        // ── Botones de acción ─────────────────────────────────────
+        HBox actions = new HBox(10);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+        actions.getStyleClass().add("ajuste-form-actions");
+
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.getStyleClass().add("inventario-btn-cancelar");
+        btnCancelar.setOnAction(e -> {
+            mostrarPlaceholderAjuste(panelDerecho);
+            onSuccess.run();
+        });
+
+        FontIcon icoAplicar = new FontIcon("fas-check");
+        icoAplicar.setIconSize(14);
+        icoAplicar.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnAplicar = new Button("Aplicar Ajuste", icoAplicar);
+        btnAplicar.getStyleClass().add("inventario-btn-guardar");
+        btnAplicar.setOnAction(e -> {
+            lblError.setVisible(false);
+            lblError.setManaged(false);
+            int cantidad;
+            try {
+                cantidad = Integer.parseInt(txtCantidad.getText().trim());
+                if (cantidad <= 0) throw new NumberFormatException();
+            } catch (NumberFormatException ex) {
+                mostrarErrorModal(lblError, "La cantidad debe ser un número entero mayor que cero.");
+                return;
+            }
+            if (!esEntrada[0] && cantidad > producto.getStock()) {
+                mostrarErrorModal(lblError, "No hay suficiente stock. Disponible: " + producto.getStock());
+                return;
+            }
+            try {
+                productoService.ajustarStock(producto.getId(), cantidad, esEntrada[0]);
+                recargarDatos();
+
+                // Flash de éxito en el badge de stock
+                String tipoStr = esEntrada[0] ? "entrada" : "salida";
+                Alert ok = new Alert(Alert.AlertType.INFORMATION);
+                ok.setTitle("Ajuste aplicado");
+                ok.setHeaderText(null);
+                ok.setContentText("Se registró una " + tipoStr + " de " + cantidad
+                        + " unidad" + (cantidad == 1 ? "" : "es")
+                        + " para \"" + producto.getNombre() + "\".");
+                ok.showAndWait();
+                onSuccess.run();
+            } catch (BusinessException be) {
+                mostrarErrorModal(lblError, be.getMessage());
+            } catch (Exception ex) {
+                mostrarErrorModal(lblError, "Error inesperado: " + ex.getMessage());
+            }
+        });
+
+        actions.getChildren().addAll(btnCancelar, btnAplicar);
+
+        Region vSpacer = new Region();
+        VBox.setVgrow(vSpacer, Priority.ALWAYS);
+
+        form.getChildren().addAll(
+                prodHeader, sep1,
+                tipoSection, cantidadSection, notasSection,
+                lblError, vSpacer, actions);
+
+        panelDerecho.getChildren().setAll(form);
+        animarEntrada(form, 0);
     }
 
     private void recargarDatos() {

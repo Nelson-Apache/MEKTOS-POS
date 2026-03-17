@@ -51,20 +51,31 @@ public class SubcategoriaService {
         subcategoriaRepository.save(sub);
     }
 
+    @Transactional(readOnly = true)
     public Subcategoria findById(Long id) {
         return subcategoriaRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Subcategoría con ID " + id + " no encontrada."));
     }
 
+    @Transactional(readOnly = true)
     public List<Subcategoria> findAll() {
         return subcategoriaRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Subcategoria> findAllActivas() {
         return subcategoriaRepository.findAllActivas();
     }
 
+    @Transactional(readOnly = true)
     public List<Subcategoria> findByCategoriaId(Long categoriaId) {
         return subcategoriaRepository.findByCategoriaId(categoriaId);
+    }
+
+    @Transactional(readOnly = true)
+    public Subcategoria findByNombreAndCategoria(String nombre, String categoriaNombre) {
+        return subcategoriaRepository.findByNombreAndCategoriaNombre(nombre, categoriaNombre)
+                .orElseThrow(() -> new BusinessException(
+                        "No se encontró la subcategoría '" + nombre + "' en la categoría '" + categoriaNombre + "'."));
     }
 }

@@ -26,6 +26,7 @@ public class ProductoMapper {
                 .stock(entity.getStock())
                 .subcategoria(subcategoriaMapper.toDomain(entity.getSubcategoria()))
                 .activo(entity.isActivo())
+                .imagenPath(entity.getImagenPath())
                 .build();
     }
 
@@ -48,6 +49,7 @@ public class ProductoMapper {
             entity.setSubcategoria(subcategoriaMapper.toRef(domain.getSubcategoria().getId()));
         }
         entity.setActivo(domain.isActivo());
+        entity.setImagenPath(domain.getImagenPath());
         return entity;
     }
 

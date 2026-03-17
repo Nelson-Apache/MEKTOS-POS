@@ -49,17 +49,26 @@ public class ProveedorService {
         });
     }
 
+    @Transactional(readOnly = true)
     public Proveedor findById(Long id) {
         return proveedorRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Proveedor con ID " + id + " no encontrado."));
     }
 
+    @Transactional(readOnly = true)
     public List<Proveedor> findAll() {
         return proveedorRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Proveedor> findAllActivos() {
         return proveedorRepository.findAllActivos();
+    }
+
+    @Transactional(readOnly = true)
+    public Proveedor findByNit(String nit) {
+        return proveedorRepository.findByNit(nit)
+                .orElseThrow(() -> new BusinessException("No se encontró un proveedor con NIT '" + nit + "'."));
     }
 
     // Valida que no exista otro proveedor con el mismo NIT o nombre.

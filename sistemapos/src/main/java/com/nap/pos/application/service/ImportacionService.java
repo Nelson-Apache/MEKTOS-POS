@@ -192,6 +192,7 @@ public class ImportacionService {
 
     // ── Detección de duplicados ─────────────────────────────────────────
 
+    @Transactional(readOnly = true)
     public List<DuplicadoEncontrado> detectarDuplicadosProductos(
             File archivo, Map<CampoImportacion, Integer> mapeo) {
 
@@ -215,6 +216,7 @@ public class ImportacionService {
         return duplicados;
     }
 
+    @Transactional(readOnly = true)
     public List<DuplicadoEncontrado> detectarDuplicadosClientes(
             File archivo, Map<CampoImportacion, Integer> mapeo) {
 
@@ -319,6 +321,7 @@ public class ImportacionService {
      * en alguna fila pero no existen en la base de datos.
      * Solo aplica a importaciones de productos con la columna subcategoría mapeada.
      */
+    @Transactional(readOnly = true)
     public List<CategoriaSubcategoriaNueva> detectarCategoriasNuevas(
             File archivo, Map<CampoImportacion, Integer> mapeo) {
 

@@ -51,22 +51,49 @@ public class ProductoService {
         productoRepository.save(producto);
     }
 
+    /** Actualiza la ruta de imagen del producto. */
+    @Transactional
+    public void actualizarImagen(Long id, String rutaImagen) {
+        Producto producto = findById(id);
+        producto.actualizarImagen(rutaImagen);
+        productoRepository.save(producto);
+    }
+
+    /**
+     * Ajusta el stock de un producto.
+     * @param esEntrada true → incrementa stock, false → descuenta stock.
+     */
+    @Transactional
+    public void ajustarStock(Long id, int cantidad, boolean esEntrada) {
+        Producto producto = findById(id);
+        if (esEntrada) {
+            producto.incrementarStock(cantidad);
+        } else {
+            producto.descontarStock(cantidad);
+        }
+        productoRepository.save(producto);
+    }
+
     // Búsqueda por scanner de código de barras — devuelve Optional para que la UI maneje "no encontrado"
+    @Transactional(readOnly = true)
     public Optional<Producto> findByCodigoBarras(String codigoBarras) {
         return productoRepository.findByCodigoBarras(codigoBarras);
     }
 
+    @Transactional(readOnly = true)
     public Producto findById(Long id) {
         return productoRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Producto con ID " + id + " no encontrado."));
     }
 
     // Módulo de inventario: todos los productos (activos e inactivos)
+    @Transactional(readOnly = true)
     public List<Producto> findAll() {
         return productoRepository.findAll();
     }
 
     // Pantalla de ventas: solo productos activos
+    @Transactional(readOnly = true)
     public List<Producto> findAllActivos() {
         return productoRepository.findAllActivos();
     }

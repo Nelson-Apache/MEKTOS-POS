@@ -3,9 +3,54 @@
    (complementa setup_wizard.css que define las clases compartidas)
    ================================================================ */
 
+/* ── Cabecera del wizard de importación ───────────────────────── */
+.wizard-header {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0;
+}
+
+.wizard-brand {
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1A1F2E;
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+}
+
+.wizard-subtitle {
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #5A6ACF;
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+}
+
+/* ── Indicadores: override para fondo claro ───────────────────── */
+.indicador-inactivo {
+    -fx-background-color: #E2E8F0;
+    -fx-text-fill: #94A3B8;
+}
+
+.indicador-linea {
+    -fx-font-size: 14px;
+    -fx-text-fill: #CBD5E0;
+}
+
+/* ── Separador de cabecera ────────────────────────────────────── */
+.indicador-activo {
+    -fx-background-color: #5A6ACF;
+    -fx-text-fill: #FFFFFF;
+}
+
 /* ── Tabla de errores ──────────────────────────────────────────── */
 .error-row {
     -fx-background-color: #FFF5F5;
+}
+
+/* Ocultar filas vacías de relleno en todas las tablas del wizard */
+.table-row-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 
 .table-view {
@@ -28,6 +73,20 @@
 .table-view .table-cell {
     -fx-font-size: 13px;
     -fx-text-fill: #2D3748;
+    -fx-border-color: transparent transparent #EDF2F7 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: #FFFFFF;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: #F8FAFC;
+}
+
+.table-view .table-row-cell:even {
+    -fx-background-color: #FFFFFF;
 }
 
 /* ── ComboBox en tabla de duplicados ──────────────────────────── */

@@ -57,6 +57,17 @@ public class ImportacionController {
 
     @FXML
     public void initialize() {
+        // Resetear estado: el bean es singleton, se reutiliza en cada apertura del wizard
+        pasoActual            = 0;
+        tipoEntidad           = TipoEntidad.PRODUCTO;
+        archivoSeleccionado   = null;
+        encabezados           = null;
+        mapeoActual           = null;
+        comboBoxMapeo         = null;
+        duplicadosObservable  = null;
+        categoriasObservable  = null;
+        mostroCategorias      = false;
+
         configurarTablaErrores();
         configurarTablaCategorias();
         configurarTablaDuplicados();
@@ -449,7 +460,7 @@ public class ImportacionController {
     private void actualizarBotones() {
         btnAnterior.setVisible(true);
         btnAnterior.setManaged(true);
-        btnAnterior.setText("← Anterior");
+        btnAnterior.setText("Anterior");
         btnSiguiente.setVisible(true);
         btnSiguiente.setManaged(true);
         btnDescargarPlantilla.setVisible(false);
@@ -463,12 +474,12 @@ public class ImportacionController {
                 btnAnterior.setManaged(false);
                 btnDescargarPlantilla.setVisible(true);
                 btnDescargarPlantilla.setManaged(true);
-                btnSiguiente.setText("Siguiente →");
+                btnSiguiente.setText("Siguiente");
             }
             case 1 -> {
                 btnDetectarAuto.setVisible(true);
                 btnDetectarAuto.setManaged(true);
-                btnSiguiente.setText("Validar →");
+                btnSiguiente.setText("Validar");
             }
             case 2 -> {
                 btnAnterior.setVisible(false);
@@ -476,8 +487,8 @@ public class ImportacionController {
                 btnSiguiente.setVisible(false);
                 btnSiguiente.setManaged(false);
             }
-            case 3 -> btnSiguiente.setText("Crear y continuar →");
-            case 4 -> btnSiguiente.setText("Importar ✓");
+            case 3 -> btnSiguiente.setText("Crear y continuar");
+            case 4 -> btnSiguiente.setText("Importar");
             case 5 -> {
                 btnAnterior.setVisible(false);
                 btnAnterior.setManaged(false);

@@ -27,6 +27,8 @@ public class Producto {
     private int stock;
     private Subcategoria subcategoria;
     private boolean activo;
+    /** Ruta absoluta a la imagen del producto en ~/.nappos/assets/products/ */
+    private String imagenPath;
 
     /**
      * Recalcula el precioVenta usando la fórmula del PRD:
@@ -120,5 +122,10 @@ public class Producto {
     /** Desactiva un producto — deja de aparecer en ventas sin eliminarlo del historial. */
     public void desactivar() {
         this.activo = false;
+    }
+
+    /** Actualiza la ruta de la imagen del producto. */
+    public void actualizarImagen(String rutaImagen) {
+        this.imagenPath = rutaImagen;
     }
 }
