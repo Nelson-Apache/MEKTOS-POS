@@ -48,6 +48,7 @@ public class MainWindowController {
     private final DashboardController   dashboardController;
     private final VentasController      ventasController;
     private final InventarioController  inventarioController;
+    private final ComprasController     comprasController;
 
     // ── Sidebar ───────────────────────────────────────────────────
     @FXML private VBox   sidebar;
@@ -136,8 +137,7 @@ public class MainWindowController {
     @FXML
     public void navCompras() {
         activarNav(btnCompras, "Compras");
-        mostrarPlaceholder("Compras",
-                "Registro de compras a proveedores");
+        contenido.getChildren().setAll(comprasController.buildView(usuarioActual));
     }
 
     @FXML

@@ -2423,6 +2423,55 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
+   MODAL DE ADVERTENCIA — Ajuste de Stock
+   ════════════════════════════════════════════════════════════════ */
+
+.ajuste-warn-modal {
+    -fx-padding: 28 24 22 24;
+    -fx-alignment: CENTER;
+}
+
+.ajuste-warn-ico-circle {
+    -fx-background-color: #FEF3C7;
+    -fx-background-radius: 28px;
+    -fx-alignment: CENTER;
+}
+
+.ajuste-warn-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1A1F2E;
+    -fx-alignment: CENTER;
+    -fx-text-alignment: CENTER;
+}
+
+.ajuste-warn-fecha {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #D97706;
+    -fx-background-color: #FEF3C7;
+    -fx-background-radius: 6px;
+    -fx-padding: 5 12 5 12;
+    -fx-alignment: CENTER;
+}
+
+.ajuste-warn-mensaje {
+    -fx-font-size: 13px;
+    -fx-text-fill: #4B5563;
+    -fx-line-spacing: 2;
+    -fx-text-alignment: CENTER;
+    -fx-alignment: CENTER;
+}
+
+.ajuste-warn-pregunta {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+    -fx-alignment: CENTER;
+    -fx-text-alignment: CENTER;
+}
+
+/* ════════════════════════════════════════════════════════════════
    AJUSTE DE STOCK — Vista completa
    ════════════════════════════════════════════════════════════════ */
 

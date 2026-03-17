@@ -36,6 +36,8 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -50,11 +52,14 @@ import lombok.RequiredArgsConstructor;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -80,6 +85,11 @@ public class VentasController {
     private final List<ItemCarrito> carrito = new ArrayList<>();
     private Long   categoriaFiltro  = null;
     private String textoBusqueda    = "";
+
+    // ── Maps para actualización dinámica de stock ────────────────
+    private final Map<Long, Label>  stockBadges  = new HashMap<>();
+    private final Map<Long, Button> addButtons   = new HashMap<>();
+    private final Map<Long, VBox>   productCards = new HashMap<>();
 
     // ── Refs UI (catálogo) ────────────────────────────────────────
     private FlowPane gridProductos;
@@ -118,6 +128,9 @@ public class VentasController {
     public Node buildView(Usuario usuario) {
         this.usuarioActual = usuario;
         carrito.clear();
+        stockBadges.clear();
+        addButtons.clear();
+        productCards.clear();
         categoriaFiltro = null;
         textoBusqueda   = "";
 
@@ -320,6 +333,9 @@ public class VentasController {
 
     private void actualizarGrid() {
         gridProductos.getChildren().clear();
+        stockBadges.clear();
+        addButtons.clear();
+        productCards.clear();
         NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.of("es", "CO"));
 
         List<Producto> filtrados = todosProductos.stream()
@@ -375,23 +391,43 @@ public class VentasController {
             aplicarHoverCard(card);
         }
 
-        // Área de ícono con inicial y badge de stock
+        // Área de ícono con imagen o inicial, más badge de stock
         StackPane iconArea = new StackPane();
         iconArea.getStyleClass().add("venta-producto-icon");
         iconArea.setPrefHeight(76);
         iconArea.setMinHeight(76);
 
-        String ini = (p.getNombre() != null && !p.getNombre().isBlank())
-                ? p.getNombre().substring(0, 1).toUpperCase() : "?";
-        Label lIni = new Label(ini);
-        lIni.setStyle("-fx-font-size: 28px; -fx-font-weight: 700; -fx-text-fill: #5A6ACF;");
+        // Mostrar imagen si existe, si no mostrar inicial
+        String imgPath = p.getImagenPath();
+        boolean tieneImagen = imgPath != null && !imgPath.isBlank() && new File(imgPath).exists();
+        if (tieneImagen) {
+            try {
+                Image img = new Image(new File(imgPath).toURI().toString(), 76, 76, true, true, false);
+                ImageView iv = new ImageView(img);
+                iv.setFitWidth(76);
+                iv.setFitHeight(76);
+                iv.setPreserveRatio(true);
+                iv.setSmooth(true);
+                iv.setStyle("-fx-background-radius: 8;");
+                iconArea.getChildren().add(iv);
+            } catch (Exception ex) {
+                tieneImagen = false;
+            }
+        }
+        if (!tieneImagen) {
+            String ini = (p.getNombre() != null && !p.getNombre().isBlank())
+                    ? p.getNombre().substring(0, 1).toUpperCase() : "?";
+            Label lIni = new Label(ini);
+            lIni.setStyle("-fx-font-size: 28px; -fx-font-weight: 700; -fx-text-fill: #5A6ACF;");
+            iconArea.getChildren().add(lIni);
+        }
 
         Label lStock = new Label(sinStock ? "Agotado" : String.valueOf(p.getStock()));
         lStock.getStyleClass().addAll("venta-stock-badge", sinStock ? "venta-stock-agotado" : "venta-stock-ok");
         StackPane.setAlignment(lStock, Pos.TOP_RIGHT);
         StackPane.setMargin(lStock, new Insets(6, 6, 0, 0));
 
-        iconArea.getChildren().addAll(lIni, lStock);
+        iconArea.getChildren().add(lStock);
 
         // Nombre
         Label lNombre = new Label(p.getNombre());
@@ -436,7 +472,54 @@ public class VentasController {
         if (!sinStock) {
             card.setOnMouseClicked(e -> agregarAlCarrito(p));
         }
+
+        // Guardar referencias para actualización dinámica de stock
+        stockBadges.put(p.getId(), lStock);
+        addButtons.put(p.getId(), btnAdd);
+        productCards.put(p.getId(), card);
+
         return card;
+    }
+
+    /**
+     * Actualiza el badge de stock y el estado de la card/botón de un producto
+     * en función del stock real menos la cantidad ya en el carrito.
+     */
+    private void actualizarStockCard(Long productoId) {
+        // Buscar el producto en la lista
+        todosProductos.stream()
+            .filter(p -> p.getId().equals(productoId))
+            .findFirst()
+            .ifPresent(p -> {
+                int enCarrito = carrito.stream()
+                        .filter(i -> i.producto.getId().equals(productoId))
+                        .mapToInt(i -> i.cantidad)
+                        .sum();
+                int disponible = p.getStock() - enCarrito;
+
+                Label badge  = stockBadges.get(productoId);
+                Button btn   = addButtons.get(productoId);
+                VBox   crd   = productCards.get(productoId);
+
+                if (badge == null) return;
+
+                boolean agotado = disponible <= 0;
+
+                badge.setText(agotado ? "Agotado" : String.valueOf(disponible));
+                badge.getStyleClass().removeAll("venta-stock-ok", "venta-stock-agotado");
+                badge.getStyleClass().add(agotado ? "venta-stock-agotado" : "venta-stock-ok");
+
+                if (btn != null) btn.setDisable(agotado);
+                if (crd != null) {
+                    crd.setOpacity(agotado ? 0.50 : 1.0);
+                    crd.setCursor(agotado ? Cursor.DEFAULT : Cursor.HAND);
+                    if (agotado) {
+                        crd.setOnMouseClicked(null);
+                    } else {
+                        crd.setOnMouseClicked(e -> agregarAlCarrito(p));
+                    }
+                }
+            });
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -663,6 +746,13 @@ public class VentasController {
     // ─────────────────────────────────────────────────────────────
 
     private void agregarAlCarrito(Producto p) {
+        // Verificar que aún hay stock disponible
+        int enCarrito = carrito.stream()
+                .filter(i -> i.producto.getId().equals(p.getId()))
+                .mapToInt(i -> i.cantidad)
+                .sum();
+        if (enCarrito >= p.getStock()) return;
+
         carrito.stream()
             .filter(i -> i.producto.getId().equals(p.getId()))
             .findFirst()
@@ -670,6 +760,7 @@ public class VentasController {
                 i -> i.cantidad++,
                 () -> carrito.add(new ItemCarrito(p, 1))
             );
+        actualizarStockCard(p.getId());
         pulsarContador();
         actualizarVistaCarrito();
     }
@@ -679,14 +770,18 @@ public class VentasController {
             .filter(i -> i.producto.getId().equals(pId))
             .findFirst()
             .ifPresent(item -> {
+                // No permitir superar el stock real
+                if (delta > 0 && item.cantidad >= item.producto.getStock()) return;
                 item.cantidad += delta;
                 if (item.cantidad <= 0) carrito.remove(item);
             });
+        actualizarStockCard(pId);
         actualizarVistaCarrito();
     }
 
     private void quitarItem(Long pId) {
         carrito.removeIf(i -> i.producto.getId().equals(pId));
+        actualizarStockCard(pId);
         actualizarVistaCarrito();
     }
 

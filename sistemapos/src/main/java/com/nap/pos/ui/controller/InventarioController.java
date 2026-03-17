@@ -1,11 +1,13 @@
 package com.nap.pos.ui.controller;
 
 import com.nap.pos.application.service.CategoriaService;
+import com.nap.pos.application.service.ConfiguracionService;
 import com.nap.pos.application.service.ProductoService;
 import com.nap.pos.application.service.ProveedorService;
 import com.nap.pos.application.service.SubcategoriaService;
 import com.nap.pos.domain.exception.BusinessException;
 import com.nap.pos.domain.model.Categoria;
+import com.nap.pos.domain.model.ConfiguracionTienda;
 import com.nap.pos.domain.model.Producto;
 import com.nap.pos.domain.model.Proveedor;
 import com.nap.pos.domain.model.Subcategoria;
@@ -75,10 +77,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InventarioController {
 
-    private final ProductoService     productoService;
-    private final CategoriaService    categoriaService;
-    private final SubcategoriaService subcategoriaService;
-    private final ProveedorService    proveedorService;
+    private final ProductoService      productoService;
+    private final CategoriaService     categoriaService;
+    private final SubcategoriaService  subcategoriaService;
+    private final ProveedorService     proveedorService;
+    private final ConfiguracionService configuracionService;
 
     private List<Producto> todosProductos = new ArrayList<>();
     private List<Producto> productosFiltrados = new ArrayList<>();
@@ -158,7 +161,7 @@ public class InventarioController {
         tabAjuste.getStyleClass().add("inventario-tab");
         tabAjuste.setOnAction(e -> {
             animarClickTab(tabAjuste);
-            mostrarAjusteStock();
+            mostrarAdvertenciaAjuste(this::mostrarAjusteStock);
         });
 
         Region spacer = new Region();
@@ -194,6 +197,102 @@ public class InventarioController {
 
         press.setOnFinished(e -> release.play());
         press.play();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Modal de advertencia — Ajuste de Stock
+    // ══════════════════════════════════════════════════════════════
+
+    private void mostrarAdvertenciaAjuste(Runnable onConfirmar) {
+        // Leer fecha programada de la configuración
+        String fechaProgramada = "no configurada";
+        try {
+            ConfiguracionTienda cfg = configuracionService.obtener();
+            if (cfg.getDiaInventarioAnual() != null && cfg.getMesInventarioAnual() != null) {
+                String[] meses = {"enero","febrero","marzo","abril","mayo","junio",
+                        "julio","agosto","septiembre","octubre","noviembre","diciembre"};
+                String mes = meses[cfg.getMesInventarioAnual() - 1];
+                fechaProgramada = cfg.getDiaInventarioAnual() + " de " + mes;
+            }
+        } catch (Exception ignored) {}
+        final String fecha = fechaProgramada;
+
+        // ── Overlay ───────────────────────────────────────────────
+        StackPane overlay = new StackPane();
+        overlay.getStyleClass().add("inventario-modal-overlay");
+
+        // ── Card ─────────────────────────────────────────────────
+        VBox modal = new VBox(16);
+        modal.getStyleClass().addAll("inventario-modal", "ajuste-warn-modal");
+        modal.setMaxWidth(400);
+        modal.setMaxHeight(Region.USE_PREF_SIZE);
+        modal.setAlignment(Pos.TOP_CENTER);
+
+        // Icono centrado
+        StackPane icoCircle = new StackPane();
+        icoCircle.getStyleClass().add("ajuste-warn-ico-circle");
+        icoCircle.setMinSize(56, 56);
+        icoCircle.setMaxSize(56, 56);
+        FontIcon ico = new FontIcon("fas-calendar-check");
+        ico.setIconSize(22);
+        ico.setIconColor(Paint.valueOf("#D97706"));
+        icoCircle.getChildren().add(ico);
+
+        VBox icoWrapper = new VBox(icoCircle);
+        icoWrapper.setAlignment(Pos.CENTER);
+
+        // Título
+        Label lblTitulo = new Label("Ajuste de Inventario Anual");
+        lblTitulo.getStyleClass().add("ajuste-warn-title");
+        lblTitulo.setWrapText(true);
+        lblTitulo.setMaxWidth(Double.MAX_VALUE);
+
+        // Fecha programada
+        Label lblFecha = new Label("Fecha programada: " + fecha);
+        lblFecha.getStyleClass().add("ajuste-warn-fecha");
+
+        // Cuerpo del mensaje (sin doble salto — pregunta separada)
+        Label lblMensaje = new Label(
+                "El ajuste de stock es una operación de inventario anual. " +
+                "Realizarla fuera de la fecha programada puede afectar " +
+                "la exactitud de los reportes y el historial contable.");
+        lblMensaje.getStyleClass().add("ajuste-warn-mensaje");
+        lblMensaje.setWrapText(true);
+        lblMensaje.setMaxWidth(Double.MAX_VALUE);
+
+        Label lblPregunta = new Label("¿Deseas continuar de todas formas?");
+        lblPregunta.getStyleClass().add("ajuste-warn-pregunta");
+
+        Separator sep = new Separator();
+
+        // Botones
+        HBox actions = new HBox(10);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.getStyleClass().add("inventario-btn-cancelar");
+        btnCancelar.setOnAction(e -> {
+            // Revertir la selección visual del tab
+            activarTab(tabResumen);
+            cerrarModal(overlay);
+        });
+
+        FontIcon icoAceptar = new FontIcon("fas-check");
+        icoAceptar.setIconSize(13);
+        icoAceptar.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnAceptar = new Button("Sí, continuar", icoAceptar);
+        btnAceptar.getStyleClass().add("inventario-btn-guardar");
+        btnAceptar.setOnAction(e -> {
+            cerrarModal(overlay);
+            onConfirmar.run();
+        });
+
+        actions.getChildren().addAll(btnCancelar, btnAceptar);
+
+        modal.getChildren().addAll(icoWrapper, lblTitulo, lblFecha, lblMensaje, lblPregunta, sep, actions);
+        overlay.getChildren().add(modal);
+        rootStack.getChildren().add(overlay);
+        animarEntradaModal(overlay, modal);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -2270,7 +2369,10 @@ public class InventarioController {
         final Node[] rowSeleccionado = {null};
 
         // ── Función que llena la lista con resultados ──────────────
-        Runnable actualizarLista = () -> {
+        // Wrapped in array so the lambda can call itself (self-reference)
+        Runnable[] actualizarListaRef = {null};
+        actualizarListaRef[0] = () -> {
+            recargarDatos();
             listaRows.getChildren().clear();
             String texto = txtBuscar.getText().toLowerCase().trim();
             boolean soloActivos = "Solo activos".equals(cmbFiltro.getValue());
@@ -2318,20 +2420,17 @@ public class InventarioController {
                         if (rowSeleccionado[0] != null)
                             rowSeleccionado[0].getStyleClass().remove("ajuste-row-selected");
                         rowSeleccionado[0] = null;
-                        recargarDatos();
                         mostrarPlaceholderAjuste(panelDerecho);
-                        // Refrescar lista
-                        listaRows.getChildren().clear();
-                        txtBuscar.setText(txtBuscar.getText()); // trigger listener
+                        actualizarListaRef[0].run(); // refresca BD + lista correctamente
                     });
                 });
                 listaRows.getChildren().add(row);
             }
         };
 
-        txtBuscar.textProperty().addListener((obs, o, n) -> actualizarLista.run());
-        cmbFiltro.valueProperty().addListener((obs, o, n) -> actualizarLista.run());
-        actualizarLista.run();
+        txtBuscar.textProperty().addListener((obs, o, n) -> actualizarListaRef[0].run());
+        cmbFiltro.valueProperty().addListener((obs, o, n) -> actualizarListaRef[0].run());
+        actualizarListaRef[0].run();
 
         body.getChildren().addAll(listaPanel, panelDerecho);
         view.getChildren().addAll(toolbar, body);
