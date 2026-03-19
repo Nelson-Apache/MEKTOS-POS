@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +47,12 @@ public class CompraService {
             Producto producto = productoRepository.findById(item.productoId())
                     .orElseThrow(() -> new BusinessException("Producto con ID " + item.productoId() + " no encontrado."));
             producto.incrementarStock(item.cantidad());
-            producto.actualizarCosto(item.precioCompraUnitario()); // recalcula precioVenta
+            // Si el producto viene de otro proveedor, el margen del proveedor actual toma precedencia
+            if (producto.getProveedorPrincipal() == null
+                    || !producto.getProveedorPrincipal().getId().equals(proveedor.getId())) {
+                producto.cambiarProveedorPrincipal(proveedor); // cambia proveedor, resetea ajuste y recalcula
+            }
+            producto.actualizarCosto(item.precioCompraUnitario()); // actualiza costo y recalcula precioVenta
             productoRepository.save(producto);
             detalles.add(new DetalleCompra(producto, item.cantidad(), item.precioCompraUnitario()));
         }
@@ -64,10 +70,18 @@ public class CompraService {
     }
 
     // Historial de compras filtrado por proveedor
+    @Transactional(readOnly = true)
     public List<Compra> findByProveedorId(Long proveedorId) {
         return compraRepository.findByProveedorId(proveedorId);
     }
 
+    // Última compra registrada para un proveedor
+    @Transactional(readOnly = true)
+    public Optional<Compra> findUltimaCompraByProveedorId(Long proveedorId) {
+        return compraRepository.findUltimaByProveedorId(proveedorId);
+    }
+
+    @Transactional(readOnly = true)
     public List<Compra> findAll() {
         return compraRepository.findAll();
     }

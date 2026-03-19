@@ -22,7 +22,6 @@ public class ProductoMapper {
                 .precioVenta(entity.getPrecioVenta())
                 .precioCompra(entity.getPrecioCompra())
                 .proveedorPrincipal(proveedorMapper.toDomain(entity.getProveedorPrincipal()))
-                .ajusteProducto(entity.getAjusteProducto())
                 .stock(entity.getStock())
                 .subcategoria(subcategoriaMapper.toDomain(entity.getSubcategoria()))
                 .activo(entity.isActivo())
@@ -43,7 +42,6 @@ public class ProductoMapper {
         if (domain.getProveedorPrincipal() != null) {
             entity.setProveedorPrincipal(proveedorMapper.toRef(domain.getProveedorPrincipal().getId()));
         }
-        entity.setAjusteProducto(domain.getAjusteProducto());
         entity.setStock(domain.getStock());
         if (domain.getSubcategoria() != null) {
             entity.setSubcategoria(subcategoriaMapper.toRef(domain.getSubcategoria().getId()));

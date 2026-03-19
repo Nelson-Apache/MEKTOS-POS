@@ -31,14 +31,14 @@ public class ProductoEntity {
     @Column(name = "precio_compra", nullable = false, precision = 15, scale = 2)
     private BigDecimal precioCompra;
 
+    // Columna legada — siempre 0. El margen real vive en proveedor.porcentajeGanancia.
+    @Column(name = "ajuste_producto", nullable = false, precision = 10, scale = 4)
+    private BigDecimal ajusteProducto = BigDecimal.ZERO;
+
     // Proveedor cuyo % de ganancia se usa para calcular el precioVenta
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proveedor_principal_id")
     private ProveedorEntity proveedorPrincipal;
-
-    // Ajuste individual al margen del proveedor para este producto (puede ser negativo)
-    @Column(name = "ajuste_producto", nullable = false, precision = 10, scale = 4)
-    private BigDecimal ajusteProducto;
 
     @Column(nullable = false)
     private int stock;

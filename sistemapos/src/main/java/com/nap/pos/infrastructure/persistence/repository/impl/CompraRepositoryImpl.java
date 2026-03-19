@@ -43,6 +43,13 @@ public class CompraRepositoryImpl implements CompraRepository {
                 .toList();
     }
 
+    // Última compra registrada para un proveedor
+    @Override
+    public Optional<Compra> findUltimaByProveedorId(Long proveedorId) {
+        return jpaCompraRepository.findTopByProveedorIdOrderByFechaDesc(proveedorId)
+                .map(compraMapper::toDomain);
+    }
+
     @Override
     public List<Compra> findAll() {
         return jpaCompraRepository.findAll().stream()

@@ -49,6 +49,8 @@ public class MainWindowController {
     private final VentasController      ventasController;
     private final InventarioController  inventarioController;
     private final ComprasController     comprasController;
+    private final ClientesController    clientesController;
+    private final ProveedoresController proveedoresController;
 
     // ── Sidebar ───────────────────────────────────────────────────
     @FXML private VBox   sidebar;
@@ -143,15 +145,13 @@ public class MainWindowController {
     @FXML
     public void navClientes() {
         activarNav(btnClientes, "Clientes");
-        mostrarPlaceholder("Clientes",
-                "Gestión de clientes y créditos");
+        contenido.getChildren().setAll(clientesController.buildView(usuarioActual));
     }
 
     @FXML
     public void navProveedores() {
         activarNav(btnProveedores, "Proveedores");
-        mostrarPlaceholder("Proveedores",
-                "Gestión de proveedores y márgenes");
+        contenido.getChildren().setAll(proveedoresController.buildView(usuarioActual));
     }
 
     @FXML

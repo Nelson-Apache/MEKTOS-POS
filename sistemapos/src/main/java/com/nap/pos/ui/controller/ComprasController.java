@@ -8,6 +8,7 @@ import com.nap.pos.application.service.SubcategoriaService;
 import com.nap.pos.domain.exception.BusinessException;
 import com.nap.pos.domain.model.Categoria;
 import com.nap.pos.domain.model.Compra;
+import com.nap.pos.domain.model.DetalleCompra;
 import com.nap.pos.domain.model.Producto;
 import com.nap.pos.domain.model.Proveedor;
 import com.nap.pos.domain.model.Subcategoria;
@@ -33,25 +34,40 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Paint;
+import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import lombok.RequiredArgsConstructor;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.NumberFormat;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -221,7 +237,15 @@ public class ComprasController {
             }
         }
 
-        inner.getChildren().addAll(kpiRow, new Separator(), lblRecientes, listaRecientes);
+        // ── Gráficas ───────────────────────────────────────────────
+        HBox chartsRow = new HBox(16);
+        VBox chartGasto      = crearGastoMensualCard();
+        VBox chartProveedores = crearTopProveedoresCard();
+        HBox.setHgrow(chartGasto,       Priority.ALWAYS);
+        HBox.setHgrow(chartProveedores, Priority.ALWAYS);
+        chartsRow.getChildren().addAll(chartGasto, chartProveedores);
+
+        inner.getChildren().addAll(kpiRow, new Separator(), chartsRow, new Separator(), lblRecientes, listaRecientes);
         scroll.setContent(inner);
         contentArea.getChildren().add(scroll);
         animarEntrada(inner, 0);
@@ -248,6 +272,116 @@ public class ComprasController {
         lblTitulo.setStyle("-fx-font-size: 12px; -fx-text-fill: #78716C;");
 
         card.getChildren().addAll(icoCircle, lblValor, lblTitulo);
+        return card;
+    }
+
+    private VBox crearGastoMensualCard() {
+        VBox card = new VBox(14);
+        card.getStyleClass().add("inventario-card");
+
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label lTit = new Label("GASTO MENSUAL");
+        lTit.getStyleClass().add("inventario-card-title");
+        HBox.setHgrow(lTit, Priority.ALWAYS);
+        FontIcon ico = new FontIcon("fas-chart-bar");
+        ico.setIconSize(14); ico.setIconColor(Paint.valueOf("#94A3B8"));
+        header.getChildren().addAll(lTit, ico);
+
+        // Últimos 6 meses
+        DateTimeFormatter mesYFmt = DateTimeFormatter.ofPattern("MMM yy", Locale.of("es", "CO"));
+        YearMonth ahora = YearMonth.now();
+        Map<String, BigDecimal> gastoMes = new LinkedHashMap<>();
+        for (int i = 5; i >= 0; i--) {
+            gastoMes.put(ahora.minusMonths(i).format(mesYFmt), BigDecimal.ZERO);
+        }
+        for (Compra c : todasCompras) {
+            if (c.getFecha() == null) continue;
+            String mes = YearMonth.from(c.getFecha()).format(mesYFmt);
+            if (gastoMes.containsKey(mes)) {
+                gastoMes.merge(mes, c.getTotal() != null ? c.getTotal() : BigDecimal.ZERO, BigDecimal::add);
+            }
+        }
+
+        boolean sinDatos = gastoMes.values().stream().allMatch(v -> v.compareTo(BigDecimal.ZERO) == 0);
+        if (sinDatos) {
+            Label lv = new Label("Sin compras en los últimos 6 meses.");
+            lv.setStyle("-fx-font-size: 12px; -fx-text-fill: #A8A29E;");
+            card.getChildren().addAll(header, lv);
+            return card;
+        }
+
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setTickMarkVisible(false);
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setMinorTickVisible(false);
+        yAxis.setForceZeroInRange(true);
+        yAxis.setLabel("");
+
+        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
+        chart.setLegendVisible(false);
+        chart.setAnimated(true);
+        chart.getStyleClass().add("inventario-bar-chart");
+        chart.setPrefHeight(220);
+        VBox.setVgrow(chart, Priority.ALWAYS);
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        gastoMes.forEach((mes, valor) -> series.getData().add(new XYChart.Data<>(mes, valor)));
+        chart.getData().add(series);
+
+        card.getChildren().addAll(header, chart);
+        return card;
+    }
+
+    private VBox crearTopProveedoresCard() {
+        VBox card = new VBox(14);
+        card.getStyleClass().add("inventario-card");
+
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label lTit = new Label("TOP PROVEEDORES");
+        lTit.getStyleClass().add("inventario-card-title");
+        HBox.setHgrow(lTit, Priority.ALWAYS);
+        FontIcon ico = new FontIcon("fas-truck");
+        ico.setIconSize(14); ico.setIconColor(Paint.valueOf("#94A3B8"));
+        header.getChildren().addAll(lTit, ico);
+
+        // Gasto total por proveedor, top 5
+        Map<String, BigDecimal> porProveedor = todasCompras.stream()
+                .filter(c -> c.getProveedor() != null && c.getTotal() != null)
+                .collect(Collectors.groupingBy(
+                        c -> c.getProveedor().getNombre(),
+                        Collectors.reducing(BigDecimal.ZERO, Compra::getTotal, BigDecimal::add)));
+
+        if (porProveedor.isEmpty()) {
+            Label lv = new Label("Sin datos de proveedores.");
+            lv.setStyle("-fx-font-size: 12px; -fx-text-fill: #A8A29E;");
+            card.getChildren().addAll(header, lv);
+            return card;
+        }
+
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setTickMarkVisible(false);
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setMinorTickVisible(false);
+        yAxis.setForceZeroInRange(true);
+        yAxis.setLabel("");
+
+        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
+        chart.setLegendVisible(false);
+        chart.setAnimated(true);
+        chart.getStyleClass().add("inventario-bar-chart");
+        chart.setPrefHeight(220);
+        VBox.setVgrow(chart, Priority.ALWAYS);
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        porProveedor.entrySet().stream()
+                .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
+                .limit(5)
+                .forEach(e -> series.getData().add(new XYChart.Data<>(e.getKey(), e.getValue())));
+        chart.getData().add(series);
+
+        card.getChildren().addAll(header, chart);
         return card;
     }
 
@@ -362,19 +496,47 @@ public class ComprasController {
             return cell;
         });
 
-        TableColumn<Compra, String> colUsuario = new TableColumn<>("Usuario");
-        colUsuario.setCellValueFactory(d -> new SimpleStringProperty(
-                d.getValue().getUsuario() != null ? d.getValue().getUsuario().getNombre() : "—"));
-        colUsuario.setPrefWidth(120);
+        // Columna de acción rápida (ver detalle)
+        TableColumn<Compra, String> colAccion = new TableColumn<>("");
+        colAccion.setCellValueFactory(d -> new SimpleStringProperty(""));
+        colAccion.setCellFactory(col -> new TableCell<>() {
+            private final Button btn = new Button();
+            {
+                FontIcon ico = new FontIcon("fas-eye");
+                ico.setIconSize(13);
+                ico.setIconColor(Paint.valueOf("#5A6ACF"));
+                btn.setGraphic(ico);
+                btn.getStyleClass().add("prod-row-arrow");
+                btn.setOnAction(e -> {
+                    if (getTableRow() != null && getTableRow().getItem() != null)
+                        mostrarDetalleCompra(getTableRow().getItem());
+                });
+                setAlignment(Pos.CENTER);
+            }
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btn);
+                setText(null);
+            }
+        });
+        colAccion.setMinWidth(44);
+        colAccion.setMaxWidth(44);
+        colAccion.setSortable(false);
 
-        List<TableColumn<Compra, ?>> cols = List.of(colFecha, colProveedor, colFactura, colProductos, colTotal, colUsuario);
+        List<TableColumn<Compra, ?>> cols = List.of(colFecha, colProveedor, colFactura, colProductos, colTotal, colAccion);
         tabla.getColumns().addAll(cols);
 
-        // Estilo alterno filas
+        // Estilo filas + click para ver detalle
         tabla.setRowFactory(tv -> {
             TableRow<Compra> row = new TableRow<>();
-            row.setOnMouseEntered(e -> { if (!row.isEmpty()) row.setStyle("-fx-background-color: rgba(90,106,207,0.05);"); });
+            row.setOnMouseEntered(e -> { if (!row.isEmpty()) row.setStyle("-fx-background-color: rgba(90,106,207,0.05); -fx-cursor: hand;"); });
             row.setOnMouseExited(e -> row.setStyle(""));
+            row.setOnMouseClicked(e -> {
+                if (!row.isEmpty() && row.getItem() != null) {
+                    mostrarDetalleCompra(row.getItem());
+                }
+            });
             return row;
         });
 
@@ -406,6 +568,195 @@ public class ComprasController {
         wrapper.getChildren().addAll(toolbar, tabla);
         contentArea.getChildren().add(wrapper);
         animarEntrada(wrapper, 0);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Detalle de compra (view switching)
+    // ─────────────────────────────────────────────────────────────
+
+    private void mostrarDetalleCompra(Compra compra) {
+        String provNombre = compra.getProveedor() != null ? compra.getProveedor().getNombre() : "Sin proveedor";
+
+        VBox view = new VBox(0);
+        view.getStyleClass().add("prod-detalle-root");
+        VBox.setVgrow(view, Priority.ALWAYS);
+
+        // ── Header / breadcrumb ───────────────────────────────────
+        HBox header = new HBox(10);
+        header.getStyleClass().add("prod-detalle-header");
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnVolver = new Button("Historial");
+        FontIcon icoBack = new FontIcon("fas-arrow-left");
+        icoBack.setIconSize(13); icoBack.setIconColor(Paint.valueOf("#5A6ACF"));
+        btnVolver.setGraphic(icoBack);
+        btnVolver.getStyleClass().add("prod-detalle-back-btn");
+        btnVolver.setOnAction(e -> mostrarHistorial());
+
+        Label lblSep = new Label("›");
+        lblSep.getStyleClass().add("prod-detalle-breadcrumb-sep");
+
+        Label lblTitulo = new Label(provNombre);
+        lblTitulo.getStyleClass().add("prod-detalle-title");
+        HBox.setHgrow(lblTitulo, Priority.ALWAYS);
+
+        String fechaStr = compra.getFecha() != null ? compra.getFecha().format(DFT) : "—";
+        Label badgeFecha = new Label(fechaStr);
+        badgeFecha.setStyle("-fx-background-color: #F5F1EB; -fx-background-radius: 6; " +
+                "-fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #78716C;");
+
+        header.getChildren().addAll(btnVolver, lblSep, lblTitulo, badgeFecha);
+
+        // ── Cuerpo con scroll ─────────────────────────────────────
+        VBox body = new VBox(24);
+        body.setPadding(new Insets(24, 32, 32, 32));
+        VBox.setVgrow(body, Priority.ALWAYS);
+
+        ScrollPane scroll = new ScrollPane(body);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.getStyleClass().add("dashboard-scroll");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+
+        // ── Tarjetas resumen ──────────────────────────────────────
+        String facturaStr = (compra.getNumeroFactura() != null && !compra.getNumeroFactura().isBlank())
+                ? "#" + compra.getNumeroFactura() : "Sin número";
+        String totalStr = FMT.format(compra.getTotal() != null ? compra.getTotal() : BigDecimal.ZERO);
+        int numProductos = compra.getDetalles().size();
+
+        HBox cards = new HBox(14);
+        cards.getChildren().addAll(
+            buildInfoCard("fas-truck",          "#5A6ACF", "Proveedor",    provNombre),
+            buildInfoCard("fas-file-invoice",   "#D97706", "N° Factura",   facturaStr),
+            buildInfoCard("fas-boxes",          "#7C3AED", "Productos",    String.valueOf(numProductos)),
+            buildInfoCard("fas-dollar-sign",    "#15803D", "Total",        totalStr)
+        );
+
+        // ── Sección: productos comprados ──────────────────────────
+        HBox secHeader = new HBox(8);
+        secHeader.setAlignment(Pos.CENTER_LEFT);
+        FontIcon icoSec = new FontIcon("fas-shopping-basket");
+        icoSec.setIconSize(13); icoSec.setIconColor(Paint.valueOf("#5A6ACF"));
+        Label lblSec = new Label("PRODUCTOS COMPRADOS");
+        lblSec.getStyleClass().add("prod-detalle-section-label");
+        secHeader.getChildren().addAll(icoSec, lblSec);
+
+        // Cabecera de la tabla
+        HBox tabHead = new HBox();
+        tabHead.setPadding(new Insets(9, 16, 9, 16));
+        tabHead.setStyle("-fx-background-color: #1A1F2E; -fx-background-radius: 8 8 0 0;");
+        tabHead.setAlignment(Pos.CENTER_LEFT);
+
+        Label hNom = new Label("Producto");
+        hNom.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #FFFFFF;");
+        HBox.setHgrow(hNom, Priority.ALWAYS);
+        hNom.setMaxWidth(Double.MAX_VALUE);
+
+        Label hCant = new Label("Cant.");
+        hCant.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #FFFFFF;");
+        hCant.setMinWidth(70); hCant.setMaxWidth(70); hCant.setPrefWidth(70);
+        hCant.setAlignment(Pos.CENTER);
+
+        Label hUnit = new Label("P. Unitario");
+        hUnit.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #FFFFFF;");
+        hUnit.setMinWidth(130); hUnit.setMaxWidth(130); hUnit.setPrefWidth(130);
+        hUnit.setAlignment(Pos.CENTER_RIGHT);
+
+        Label hSub = new Label("Subtotal");
+        hSub.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #FFFFFF;");
+        hSub.setMinWidth(130); hSub.setMaxWidth(130); hSub.setPrefWidth(130);
+        hSub.setAlignment(Pos.CENTER_RIGHT);
+
+        tabHead.getChildren().addAll(hNom, hCant, hUnit, hSub);
+
+        // Filas de productos
+        VBox filas = new VBox(0);
+        filas.setStyle("-fx-border-color: rgba(26,31,46,0.10); -fx-border-width: 0 1 1 1; -fx-border-radius: 0 0 8 8;");
+        boolean[] par = {true};
+        for (var d : compra.getDetalles()) {
+            String bg = par[0] ? "#FFFFFF" : "#FDFCFA";
+            par[0] = !par[0];
+
+            HBox fila = new HBox();
+            fila.setPadding(new Insets(11, 16, 11, 16));
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setStyle("-fx-background-color: " + bg + "; " +
+                    "-fx-border-color: transparent transparent rgba(26,31,46,0.06) transparent; -fx-border-width: 1;");
+
+            String nom = d.getProducto() != null ? d.getProducto().getNombre() : "—";
+            Label lNom = new Label(nom);
+            lNom.setStyle("-fx-font-size: 13px; -fx-text-fill: #1A1F2E;");
+            HBox.setHgrow(lNom, Priority.ALWAYS);
+            lNom.setMaxWidth(Double.MAX_VALUE);
+
+            Label lCant = new Label(String.valueOf(d.getCantidad()));
+            lCant.setStyle("-fx-font-size: 13px; -fx-text-fill: #1A1F2E;");
+            lCant.setMinWidth(70); lCant.setMaxWidth(70); lCant.setPrefWidth(70);
+            lCant.setAlignment(Pos.CENTER);
+
+            Label lUnit = new Label(FMT.format(d.getPrecioCompraUnitario() != null ? d.getPrecioCompraUnitario() : BigDecimal.ZERO));
+            lUnit.setStyle("-fx-font-size: 13px; -fx-text-fill: #78716C;");
+            lUnit.setMinWidth(130); lUnit.setMaxWidth(130); lUnit.setPrefWidth(130);
+            lUnit.setAlignment(Pos.CENTER_RIGHT);
+
+            Label lSub = new Label(FMT.format(d.getSubtotal() != null ? d.getSubtotal() : BigDecimal.ZERO));
+            lSub.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
+            lSub.setMinWidth(130); lSub.setMaxWidth(130); lSub.setPrefWidth(130);
+            lSub.setAlignment(Pos.CENTER_RIGHT);
+
+            fila.getChildren().addAll(lNom, lCant, lUnit, lSub);
+            filas.getChildren().add(fila);
+        }
+
+        // Fila de total
+        HBox totalFila = new HBox();
+        totalFila.setPadding(new Insets(12, 16, 12, 16));
+        totalFila.setAlignment(Pos.CENTER_RIGHT);
+        totalFila.setSpacing(16);
+        totalFila.setStyle("-fx-background-color: #F5F1EB; -fx-background-radius: 0 0 8 8; " +
+                "-fx-border-color: rgba(26,31,46,0.10); -fx-border-width: 0 1 1 1; -fx-border-radius: 0 0 8 8;");
+
+        Label lblTotLit = new Label("TOTAL DE LA COMPRA");
+        lblTotLit.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #78716C;");
+        Region spacerTotal = new Region(); HBox.setHgrow(spacerTotal, Priority.ALWAYS);
+        Label lblTotVal = new Label(totalStr);
+        lblTotVal.setStyle("-fx-font-size: 17px; -fx-font-weight: 700; -fx-text-fill: #15803D;");
+        totalFila.getChildren().addAll(lblTotLit, spacerTotal, lblTotVal);
+
+        VBox tablaCompleta = new VBox(0);
+        tablaCompleta.getChildren().addAll(tabHead, filas, totalFila);
+
+        body.getChildren().addAll(cards, new Separator(), secHeader, tablaCompleta);
+
+        view.getChildren().addAll(header, scroll);
+
+        animarEntrada(header, 0);
+        animarEntrada(scroll,  60);
+
+        contentArea.getChildren().setAll(view);
+    }
+
+    private VBox buildInfoCard(String iconLiteral, String color, String titulo, String valor) {
+        VBox card = new VBox(8);
+        card.getStyleClass().add("inventario-stat-card");
+        HBox.setHgrow(card, Priority.ALWAYS);
+
+        StackPane icoCircle = new StackPane();
+        icoCircle.setStyle("-fx-background-color: " + color + "22; -fx-background-radius: 8;");
+        icoCircle.setMinSize(34, 34); icoCircle.setMaxSize(34, 34);
+        FontIcon ico = new FontIcon(iconLiteral);
+        ico.setIconSize(15); ico.setIconColor(Paint.valueOf(color));
+        icoCircle.getChildren().add(ico);
+
+        Label lblVal = new Label(valor);
+        lblVal.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
+        lblVal.setWrapText(true);
+
+        Label lblTit = new Label(titulo);
+        lblTit.setStyle("-fx-font-size: 11px; -fx-text-fill: #78716C;");
+
+        card.getChildren().addAll(icoCircle, lblVal, lblTit);
+        return card;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -682,6 +1033,14 @@ public class ComprasController {
         VBox[] listaLineasRef = {null};
         Runnable[] recalcularRef = {null};
 
+        // Banner pre-carga (se muestra si hay última compra del proveedor)
+        HBox bannerPreCarga = new HBox(8);
+        bannerPreCarga.setAlignment(Pos.CENTER_LEFT);
+        bannerPreCarga.setStyle("-fx-background-color: #EEF0FB; -fx-background-radius: 8; " +
+                                "-fx-border-color: #C7CCF0; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 8 12;");
+        bannerPreCarga.setVisible(false);
+        bannerPreCarga.setManaged(false);
+
         HBox secProdHeader = new HBox(10);
         secProdHeader.setAlignment(Pos.CENTER_LEFT);
         Label lblProdSec = new Label("Productos");
@@ -745,6 +1104,52 @@ public class ComprasController {
         lineasRef[0] = lineas;
         listaLineasRef[0] = listaLineas;
         recalcularRef[0] = recalcularTotal;
+
+        // ── Pre-carga de la última compra del proveedor ───────────
+        try {
+            compraService.findUltimaCompraByProveedorId(proveedor.getId()).ifPresent(ultima -> {
+                List<DetalleCompra> detalles = ultima.getDetalles();
+                if (detalles == null || detalles.isEmpty()) return;
+
+                Map<Long, Producto> productosMap = listaProductos.stream()
+                        .filter(p -> p.getId() != null)
+                        .collect(Collectors.toMap(Producto::getId, p -> p, (a, b) -> a));
+
+                int cargados = 0;
+                for (DetalleCompra detalle : detalles) {
+                    if (detalle.getProducto() == null) continue;
+                    Producto prod = productosMap.getOrDefault(detalle.getProducto().getId(), detalle.getProducto());
+                    agregarLineaConDetalle(prod, detalle.getCantidad(), detalle.getPrecioCompraUnitario(),
+                            lineas, listaLineas, recalcularTotal);
+                    cargados++;
+                }
+
+                if (cargados > 0) {
+                    String fechaStr = ultima.getFecha() != null
+                            ? ultima.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "—";
+                    FontIcon icoBanner = new FontIcon("fas-history");
+                    icoBanner.setIconSize(13); icoBanner.setIconColor(Paint.valueOf("#5A6ACF"));
+                    Label lblBanner = new Label("Productos de la última compra (" + fechaStr + "). Edítalos o agrega nuevos.");
+                    lblBanner.setStyle("-fx-font-size: 11px; -fx-text-fill: #374151;");
+                    HBox.setHgrow(lblBanner, Priority.ALWAYS);
+                    FontIcon icoBorrar = new FontIcon("fas-times");
+                    icoBorrar.setIconSize(11); icoBorrar.setIconColor(Paint.valueOf("#78716C"));
+                    Button btnLimpiar = new Button("Limpiar", icoBorrar);
+                    btnLimpiar.setStyle("-fx-background-color: transparent; -fx-text-fill: #78716C; " +
+                                       "-fx-font-size: 11px; -fx-cursor: hand; -fx-padding: 2 6;");
+                    btnLimpiar.setOnAction(ev -> {
+                        lineas.clear();
+                        listaLineas.getChildren().clear();
+                        recalcularTotal.run();
+                        bannerPreCarga.setVisible(false);
+                        bannerPreCarga.setManaged(false);
+                    });
+                    bannerPreCarga.getChildren().addAll(icoBanner, lblBanner, btnLimpiar);
+                    bannerPreCarga.setVisible(true);
+                    bannerPreCarga.setManaged(true);
+                }
+            });
+        } catch (Exception ignored) {}
 
         // Listener del buscador de productos
         txtBuscarProd.textProperty().addListener((obs, o, n) -> {
@@ -912,7 +1317,7 @@ public class ComprasController {
         actions.getChildren().addAll(btnCancelar, btnConfirmar);
 
         modal.getChildren().addAll(header, new Separator(), provInfo, facturaBox,
-                sep, secProdHeader, searchBox, tablaLineas, new Separator(), totalRow, lblError, actions);
+                sep, secProdHeader, bannerPreCarga, searchBox, tablaLineas, new Separator(), totalRow, lblError, actions);
 
         overlay.getChildren().add(modal);
         modal.setTranslateY(16);
@@ -938,6 +1343,22 @@ public class ComprasController {
         HBox fila = crearFilaLinea(linea, lineas, listaLineas, recalcular);
         listaLineas.getChildren().add(fila);
         animarEntrada(fila, 0);
+        recalcular.run();
+    }
+
+    private void agregarLineaConDetalle(Producto prod, int cantidad, BigDecimal precio,
+                                        List<ItemLineaCompra> lineas, VBox listaLineas, Runnable recalcular) {
+        boolean yaExiste = lineas.stream().anyMatch(l -> l.producto != null && l.producto.getId().equals(prod.getId()));
+        if (yaExiste) return;
+
+        ItemLineaCompra linea = new ItemLineaCompra();
+        linea.producto = prod;
+        linea.cantidad = cantidad;
+        linea.precio = precio;
+        lineas.add(linea);
+
+        HBox fila = crearFilaLinea(linea, lineas, listaLineas, recalcular);
+        listaLineas.getChildren().add(fila);
         recalcular.run();
     }
 
@@ -1163,25 +1584,34 @@ public class ComprasController {
         VBox fCat = new VBox(6);
         Label lblCat = new Label("Categoría *"); lblCat.getStyleClass().add("form-label");
         ComboBox<Categoria> cmbCat = new ComboBox<>();
-        cmbCat.setPromptText("Seleccionar categoría"); cmbCat.setMaxWidth(Double.MAX_VALUE);
+        cmbCat.setPromptText("Seleccionar categoría"); cmbCat.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(cmbCat, Priority.ALWAYS);
         try { cmbCat.setItems(FXCollections.observableArrayList(categoriaService.findAllActivas())); }
         catch (Exception ignored) {}
         cmbCat.setConverter(new StringConverter<>() {
             @Override public String toString(Categoria c) { return c == null ? "" : c.getNombre(); }
             @Override public Categoria fromString(String s) { return null; }
         });
-        fCat.getChildren().addAll(lblCat, cmbCat);
+        Button btnNuevaCat = new Button();
+        FontIcon icoPlusCat = new FontIcon("fas-plus"); icoPlusCat.setIconSize(11); icoPlusCat.setIconColor(Paint.valueOf("#5A6ACF"));
+        btnNuevaCat.setGraphic(icoPlusCat); btnNuevaCat.getStyleClass().add("inventario-btn-masiva");
+        HBox catRow = new HBox(6, cmbCat, btnNuevaCat); catRow.setAlignment(Pos.CENTER_LEFT);
+        fCat.getChildren().addAll(lblCat, catRow);
 
         VBox fSubcat = new VBox(6);
         Label lblSubcat = new Label("Subcategoría *"); lblSubcat.getStyleClass().add("form-label");
         ComboBox<Subcategoria> cmbSubcat = new ComboBox<>();
-        cmbSubcat.setPromptText("Seleccionar subcategoría"); cmbSubcat.setMaxWidth(Double.MAX_VALUE);
+        cmbSubcat.setPromptText("Seleccionar subcategoría"); cmbSubcat.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(cmbSubcat, Priority.ALWAYS);
         cmbSubcat.setDisable(true);
         cmbSubcat.setConverter(new StringConverter<>() {
             @Override public String toString(Subcategoria s) { return s == null ? "" : s.getNombre(); }
             @Override public Subcategoria fromString(String str) { return null; }
         });
-        fSubcat.getChildren().addAll(lblSubcat, cmbSubcat);
+        Button btnNuevaSubcat = new Button();
+        FontIcon icoPlusSub = new FontIcon("fas-plus"); icoPlusSub.setIconSize(11); icoPlusSub.setIconColor(Paint.valueOf("#5A6ACF"));
+        btnNuevaSubcat.setGraphic(icoPlusSub); btnNuevaSubcat.getStyleClass().add("inventario-btn-masiva");
+        btnNuevaSubcat.setDisable(true);
+        HBox subcatRow = new HBox(6, cmbSubcat, btnNuevaSubcat); subcatRow.setAlignment(Pos.CENTER_LEFT);
+        fSubcat.getChildren().addAll(lblSubcat, subcatRow);
 
         cmbCat.valueProperty().addListener((obs, old, cat) -> {
             cmbSubcat.getItems().clear(); cmbSubcat.setValue(null);
@@ -1189,10 +1619,13 @@ public class ComprasController {
                 try {
                     cmbSubcat.setItems(FXCollections.observableArrayList(
                             subcategoriaService.findByCategoriaId(cat.getId())));
-                    cmbSubcat.setDisable(false);
-                } catch (Exception ignored) { cmbSubcat.setDisable(true); }
-            } else { cmbSubcat.setDisable(true); }
+                    cmbSubcat.setDisable(false); btnNuevaSubcat.setDisable(false);
+                } catch (Exception ignored) { cmbSubcat.setDisable(true); btnNuevaSubcat.setDisable(true); }
+            } else { cmbSubcat.setDisable(true); btnNuevaSubcat.setDisable(true); }
         });
+
+        btnNuevaCat.setOnAction(e -> abrirMiniModalCategoria(cmbCat, cmbSubcat, btnNuevaSubcat));
+        btnNuevaSubcat.setOnAction(e -> abrirMiniModalSubcategoria(cmbCat.getValue(), cmbSubcat));
 
         HBox row2 = new HBox(14, fCat, fSubcat);
         HBox.setHgrow(fCat, Priority.ALWAYS); HBox.setHgrow(fSubcat, Priority.ALWAYS);
@@ -1210,7 +1643,10 @@ public class ComprasController {
             }
             @Override public Proveedor fromString(String s) { return null; }
         });
-        fProv.getChildren().addAll(lblProv, cmbProv);
+        Label lblMargenBase = new Label();
+        lblMargenBase.setStyle("-fx-font-size: 11px; -fx-text-fill: #5A6ACF; -fx-font-weight: 600;");
+        lblMargenBase.setVisible(false); lblMargenBase.setManaged(false);
+        fProv.getChildren().addAll(lblProv, cmbProv, lblMargenBase);
 
         VBox fPrecio = crearCampoVBox("Precio de compra *");
         TextField txtPrecio = (TextField) fPrecio.getChildren().get(1);
@@ -1219,18 +1655,56 @@ public class ComprasController {
         HBox row3 = new HBox(14, fProv, fPrecio);
         HBox.setHgrow(fProv, Priority.ALWAYS); HBox.setHgrow(fPrecio, Priority.ALWAYS);
 
-        // ── Stock + Ajuste ───────────────────────────────────────
+        // ── Stock ────────────────────────────────────────────────
         VBox fStock = crearCampoVBox("Stock inicial *");
         TextField txtStock = (TextField) fStock.getChildren().get(1);
         txtStock.setPromptText("Ej: 0");
         txtStock.setText("0");
 
-        VBox fAjuste = crearCampoVBox("Ajuste margen (%)");
-        TextField txtAjuste = (TextField) fAjuste.getChildren().get(1);
-        txtAjuste.setPromptText("Opcional, ej: 5");
+        // Listener proveedor: muestra margen del proveedor
+        cmbProv.valueProperty().addListener((obs, old, prov) -> {
+            if (prov != null) {
+                String margenStr = prov.getPorcentajeGanancia().stripTrailingZeros().toPlainString();
+                lblMargenBase.setText("Margen del proveedor: " + margenStr + "%");
+                lblMargenBase.setVisible(true); lblMargenBase.setManaged(true);
+            } else {
+                lblMargenBase.setVisible(false); lblMargenBase.setManaged(false);
+            }
+        });
 
-        HBox row4 = new HBox(14, fStock, fAjuste);
-        HBox.setHgrow(fStock, Priority.ALWAYS); HBox.setHgrow(fAjuste, Priority.ALWAYS);
+        HBox row4 = new HBox(14, fStock);
+        HBox.setHgrow(fStock, Priority.ALWAYS);
+
+        // ── Imagen del producto ──────────────────────────────────
+        File[] imgFileRef = {null};
+        StackPane imgBox = new StackPane();
+        imgBox.setStyle("-fx-background-color: #F5F1EB; -fx-background-radius: 8; " +
+                        "-fx-border-color: rgba(26,31,46,0.12); -fx-border-radius: 8; -fx-border-width: 1;");
+        imgBox.setMinSize(72, 72); imgBox.setMaxSize(72, 72);
+        FontIcon icoImgPh = new FontIcon("fas-image"); icoImgPh.setIconSize(22); icoImgPh.setIconColor(Paint.valueOf("#C8C2BB"));
+        imgBox.getChildren().add(icoImgPh);
+
+        FontIcon icoCamera = new FontIcon("fas-camera"); icoCamera.setIconSize(12); icoCamera.setIconColor(Paint.valueOf("#5A6ACF"));
+        Button btnSelImg = new Button("Seleccionar imagen", icoCamera);
+        btnSelImg.getStyleClass().add("inventario-btn-masiva");
+        btnSelImg.setOnAction(ev -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Seleccionar imagen del producto");
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg", "*.webp", "*.gif"));
+            File archivo = chooser.showOpenDialog(modal.getScene().getWindow());
+            if (archivo == null) return;
+            imgFileRef[0] = archivo;
+            imgBox.getChildren().setAll(new ImageView(new Image(archivo.toURI().toString(), 72, 72, true, true)));
+        });
+
+        Label lblSecImg = new Label("Imagen (opcional)");
+        lblSecImg.getStyleClass().add("form-label");
+        HBox rowImagen = new HBox(14);
+        rowImagen.setAlignment(Pos.CENTER_LEFT);
+        VBox imgControls = new VBox(6, lblSecImg, btnSelImg);
+        HBox.setHgrow(imgControls, Priority.ALWAYS);
+        rowImagen.getChildren().addAll(imgBox, imgControls);
 
         // ── Error + acciones ─────────────────────────────────────
         Label lblError = new Label();
@@ -1276,14 +1750,6 @@ public class ComprasController {
             } catch (NumberFormatException ex) {
                 mostrarErrorModal(lblError, "El stock debe ser un número entero no negativo."); return;
             }
-            BigDecimal ajuste = BigDecimal.ZERO;
-            String ajusteStr = txtAjuste.getText().trim();
-            if (!ajusteStr.isEmpty()) {
-                try { ajuste = new BigDecimal(ajusteStr); }
-                catch (NumberFormatException ex) {
-                    mostrarErrorModal(lblError, "El ajuste debe ser un número válido."); return;
-                }
-            }
             try {
                 Producto nuevo = Producto.builder()
                         .nombre(nombre)
@@ -1291,12 +1757,23 @@ public class ComprasController {
                         .subcategoria(cmbSubcat.getValue())
                         .proveedorPrincipal(cmbProv.getValue())
                         .precioCompra(precioCompra)
-                        .ajusteProducto(ajuste)
                         .stock(stock)
                         .activo(true)
                         .build();
                 nuevo.calcularPrecioVenta();
                 Producto creado = productoService.crear(nuevo);
+                // Guardar imagen si el usuario eligió una
+                if (imgFileRef[0] != null) {
+                    try {
+                        int dot = imgFileRef[0].getName().lastIndexOf('.');
+                        String ext = dot >= 0 ? imgFileRef[0].getName().substring(dot + 1).toLowerCase() : "png";
+                        Path carpeta = Paths.get(System.getProperty("user.home"), ".nappos", "assets", "products");
+                        Files.createDirectories(carpeta);
+                        Path destino = carpeta.resolve("producto_" + creado.getId() + "." + ext);
+                        Files.copy(imgFileRef[0].toPath(), destino, StandardCopyOption.REPLACE_EXISTING);
+                        productoService.actualizarImagen(creado.getId(), destino.toAbsolutePath().toString());
+                    } catch (Exception ignored) { /* imagen opcional */ }
+                }
                 listaProductos.add(creado);
                 cerrarModal(overlay);
                 agregarLineaProducto(creado, lineas, listaLineas, recalcularTotal);
@@ -1310,7 +1787,7 @@ public class ComprasController {
         actions.getChildren().addAll(btnCancelar2, btnGuardar);
 
         modal.getChildren().addAll(header, new Separator(),
-                row1, row2, row3, row4, lblError, new Separator(), actions);
+                row1, row2, row3, row4, rowImagen, lblError, new Separator(), actions);
 
         overlay.getChildren().add(modal);
         rootStack.getChildren().add(overlay);
@@ -1366,6 +1843,144 @@ public class ComprasController {
     // ─────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────────────────────
+    // Mini-modales: crear categoría / subcategoría
+    // ─────────────────────────────────────────────────────────────
+
+    private void abrirMiniModalCategoria(ComboBox<Categoria> cmbCat,
+                                          ComboBox<Subcategoria> cmbSubcat,
+                                          Button btnNuevaSubcat) {
+        StackPane overlay = new StackPane();
+        overlay.getStyleClass().add("inventario-modal-overlay");
+        overlay.setOnMouseClicked(e -> { if (e.getTarget() == overlay) cerrarModal(overlay); });
+
+        VBox modal = new VBox(16);
+        modal.getStyleClass().add("inventario-modal");
+        modal.setMaxWidth(380); modal.setPadding(new Insets(22));
+
+        HBox hdr = new HBox(10); hdr.setAlignment(Pos.CENTER_LEFT);
+        FontIcon icoT = new FontIcon("fas-tag"); icoT.setIconSize(15); icoT.setIconColor(Paint.valueOf("#5A6ACF"));
+        Label lblTit = new Label("Nueva Categoría");
+        lblTit.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
+        HBox.setHgrow(lblTit, Priority.ALWAYS);
+        Button btnX = new Button();
+        FontIcon icoX = new FontIcon("fas-times"); icoX.setIconSize(13); icoX.setIconColor(Paint.valueOf("#78716C"));
+        btnX.setGraphic(icoX); btnX.getStyleClass().add("inventario-modal-close");
+        btnX.setOnAction(e -> cerrarModal(overlay));
+        hdr.getChildren().addAll(icoT, lblTit, btnX);
+
+        VBox fieldNom = crearCampoVBox("Nombre de la categoría *");
+        TextField txtNom = (TextField) fieldNom.getChildren().get(1);
+        txtNom.setPromptText("Ej: Ropa, Electrónica...");
+
+        Label lblErr = new Label();
+        lblErr.getStyleClass().add("inventario-error-label");
+        lblErr.setVisible(false); lblErr.setManaged(false);
+
+        HBox actions = new HBox(10); actions.setAlignment(Pos.CENTER_RIGHT);
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.getStyleClass().add("inventario-btn-cancelar");
+        btnCancelar.setOnAction(e -> cerrarModal(overlay));
+        FontIcon icoSave = new FontIcon("fas-save"); icoSave.setIconSize(13); icoSave.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnGuardar = new Button("Crear", icoSave);
+        btnGuardar.getStyleClass().add("btn-primario");
+        btnGuardar.setOnAction(e -> {
+            String nombre = txtNom.getText().trim();
+            if (nombre.isEmpty()) { mostrarErrorModal(lblErr, "El nombre es obligatorio."); return; }
+            try {
+                Categoria nueva = Categoria.builder().nombre(nombre).activo(true).build();
+                Categoria creada = categoriaService.crear(nueva);
+                cmbCat.getItems().add(creada);
+                cmbCat.setValue(creada);
+                cmbSubcat.getItems().clear(); cmbSubcat.setValue(null);
+                cmbSubcat.setDisable(false); btnNuevaSubcat.setDisable(false);
+                cerrarModal(overlay);
+            } catch (com.nap.pos.domain.exception.BusinessException be) {
+                mostrarErrorModal(lblErr, be.getMessage());
+            } catch (Exception ex) {
+                mostrarErrorModal(lblErr, "Error al crear la categoría.");
+            }
+        });
+        actions.getChildren().addAll(btnCancelar, btnGuardar);
+
+        modal.getChildren().addAll(hdr, new Separator(), fieldNom, lblErr, actions);
+        overlay.getChildren().add(modal);
+        rootStack.getChildren().add(overlay);
+        overlay.setOpacity(0);
+        FadeTransition ft = new FadeTransition(Duration.millis(180), overlay); ft.setFromValue(0); ft.setToValue(1); ft.play();
+        modal.setTranslateY(12);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(200), modal);
+        tt.setFromY(12); tt.setToY(0); tt.setInterpolator(Interpolator.EASE_OUT); tt.play();
+    }
+
+    private void abrirMiniModalSubcategoria(Categoria categoria, ComboBox<Subcategoria> cmbSubcat) {
+        if (categoria == null) return;
+
+        StackPane overlay = new StackPane();
+        overlay.getStyleClass().add("inventario-modal-overlay");
+        overlay.setOnMouseClicked(e -> { if (e.getTarget() == overlay) cerrarModal(overlay); });
+
+        VBox modal = new VBox(16);
+        modal.getStyleClass().add("inventario-modal");
+        modal.setMaxWidth(380); modal.setPadding(new Insets(22));
+
+        HBox hdr = new HBox(10); hdr.setAlignment(Pos.CENTER_LEFT);
+        FontIcon icoT = new FontIcon("fas-tag"); icoT.setIconSize(15); icoT.setIconColor(Paint.valueOf("#D97706"));
+        Label lblTit = new Label("Nueva Subcategoría");
+        lblTit.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
+        HBox.setHgrow(lblTit, Priority.ALWAYS);
+        Button btnX = new Button();
+        FontIcon icoX = new FontIcon("fas-times"); icoX.setIconSize(13); icoX.setIconColor(Paint.valueOf("#78716C"));
+        btnX.setGraphic(icoX); btnX.getStyleClass().add("inventario-modal-close");
+        btnX.setOnAction(e -> cerrarModal(overlay));
+        hdr.getChildren().addAll(icoT, lblTit, btnX);
+
+        Label lblCatInfo = new Label("Categoría: " + categoria.getNombre());
+        lblCatInfo.setStyle("-fx-font-size: 12px; -fx-text-fill: #78716C; " +
+                "-fx-background-color: #F5F1EB; -fx-background-radius: 6; -fx-padding: 6 10;");
+
+        VBox fieldNom = crearCampoVBox("Nombre de la subcategoría *");
+        TextField txtNom = (TextField) fieldNom.getChildren().get(1);
+        txtNom.setPromptText("Ej: Camisas, Zapatos...");
+
+        Label lblErr = new Label();
+        lblErr.getStyleClass().add("inventario-error-label");
+        lblErr.setVisible(false); lblErr.setManaged(false);
+
+        HBox actions = new HBox(10); actions.setAlignment(Pos.CENTER_RIGHT);
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.getStyleClass().add("inventario-btn-cancelar");
+        btnCancelar.setOnAction(e -> cerrarModal(overlay));
+        FontIcon icoSave = new FontIcon("fas-save"); icoSave.setIconSize(13); icoSave.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnGuardar = new Button("Crear", icoSave);
+        btnGuardar.getStyleClass().add("btn-primario");
+        btnGuardar.setOnAction(e -> {
+            String nombre = txtNom.getText().trim();
+            if (nombre.isEmpty()) { mostrarErrorModal(lblErr, "El nombre es obligatorio."); return; }
+            try {
+                Subcategoria nueva = Subcategoria.builder().nombre(nombre).categoria(categoria).activo(true).build();
+                Subcategoria creada = subcategoriaService.crear(nueva);
+                cmbSubcat.getItems().add(creada);
+                cmbSubcat.setValue(creada);
+                cerrarModal(overlay);
+            } catch (com.nap.pos.domain.exception.BusinessException be) {
+                mostrarErrorModal(lblErr, be.getMessage());
+            } catch (Exception ex) {
+                mostrarErrorModal(lblErr, "Error al crear la subcategoría.");
+            }
+        });
+        actions.getChildren().addAll(btnCancelar, btnGuardar);
+
+        modal.getChildren().addAll(hdr, new Separator(), lblCatInfo, fieldNom, lblErr, actions);
+        overlay.getChildren().add(modal);
+        rootStack.getChildren().add(overlay);
+        overlay.setOpacity(0);
+        FadeTransition ft = new FadeTransition(Duration.millis(180), overlay); ft.setFromValue(0); ft.setToValue(1); ft.play();
+        modal.setTranslateY(12);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(200), modal);
+        tt.setFromY(12); tt.setToY(0); tt.setInterpolator(Interpolator.EASE_OUT); tt.play();
+    }
 
     private void cerrarModal(StackPane overlay) {
         FadeTransition ft = new FadeTransition(Duration.millis(160), overlay);

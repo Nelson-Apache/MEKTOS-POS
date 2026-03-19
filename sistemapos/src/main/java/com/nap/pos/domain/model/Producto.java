@@ -21,9 +21,6 @@ public class Producto {
     private BigDecimal precioVenta;
     private BigDecimal precioCompra;
     private Proveedor proveedorPrincipal;
-    // Por defecto 0: el precio se calcula con el % base del proveedor sin ajuste
-    @Builder.Default
-    private BigDecimal ajusteProducto = BigDecimal.ZERO;
     private int stock;
     private Subcategoria subcategoria;
     private boolean activo;
@@ -31,53 +28,33 @@ public class Producto {
     private String imagenPath;
 
     /**
-     * Recalcula el precioVenta usando la fórmula del PRD:
-     *   precioVenta = precioCompra × (1 + (% proveedor + ajusteProducto) / 100)
+     * Recalcula el precioVenta usando el margen del proveedor principal:
+     *   precioVenta = precioCompra × (1 + % proveedor / 100)
      *
-     * Ejemplo: precioCompra=1000, proveedor=30%, ajuste=+10%
-     *   margenEfectivo = 30 + 10 = 40%
-     *   factor = 1 + (40/100) = 1.40
-     *   precioVenta = 1000 × 1.40 = 1400
+     * Ejemplo: precioCompra=1000, proveedor=30%
+     *   factor = 1 + (30/100) = 1.30
+     *   precioVenta = 1000 × 1.30 = 1300
      */
     public void calcularPrecioVenta() {
         if (precioCompra == null || proveedorPrincipal == null) {
             return;
         }
-        BigDecimal margenEfectivo = proveedorPrincipal.getPorcentajeGanancia().add(ajusteProducto);
-        if (margenEfectivo.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException("El margen efectivo del producto '" + nombre + "' debe ser mayor que cero.");
+        BigDecimal margen = proveedorPrincipal.getPorcentajeGanancia();
+        if (margen.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("El margen del proveedor del producto '" + nombre + "' debe ser mayor que cero.");
         }
-        // Se usa 10 decimales intermedios para evitar pérdida de precisión,
-        // y al final se redondea a 2 decimales (centavos).
         BigDecimal factor = BigDecimal.ONE.add(
-                margenEfectivo.divide(new BigDecimal("100"), 10, RoundingMode.HALF_UP)
+                margen.divide(new BigDecimal("100"), 10, RoundingMode.HALF_UP)
         );
         this.precioVenta = precioCompra.multiply(factor).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
-     * Cambia el proveedor principal del producto.
-     * Según las reglas del PRD, al hacer este cambio:
-     *  1. El ajusteProducto se reinicia a 0.
-     *  2. El precioVenta se recalcula con el % base del nuevo proveedor.
+     * Cambia el proveedor principal del producto y recalcula el precioVenta
+     * con el margen del nuevo proveedor.
      */
     public void cambiarProveedorPrincipal(Proveedor nuevoProveedor) {
         this.proveedorPrincipal = nuevoProveedor;
-        this.ajusteProducto = BigDecimal.ZERO;
-        calcularPrecioVenta();
-    }
-
-    /**
-     * Aplica un ajuste al margen del proveedor para este producto específico.
-     * El valor puede ser positivo (aumentar) o negativo (reducir).
-     * El margen efectivo total nunca puede quedar en 0 o negativo.
-     */
-    public void aplicarAjuste(BigDecimal ajuste) {
-        BigDecimal margenResultante = proveedorPrincipal.getPorcentajeGanancia().add(ajuste);
-        if (margenResultante.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException("El margen efectivo del producto '" + nombre + "' debe ser mayor que cero.");
-        }
-        this.ajusteProducto = ajuste;
         calcularPrecioVenta();
     }
 
