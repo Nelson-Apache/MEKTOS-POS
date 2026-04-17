@@ -3,5 +3,8 @@
     "java.import.gradle.java.home": "C:\\Program Files\\Microsoft\\jdk-21.0.10.7-hotspot",
     "java.jdt.ls.java.home": "C:\\Program Files\\Microsoft\\jdk-21.0.10.7-hotspot",
     "java.import.gradle.arguments": "",
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "chat.tools.terminal.autoApprove": {
+        "ForEach-Object": true
+    }
 }

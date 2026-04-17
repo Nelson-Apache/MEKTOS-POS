@@ -2073,6 +2073,8 @@
 .inventario-bar-chart {
     -fx-padding: 0;
     -fx-background-color: transparent;
+    -fx-bar-gap: 2;
+    -fx-category-gap: 14;
 }
 
 .inventario-bar-chart .chart-plot-background {
@@ -2105,11 +2107,20 @@
 .inventario-bar-chart .x-axis .tick-label {
     -fx-font-size: 10px;
     -fx-text-fill: #78716C;
+    -fx-wrap-text: false;
 }
 
 .inventario-bar-chart .y-axis .tick-label {
     -fx-font-size: 10px;
     -fx-text-fill: #A8A29E;
+}
+
+.inventario-bar-chart .x-axis {
+    -fx-tick-label-font-size: 10px;
+}
+
+.inventario-bar-chart .y-axis {
+    -fx-tick-label-font-size: 10px;
 }
 
 .inventario-bar-chart .axis-tick-mark,

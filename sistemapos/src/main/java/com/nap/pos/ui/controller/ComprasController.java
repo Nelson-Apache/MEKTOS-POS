@@ -34,6 +34,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -64,10 +65,12 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -180,12 +183,13 @@ public class ComprasController {
 
     private void mostrarDashboard() {
         activarTab(tabDashboard);
+        recargarDatos();
         contentArea.getChildren().clear();
 
         ScrollPane scroll = new ScrollPane();
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.getStyleClass().add("inventario-root-stack");
+        scroll.getStyleClass().add("dashboard-scroll");
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
         VBox inner = new VBox(28);
@@ -293,11 +297,12 @@ public class ComprasController {
         YearMonth ahora = YearMonth.now();
         Map<String, BigDecimal> gastoMes = new LinkedHashMap<>();
         for (int i = 5; i >= 0; i--) {
-            gastoMes.put(ahora.minusMonths(i).format(mesYFmt), BigDecimal.ZERO);
+            String mes = ahora.minusMonths(i).format(mesYFmt);
+            gastoMes.put(capitalizarEtiqueta(mes), BigDecimal.ZERO);
         }
         for (Compra c : todasCompras) {
             if (c.getFecha() == null) continue;
-            String mes = YearMonth.from(c.getFecha()).format(mesYFmt);
+            String mes = capitalizarEtiqueta(YearMonth.from(c.getFecha()).format(mesYFmt));
             if (gastoMes.containsKey(mes)) {
                 gastoMes.merge(mes, c.getTotal() != null ? c.getTotal() : BigDecimal.ZERO, BigDecimal::add);
             }
@@ -313,10 +318,24 @@ public class ComprasController {
 
         CategoryAxis xAxis = new CategoryAxis();
         xAxis.setTickMarkVisible(false);
+        xAxis.setCategories(FXCollections.observableArrayList(gastoMes.keySet()));
+
         NumberAxis yAxis = new NumberAxis();
+        yAxis.setTickLabelsVisible(true);
         yAxis.setMinorTickVisible(false);
         yAxis.setForceZeroInRange(true);
         yAxis.setLabel("");
+        yAxis.setTickLabelFormatter(new StringConverter<>() {
+            @Override
+            public String toString(Number object) {
+                return formatearMonedaCorta(object);
+            }
+
+            @Override
+            public Number fromString(String string) {
+                return 0;
+            }
+        });
 
         BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
         chart.setLegendVisible(false);
@@ -326,8 +345,13 @@ public class ComprasController {
         VBox.setVgrow(chart, Priority.ALWAYS);
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        gastoMes.forEach((mes, valor) -> series.getData().add(new XYChart.Data<>(mes, valor)));
+        gastoMes.forEach((mes, valor) -> {
+            XYChart.Data<String, Number> data = new XYChart.Data<>(mes, valor.doubleValue());
+            data.setExtraValue(mes);
+            series.getData().add(data);
+        });
         chart.getData().add(series);
+        instalarTooltipsSerie(series, "Mes");
 
         card.getChildren().addAll(header, chart);
         return card;
@@ -362,10 +386,24 @@ public class ComprasController {
 
         CategoryAxis xAxis = new CategoryAxis();
         xAxis.setTickMarkVisible(false);
+        xAxis.setTickLabelRotation(0);
+
         NumberAxis yAxis = new NumberAxis();
+        yAxis.setTickLabelsVisible(true);
         yAxis.setMinorTickVisible(false);
         yAxis.setForceZeroInRange(true);
         yAxis.setLabel("");
+        yAxis.setTickLabelFormatter(new StringConverter<>() {
+            @Override
+            public String toString(Number object) {
+                return formatearMonedaCorta(object);
+            }
+
+            @Override
+            public Number fromString(String string) {
+                return 0;
+            }
+        });
 
         BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
         chart.setLegendVisible(false);
@@ -375,14 +413,142 @@ public class ComprasController {
         VBox.setVgrow(chart, Priority.ALWAYS);
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
+        List<String> categoriasProveedores = new ArrayList<>();
+        Set<String> etiquetasUsadas = new HashSet<>();
         porProveedor.entrySet().stream()
                 .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
                 .limit(5)
-                .forEach(e -> series.getData().add(new XYChart.Data<>(e.getKey(), e.getValue())));
+                .forEach(e -> {
+                    String nombre = normalizarNombreGrafica(e.getKey());
+                    String etiqueta = abreviarEtiquetaEjeX(nombre, etiquetasUsadas);
+                    categoriasProveedores.add(etiqueta);
+                    XYChart.Data<String, Number> data = new XYChart.Data<>(etiqueta, e.getValue().doubleValue());
+                    data.setExtraValue(nombre);
+                    series.getData().add(data);
+                });
+        xAxis.setCategories(FXCollections.observableArrayList(categoriasProveedores));
         chart.getData().add(series);
+        instalarTooltipsSerie(series, "Proveedor");
 
         card.getChildren().addAll(header, chart);
         return card;
+    }
+
+    private void instalarTooltipsSerie(XYChart.Series<String, Number> series, String tituloCategoria) {
+        for (XYChart.Data<String, Number> data : series.getData()) {
+            String categoriaVisible = data.getXValue();
+            Number valor = data.getYValue();
+
+            boolean esPadding = categoriaVisible != null && categoriaVisible.trim().isEmpty()
+                    && (valor == null || valor.doubleValue() == 0d);
+            if (esPadding) {
+                continue;
+            }
+
+            Runnable instalarTooltip = () -> {
+                Node nodo = data.getNode();
+                if (nodo == null) {
+                    return;
+                }
+
+                Object extra = data.getExtraValue();
+                String categoria = extra instanceof String ? (String) extra : data.getXValue();
+                Number monto = data.getYValue() != null ? data.getYValue() : 0;
+                String texto = tituloCategoria + ": " + categoria + "\nValor: " + FMT.format(monto.doubleValue());
+
+                Tooltip tooltip = new Tooltip(texto);
+                tooltip.setShowDelay(Duration.millis(120));
+                Tooltip.install(nodo, tooltip);
+            };
+
+            data.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                if (newNode == null) {
+                    return;
+                }
+                instalarTooltip.run();
+            });
+
+            instalarTooltip.run();
+        }
+    }
+
+    private String capitalizarEtiqueta(String texto) {
+        if (texto == null || texto.isBlank()) {
+            return texto;
+        }
+        return texto.substring(0, 1).toUpperCase(Locale.of("es", "CO")) + texto.substring(1);
+    }
+
+    private String normalizarNombreGrafica(String nombre) {
+        if (nombre == null || nombre.isBlank()) {
+            return "Sin nombre";
+        }
+        return nombre.trim();
+    }
+
+    private String abreviarEtiquetaEjeX(String nombreCompleto, Set<String> etiquetasUsadas) {
+        String limpio = normalizarNombreGrafica(nombreCompleto);
+        String[] partes = limpio.split("\\s+");
+
+        String base;
+        if (partes.length >= 2) {
+            StringBuilder iniciales = new StringBuilder();
+            for (String parte : partes) {
+                if (parte.isBlank()) {
+                    continue;
+                }
+
+                char inicial = Character.toUpperCase(parte.charAt(0));
+                if (!Character.isLetterOrDigit(inicial)) {
+                    continue;
+                }
+
+                iniciales.append(inicial);
+                if (iniciales.length() == 3) {
+                    break;
+                }
+            }
+            base = iniciales.isEmpty() ? "SN" : iniciales.toString();
+        } else {
+            String alfanumerico = limpio.replaceAll("[^\\p{L}\\p{Nd}]", "");
+            if (alfanumerico.isBlank()) {
+                base = "SN";
+            } else if (alfanumerico.length() <= 4) {
+                base = alfanumerico.toUpperCase(Locale.of("es", "CO"));
+            } else {
+                base = alfanumerico.substring(0, 4).toUpperCase(Locale.of("es", "CO"));
+            }
+        }
+
+        String etiqueta = base;
+        int sufijo = 2;
+        while (etiquetasUsadas.contains(etiqueta)) {
+            etiqueta = base + sufijo;
+            sufijo++;
+        }
+
+        etiquetasUsadas.add(etiqueta);
+        return etiqueta;
+    }
+
+    private String formatearMonedaCorta(Number valor) {
+        if (valor == null) {
+            return "$0";
+        }
+
+        double numero = valor.doubleValue();
+        double abs = Math.abs(numero);
+
+        if (abs >= 1_000_000_000d) {
+            return String.format(Locale.of("es", "CO"), "$%.1fB", numero / 1_000_000_000d);
+        }
+        if (abs >= 1_000_000d) {
+            return String.format(Locale.of("es", "CO"), "$%.1fM", numero / 1_000_000d);
+        }
+        if (abs >= 1_000d) {
+            return String.format(Locale.of("es", "CO"), "$%.0fk", numero / 1_000d);
+        }
+        return String.format(Locale.of("es", "CO"), "$%.0f", numero);
     }
 
     private VBox buildChartEmptyState(String icon, String titulo, String subtitulo) {

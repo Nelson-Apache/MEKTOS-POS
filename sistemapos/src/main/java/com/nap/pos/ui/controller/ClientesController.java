@@ -30,6 +30,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -46,8 +47,10 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -155,12 +158,13 @@ public class ClientesController {
 
     private void mostrarDashboard() {
         activarTab(tabDashboard);
+        recargarDatos();
         contentArea.getChildren().clear();
 
         ScrollPane scroll = new ScrollPane();
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.getStyleClass().add("inventario-root-stack");
+        scroll.getStyleClass().add("dashboard-scroll");
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
         VBox inner = new VBox(28);
@@ -271,10 +275,24 @@ public class ClientesController {
 
         CategoryAxis xAxis = new CategoryAxis();
         xAxis.setTickMarkVisible(false);
+        xAxis.setTickLabelRotation(0);
+
         NumberAxis yAxis = new NumberAxis();
+        yAxis.setTickLabelsVisible(true);
         yAxis.setMinorTickVisible(false);
         yAxis.setForceZeroInRange(true);
         yAxis.setLabel("");
+        yAxis.setTickLabelFormatter(new StringConverter<>() {
+            @Override
+            public String toString(Number object) {
+                return formatearMonedaCorta(object);
+            }
+
+            @Override
+            public Number fromString(String string) {
+                return 0;
+            }
+        });
 
         BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
         chart.setLegendVisible(false);
@@ -284,11 +302,125 @@ public class ClientesController {
         VBox.setVgrow(chart, Priority.ALWAYS);
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        deudores.forEach(c -> series.getData().add(new XYChart.Data<>(c.getNombre(), c.getSaldoUtilizado())));
+        List<String> categorias = new ArrayList<>();
+        Set<String> etiquetasUsadas = new HashSet<>();
+        deudores.forEach(c -> {
+            String nombre = normalizarNombreGrafica(c.getNombre());
+            String etiqueta = abreviarEtiquetaEjeX(nombre, etiquetasUsadas);
+            categorias.add(etiqueta);
+
+            XYChart.Data<String, Number> data = new XYChart.Data<>(etiqueta, c.getSaldoUtilizado());
+            data.setExtraValue(nombre);
+            series.getData().add(data);
+        });
+
+        xAxis.setCategories(FXCollections.observableArrayList(categorias));
         chart.getData().add(series);
+        instalarTooltipsSerieMoneda(series, "Cliente");
 
         card.getChildren().addAll(header, chart);
         return card;
+    }
+
+    private void instalarTooltipsSerieMoneda(XYChart.Series<String, Number> series, String tituloCategoria) {
+        for (XYChart.Data<String, Number> data : series.getData()) {
+            Runnable instalarTooltip = () -> {
+                Node nodo = data.getNode();
+                if (nodo == null) {
+                    return;
+                }
+
+                Object extra = data.getExtraValue();
+                String categoria = extra instanceof String ? (String) extra : data.getXValue();
+                Number valor = data.getYValue() != null ? data.getYValue() : 0;
+
+                Tooltip tooltip = new Tooltip(
+                        tituloCategoria + ": " + categoria + "\nValor: " + FMT.format(valor.doubleValue()));
+                tooltip.setShowDelay(Duration.millis(120));
+                Tooltip.install(nodo, tooltip);
+            };
+
+            data.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                if (newNode == null) {
+                    return;
+                }
+                instalarTooltip.run();
+            });
+
+            instalarTooltip.run();
+        }
+    }
+
+    private String formatearMonedaCorta(Number valor) {
+        if (valor == null) {
+            return "$0";
+        }
+
+        double numero = valor.doubleValue();
+        double abs = Math.abs(numero);
+
+        if (abs >= 1_000_000_000d) {
+            return String.format(Locale.of("es", "CO"), "$%.1fB", numero / 1_000_000_000d);
+        }
+        if (abs >= 1_000_000d) {
+            return String.format(Locale.of("es", "CO"), "$%.1fM", numero / 1_000_000d);
+        }
+        if (abs >= 1_000d) {
+            return String.format(Locale.of("es", "CO"), "$%.0fk", numero / 1_000d);
+        }
+        return String.format(Locale.of("es", "CO"), "$%.0f", numero);
+    }
+
+    private String normalizarNombreGrafica(String nombre) {
+        if (nombre == null || nombre.isBlank()) {
+            return "Sin nombre";
+        }
+        return nombre.trim();
+    }
+
+    private String abreviarEtiquetaEjeX(String nombreCompleto, Set<String> etiquetasUsadas) {
+        String limpio = normalizarNombreGrafica(nombreCompleto);
+        String[] partes = limpio.split("\\s+");
+
+        String base;
+        if (partes.length >= 2) {
+            StringBuilder iniciales = new StringBuilder();
+            for (String parte : partes) {
+                if (parte.isBlank()) {
+                    continue;
+                }
+
+                char inicial = Character.toUpperCase(parte.charAt(0));
+                if (!Character.isLetterOrDigit(inicial)) {
+                    continue;
+                }
+
+                iniciales.append(inicial);
+                if (iniciales.length() == 3) {
+                    break;
+                }
+            }
+            base = iniciales.isEmpty() ? "SN" : iniciales.toString();
+        } else {
+            String alfanumerico = limpio.replaceAll("[^\\p{L}\\p{Nd}]", "");
+            if (alfanumerico.isBlank()) {
+                base = "SN";
+            } else if (alfanumerico.length() <= 4) {
+                base = alfanumerico.toUpperCase(Locale.of("es", "CO"));
+            } else {
+                base = alfanumerico.substring(0, 4).toUpperCase(Locale.of("es", "CO"));
+            }
+        }
+
+        String etiqueta = base;
+        int sufijo = 2;
+        while (etiquetasUsadas.contains(etiqueta)) {
+            etiqueta = base + sufijo;
+            sufijo++;
+        }
+
+        etiquetasUsadas.add(etiqueta);
+        return etiqueta;
     }
 
     private VBox crearResumenCreditoCard() {

@@ -1539,6 +1539,8 @@ public class InventarioController {
         porCategoria.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .forEach(e -> series.getData().add(new XYChart.Data<>(e.getKey(), e.getValue())));
+        int catPad = series.getData().size();
+        for (int i = catPad; i < 5; i++) series.getData().add(new XYChart.Data<>(" ".repeat(i + 1), 0));
         barChart.getData().add(series);
 
         card.getChildren().addAll(header, barChart);
