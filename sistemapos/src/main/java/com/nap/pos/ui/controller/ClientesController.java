@@ -336,6 +336,7 @@ public class ClientesController {
 
                 Tooltip tooltip = new Tooltip(
                         tituloCategoria + ": " + categoria + "\nValor: " + FMT.format(valor.doubleValue()));
+                tooltip.getStyleClass().add("inventario-chart-tooltip");
                 tooltip.setShowDelay(Duration.millis(120));
                 Tooltip.install(nodo, tooltip);
             };

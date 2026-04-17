@@ -457,6 +457,7 @@ public class ComprasController {
                 String texto = tituloCategoria + ": " + categoria + "\nValor: " + FMT.format(monto.doubleValue());
 
                 Tooltip tooltip = new Tooltip(texto);
+                tooltip.getStyleClass().add("inventario-chart-tooltip");
                 tooltip.setShowDelay(Duration.millis(120));
                 Tooltip.install(nodo, tooltip);
             };

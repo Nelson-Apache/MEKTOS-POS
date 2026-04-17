@@ -337,6 +337,7 @@ public class ProveedoresController {
 
                 Tooltip tooltip = new Tooltip(
                         "Proveedor: " + proveedor + "\nMargen: " + valor + "%");
+                tooltip.getStyleClass().add("inventario-chart-tooltip");
                 tooltip.setShowDelay(Duration.millis(120));
                 Tooltip.install(nodo, tooltip);
             };
