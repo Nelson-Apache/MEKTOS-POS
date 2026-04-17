@@ -1566,6 +1566,11 @@
 
 .inventario-root-stack {
     -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.inventario-root-stack > .viewport {
+    -fx-background-color: transparent;
 }
 
 .inventario-root {
@@ -2114,6 +2119,21 @@
 
 .inventario-bar-chart .axis-label {
     -fx-text-fill: transparent;
+}
+
+/* ── Estado vacío de gráficas ──────────────────────────────────── */
+.inventario-chart-empty-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #78716C;
+    -fx-text-alignment: center;
+}
+.inventario-chart-empty-sub {
+    -fx-font-size: 11px;
+    -fx-text-fill: #A8A29E;
+    -fx-text-alignment: center;
+    -fx-wrap-text: true;
+    -fx-max-width: 220px;
 }
 
 /* ── Botones de acción modal ───────────────────────────────────── */
@@ -2714,4 +2734,124 @@
 .ajuste-form-actions {
     -fx-padding: 20 28 24 28;
     -fx-background-color: transparent;
+}
+
+/* ── ComboBox de filtro/formulario (clientes, proveedores) ─────── */
+.inventario-combo {
+    -fx-background-color: #EDE9E2;
+    -fx-border-color: rgba(26,31,46,0.12);
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 0;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-max-width: Infinity;
+}
+
+.inventario-combo:hover {
+    -fx-border-color: rgba(26,31,46,0.28);
+}
+
+.inventario-combo:focused {
+    -fx-border-color: #5A6ACF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 5, 0, 0, 0);
+}
+
+.inventario-combo .list-cell {
+    -fx-font-size: 13px;
+    -fx-text-fill: #1A1F2E;
+    -fx-padding: 9 12 9 12;
+    -fx-background-color: transparent;
+}
+
+.inventario-combo .arrow-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0 10 0 0;
+}
+
+.inventario-combo .arrow-button .arrow {
+    -fx-background-color: #78716C;
+    -fx-shape: "M 0 0 L 4 4 L 8 0 Z";
+}
+
+/* ── Campo de formulario genérico (módulos inventario, caja, reportes, clientes, proveedores) ── */
+.inventario-field {
+    -fx-background-color: #EDE9E2;
+    -fx-border-color: rgba(26,31,46,0.12);
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 10 12 10 12;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1A1F2E;
+    -fx-prompt-text-fill: #A8A29E;
+    -fx-max-width: Infinity;
+}
+
+.inventario-field:hover {
+    -fx-border-color: rgba(26,31,46,0.28);
+}
+
+.inventario-field:focused {
+    -fx-border-color: #5A6ACF;
+    -fx-background-color: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 5, 0, 0, 0);
+}
+
+/* ── Módulo de Configuración ────────────────────────────────────── */
+
+.cfg-scroll {
+    -fx-background-color: #F5F1EB;
+    -fx-background: #F5F1EB;
+    -fx-border-color: transparent;
+}
+
+.cfg-scroll > .viewport {
+    -fx-background-color: #F5F1EB;
+}
+
+/* Tab lateral de configuración */
+.cfg-tab {
+    -fx-background-color: transparent;
+    -fx-text-fill: #4B5563;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-padding: 10 14 10 14;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT;
+    -fx-graphic-text-gap: 10;
+    -fx-effect: none;
+}
+
+.cfg-tab:hover {
+    -fx-background-color: rgba(90,106,207,0.07);
+    -fx-text-fill: #1A1F2E;
+}
+
+.cfg-tab .ikonli-font-icon {
+    -fx-icon-color: #A8A29E;
+    -fx-fill: #A8A29E;
+}
+
+.cfg-tab:hover .ikonli-font-icon {
+    -fx-icon-color: #5A6ACF;
+    -fx-fill: #5A6ACF;
+}
+
+/* Tab activo */
+.cfg-tab-active {
+    -fx-background-color: #ECEEF7;
+    -fx-text-fill: #3C48AA;
+    -fx-font-weight: 700;
+}
+
+.cfg-tab-active .ikonli-font-icon {
+    -fx-icon-color: #5A6ACF;
+    -fx-fill: #5A6ACF;
+}
+
+.cfg-tab-active:hover {
+    -fx-background-color: #DDE0F5;
 }

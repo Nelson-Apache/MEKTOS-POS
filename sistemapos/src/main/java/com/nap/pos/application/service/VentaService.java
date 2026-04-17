@@ -115,10 +115,12 @@ public class VentaService {
     }
 
     // Usado al cerrar caja para calcular el resumen del período
+    @Transactional(readOnly = true)
     public List<Venta> findByCajaId(Long cajaId) {
         return ventaRepository.findByCajaId(cajaId);
     }
 
+    @Transactional(readOnly = true)
     public List<Venta> findAll() {
         return ventaRepository.findAll();
     }

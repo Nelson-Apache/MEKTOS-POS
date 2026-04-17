@@ -305,9 +305,9 @@ public class ComprasController {
 
         boolean sinDatos = gastoMes.values().stream().allMatch(v -> v.compareTo(BigDecimal.ZERO) == 0);
         if (sinDatos) {
-            Label lv = new Label("Sin compras en los últimos 6 meses.");
-            lv.setStyle("-fx-font-size: 12px; -fx-text-fill: #A8A29E;");
-            card.getChildren().addAll(header, lv);
+            card.getChildren().addAll(header, buildChartEmptyState("fas-calendar-alt",
+                    "Sin compras recientes",
+                    "Registra compras a proveedores para ver el historial mensual"));
             return card;
         }
 
@@ -354,9 +354,9 @@ public class ComprasController {
                         Collectors.reducing(BigDecimal.ZERO, Compra::getTotal, BigDecimal::add)));
 
         if (porProveedor.isEmpty()) {
-            Label lv = new Label("Sin datos de proveedores.");
-            lv.setStyle("-fx-font-size: 12px; -fx-text-fill: #A8A29E;");
-            card.getChildren().addAll(header, lv);
+            card.getChildren().addAll(header, buildChartEmptyState("fas-truck",
+                    "Sin compras a proveedores",
+                    "Registra compras para ver el ranking de proveedores"));
             return card;
         }
 
@@ -383,6 +383,23 @@ public class ComprasController {
 
         card.getChildren().addAll(header, chart);
         return card;
+    }
+
+    private VBox buildChartEmptyState(String icon, String titulo, String subtitulo) {
+        VBox box = new VBox(10);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(24, 0, 8, 0));
+        FontIcon ico = new FontIcon(icon);
+        ico.setIconSize(32);
+        ico.setIconColor(Paint.valueOf("#D4CEC8"));
+        Label lTitle = new Label(titulo);
+        lTitle.getStyleClass().add("inventario-chart-empty-title");
+        Label lSub = new Label(subtitulo);
+        lSub.getStyleClass().add("inventario-chart-empty-sub");
+        lSub.setWrapText(true);
+        lSub.setMaxWidth(220);
+        box.getChildren().addAll(ico, lTitle, lSub);
+        return box;
     }
 
     private HBox crearFilaReciente(Compra c) {

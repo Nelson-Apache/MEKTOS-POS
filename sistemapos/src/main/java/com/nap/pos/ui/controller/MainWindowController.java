@@ -45,12 +45,15 @@ public class MainWindowController {
     private final ConfiguracionService configuracionService;
     private final CajaService          cajaService;
     private final NotificacionService  notificacionService;
-    private final DashboardController   dashboardController;
-    private final VentasController      ventasController;
-    private final InventarioController  inventarioController;
-    private final ComprasController     comprasController;
-    private final ClientesController    clientesController;
-    private final ProveedoresController proveedoresController;
+    private final DashboardController      dashboardController;
+    private final VentasController         ventasController;
+    private final InventarioController     inventarioController;
+    private final ComprasController        comprasController;
+    private final ClientesController       clientesController;
+    private final ProveedoresController    proveedoresController;
+    private final CajaController           cajaController;
+    private final ReportesController       reportesController;
+    private final ConfiguracionController  configuracionController;
 
     // ── Sidebar ───────────────────────────────────────────────────
     @FXML private VBox   sidebar;
@@ -157,22 +160,19 @@ public class MainWindowController {
     @FXML
     public void navCaja() {
         activarNav(btnCaja, "Caja");
-        mostrarPlaceholder("Caja",
-                "Apertura, cierre e historial de caja");
+        contenido.getChildren().setAll(cajaController.buildView(usuarioActual, this::actualizarEstadoCaja));
     }
 
     @FXML
     public void navReportes() {
         activarNav(btnReportes, "Reportes");
-        mostrarPlaceholder("Reportes",
-                "Ventas, caja y análisis del negocio");
+        contenido.getChildren().setAll(reportesController.buildView());
     }
 
     @FXML
     public void navConfiguracion() {
         activarNav(btnConfiguracion, "Configuración");
-        mostrarPlaceholder("Configuración",
-                "Usuarios, categorías, proveedores y ajustes");
+        contenido.getChildren().setAll(configuracionController.buildView(usuarioActual));
     }
 
     // ── Sidebar toggle ────────────────────────────────────────────

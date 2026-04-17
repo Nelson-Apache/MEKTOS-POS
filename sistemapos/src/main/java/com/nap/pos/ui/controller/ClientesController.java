@@ -263,9 +263,9 @@ public class ClientesController {
                 .collect(Collectors.toList());
 
         if (deudores.isEmpty()) {
-            Label lv = new Label("Sin deudas registradas.");
-            lv.setStyle("-fx-font-size: 12px; -fx-text-fill: #A8A29E;");
-            card.getChildren().addAll(header, lv);
+            card.getChildren().addAll(header, buildChartEmptyState("fas-chart-bar",
+                    "Sin deudas activas",
+                    "Los clientes con saldo pendiente aparecerán aquí"));
             return card;
         }
 
@@ -344,6 +344,23 @@ public class ClientesController {
 
         row.getChildren().addAll(ico, lbl, val);
         return row;
+    }
+
+    private VBox buildChartEmptyState(String icon, String titulo, String subtitulo) {
+        VBox box = new VBox(10);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(24, 0, 8, 0));
+        FontIcon ico = new FontIcon(icon);
+        ico.setIconSize(32);
+        ico.setIconColor(Paint.valueOf("#D4CEC8"));
+        Label lTitle = new Label(titulo);
+        lTitle.getStyleClass().add("inventario-chart-empty-title");
+        Label lSub = new Label(subtitulo);
+        lSub.getStyleClass().add("inventario-chart-empty-sub");
+        lSub.setWrapText(true);
+        lSub.setMaxWidth(220);
+        box.getChildren().addAll(ico, lTitle, lSub);
+        return box;
     }
 
     private HBox crearFilaCliente(Cliente c) {

@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:contribution.usercontent.google.com)",
-      "WebFetch(domain:lh3.googleusercontent.com)"
+      "WebFetch(domain:lh3.googleusercontent.com)",
+      "mcp__stitch__list_projects"
     ]
   }
 }

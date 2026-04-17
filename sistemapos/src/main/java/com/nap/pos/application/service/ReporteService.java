@@ -8,6 +8,7 @@ import com.nap.pos.domain.model.enums.MetodoPago;
 import com.nap.pos.domain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -30,6 +31,7 @@ public class ReporteService {
      * y lista los productos más vendidos, ordenados por cantidad.
      * Las ventas ANULADAS se cuentan pero no aportan al total de dinero.
      */
+    @Transactional(readOnly = true)
     public ReporteVentasDto reporteVentasPorCaja(Long cajaId) {
         Caja caja = cajaRepository.findById(cajaId)
                 .orElseThrow(() -> new BusinessException("Caja con ID " + cajaId + " no encontrada."));
@@ -69,6 +71,7 @@ public class ReporteService {
      * Agrega todos los ítems del mismo producto a través de distintas compras,
      * ordenados de mayor a menor inversión.
      */
+    @Transactional(readOnly = true)
     public ReporteComprasDto reporteComprasPorProveedor(Long proveedorId) {
         Proveedor proveedor = proveedorRepository.findById(proveedorId)
                 .orElseThrow(() -> new BusinessException("Proveedor con ID " + proveedorId + " no encontrado."));
@@ -93,6 +96,7 @@ public class ReporteService {
      * Solo incluye clientes con saldo utilizado mayor a cero,
      * ordenados de mayor a menor deuda.
      */
+    @Transactional(readOnly = true)
     public ReporteCreditosDto reporteCreditos() {
         List<ClienteCreditoDto> conDeuda = clienteRepository.findAll().stream()
                 .filter(c -> c.tieneCreditoHabilitado()
@@ -122,6 +126,7 @@ public class ReporteService {
      *
      * @param umbralBajoStock cantidad mínima aceptable (ej: 5 unidades)
      */
+    @Transactional(readOnly = true)
     public ReporteInventarioDto reporteInventario(int umbralBajoStock) {
         List<Producto> activos = productoRepository.findAllActivos();
 
@@ -155,6 +160,7 @@ public class ReporteService {
      * @param anio año (ej: 2026)
      * @param mes  mes 1–12 (ej: 2 = febrero)
      */
+    @Transactional(readOnly = true)
     public ReporteRentabilidadDto reporteRentabilidad(int anio, int mes) {
         // Total invertido: suma de todas las compras del mes
         BigDecimal totalInvertido = compraRepository.findAll().stream()
@@ -202,6 +208,7 @@ public class ReporteService {
      *
      * @param anio año completo (ej: 2026)
      */
+    @Transactional(readOnly = true)
     public ReporteRentabilidadAnualDto reporteRentabilidadAnual(int anio) {
         final String[] NOMBRES = {"","Enero","Febrero","Marzo","Abril","Mayo","Junio",
                                   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"};

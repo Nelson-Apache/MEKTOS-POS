@@ -55,12 +55,14 @@ public class CajaService {
      * Retorna la caja actualmente abierta.
      * Lanza excepción si no hay caja abierta — requerida para registrar ventas.
      */
+    @Transactional(readOnly = true)
     public Caja getCajaAbierta() {
         return cajaRepository.findCajaAbierta()
                 .orElseThrow(() -> new BusinessException("No hay una caja abierta. Abra una caja para continuar."));
     }
 
     // Historial de todas las cajas (abiertas y cerradas)
+    @Transactional(readOnly = true)
     public List<Caja> findAll() {
         return cajaRepository.findAll();
     }

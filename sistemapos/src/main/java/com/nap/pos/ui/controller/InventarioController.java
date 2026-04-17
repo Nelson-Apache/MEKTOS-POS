@@ -1512,9 +1512,10 @@ public class InventarioController {
                         Collectors.counting()));
 
         if (porCategoria.isEmpty()) {
-            Label lVacio = new Label("Sin datos de categorías.");
-            lVacio.getStyleClass().add("inventario-empty");
-            card.getChildren().addAll(header, lVacio);
+            VBox emptyState = buildChartEmptyState("fas-chart-bar",
+                    "Sin datos de categorías",
+                    "Asigna categorías a tus productos para ver la distribución");
+            card.getChildren().addAll(header, emptyState);
             return card;
         }
 
@@ -1718,9 +1719,10 @@ public class InventarioController {
                         Collectors.counting()));
 
         if (porProveedor.isEmpty()) {
-            Label lVacio = new Label("Sin datos de proveedores.");
-            lVacio.getStyleClass().add("inventario-empty");
-            lista.getChildren().add(lVacio);
+            VBox emptyState = buildChartEmptyState("fas-truck",
+                    "Sin datos de proveedores",
+                    "Asigna proveedores a tus productos para ver el resumen");
+            lista.getChildren().add(emptyState);
         } else {
             long maxCount = porProveedor.values().stream().max(Long::compareTo).orElse(1L);
 
@@ -1768,6 +1770,23 @@ public class InventarioController {
     // ══════════════════════════════════════════════════════════════
     //  Helpers genéricos
     // ══════════════════════════════════════════════════════════════
+
+    private VBox buildChartEmptyState(String icon, String titulo, String subtitulo) {
+        VBox box = new VBox(10);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(24, 0, 8, 0));
+        FontIcon ico = new FontIcon(icon);
+        ico.setIconSize(32);
+        ico.setIconColor(Paint.valueOf("#D4CEC8"));
+        Label lTitle = new Label(titulo);
+        lTitle.getStyleClass().add("inventario-chart-empty-title");
+        Label lSub = new Label(subtitulo);
+        lSub.getStyleClass().add("inventario-chart-empty-sub");
+        lSub.setWrapText(true);
+        lSub.setMaxWidth(220);
+        box.getChildren().addAll(ico, lTitle, lSub);
+        return box;
+    }
 
     private VBox crearCampo(String labelText) {
         VBox field = new VBox(6);
