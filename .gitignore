@@ -1,0 +1,30 @@
+# Claude/AI Tools
+.agent/
+.agents/
+.claude/
+.junie/
+.interface-design/
+
+# GitHub
+.github/java-upgrade/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+.gradle/
+out/
+dist/
+
+# Project specific
+*.log
+.env
+*.swp
+*.swo
+
