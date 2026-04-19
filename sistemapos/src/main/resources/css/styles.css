@@ -475,6 +475,9 @@
     -fx-background-color: #FEE2E2;
     -fx-padding: 3 8 3 8;
     -fx-background-radius: 5px;
+    -fx-min-width: 72px;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
 }
 
 /* Tabla de últimas ventas */
@@ -2940,17 +2943,25 @@
     -fx-background-color: #FEF3C7;
     -fx-padding: 3 8 3 8;
     -fx-background-radius: 5px;
+    -fx-min-width: 72px;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
 }
 
 /* ── Campana: badge de conteo ──────────────────────────────────── */
 .notif-badge {
     -fx-background-color: #EF4444;
     -fx-text-fill: #FFFFFF;
-    -fx-font-size: 9px;
+    -fx-font-size: 10px;
     -fx-font-weight: 700;
-    -fx-background-radius: 8px;
-    -fx-padding: 1 4 1 4;
-    -fx-min-width: 16px;
+    -fx-background-radius: 9px;
+    -fx-border-color: #FFFFFF;
+    -fx-border-width: 1px;
+    -fx-border-radius: 9px;
+    -fx-padding: 0 5 0 5;
+    -fx-min-width: 18px;
+    -fx-min-height: 18px;
+    -fx-max-height: 18px;
     -fx-alignment: center;
 }
 

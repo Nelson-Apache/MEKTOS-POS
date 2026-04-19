@@ -11,6 +11,7 @@ import com.nap.pos.domain.model.ConfiguracionTienda;
 import com.nap.pos.domain.model.Producto;
 import com.nap.pos.domain.model.Proveedor;
 import com.nap.pos.domain.model.Subcategoria;
+import com.nap.pos.ui.component.CatalogoMiniModalComponent;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -82,6 +83,7 @@ public class InventarioController {
     private final SubcategoriaService  subcategoriaService;
     private final ProveedorService     proveedorService;
     private final ConfiguracionService configuracionService;
+    private final CatalogoMiniModalComponent catalogoMiniModalComponent;
 
     private List<Producto> todosProductos = new ArrayList<>();
     private List<Producto> productosFiltrados = new ArrayList<>();
@@ -1163,135 +1165,11 @@ public class InventarioController {
     private void abrirMiniModalCategoria(ComboBox<Categoria> cmbCat,
                                           ComboBox<Subcategoria> cmbSubcat,
                                           Button btnNuevaSubcat) {
-        StackPane overlay = new StackPane();
-        overlay.getStyleClass().add("inventario-modal-overlay");
-        overlay.setOnMouseClicked(e -> { if (e.getTarget() == overlay) cerrarModal(overlay); });
-
-        VBox modal = new VBox(16);
-        modal.getStyleClass().add("inventario-modal");
-        modal.setMaxWidth(380); modal.setPadding(new Insets(22));
-
-        HBox hdr = new HBox(10); hdr.setAlignment(Pos.CENTER_LEFT);
-        FontIcon icoT = new FontIcon("fas-tag"); icoT.setIconSize(15); icoT.setIconColor(Paint.valueOf("#5A6ACF"));
-        Label lblTit = new Label("Nueva Categoría");
-        lblTit.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
-        HBox.setHgrow(lblTit, Priority.ALWAYS);
-        Button btnX = new Button();
-        FontIcon icoX = new FontIcon("fas-times"); icoX.setIconSize(13); icoX.setIconColor(Paint.valueOf("#78716C"));
-        btnX.setGraphic(icoX); btnX.getStyleClass().add("inventario-modal-close");
-        btnX.setOnAction(e -> cerrarModal(overlay));
-        hdr.getChildren().addAll(icoT, lblTit, btnX);
-
-        VBox fieldNom = crearCampo("Nombre de la categoría *");
-        TextField txtNom = (TextField) fieldNom.getChildren().get(1);
-        txtNom.setPromptText("Ej: Ropa, Electrónica...");
-
-        Label lblErr = new Label();
-        lblErr.getStyleClass().add("inventario-error-label");
-        lblErr.setVisible(false); lblErr.setManaged(false);
-
-        HBox actions = new HBox(10); actions.setAlignment(Pos.CENTER_RIGHT);
-        Button btnCancelar = new Button("Cancelar");
-        btnCancelar.getStyleClass().add("inventario-btn-cancelar");
-        btnCancelar.setOnAction(e -> cerrarModal(overlay));
-        FontIcon icoSave = new FontIcon("fas-save"); icoSave.setIconSize(13); icoSave.setIconColor(Paint.valueOf("#FFFFFF"));
-        Button btnGuardar = new Button("Crear", icoSave);
-        btnGuardar.getStyleClass().add("btn-primario");
-        btnGuardar.setOnAction(e -> {
-            String nombre = txtNom.getText().trim();
-            if (nombre.isEmpty()) { mostrarErrorModal(lblErr, "El nombre es obligatorio."); return; }
-            try {
-                Categoria nueva = Categoria.builder().nombre(nombre).activo(true).build();
-                Categoria creada = categoriaService.crear(nueva);
-                cmbCat.getItems().add(creada);
-                cmbCat.setValue(creada);
-                cmbSubcat.getItems().clear(); cmbSubcat.setValue(null);
-                cmbSubcat.setDisable(false); btnNuevaSubcat.setDisable(false);
-                cerrarModal(overlay);
-            } catch (com.nap.pos.domain.exception.BusinessException be) {
-                mostrarErrorModal(lblErr, be.getMessage());
-            } catch (Exception ex) {
-                mostrarErrorModal(lblErr, "Error al crear la categoría.");
-            }
-        });
-        actions.getChildren().addAll(btnCancelar, btnGuardar);
-
-        modal.getChildren().addAll(hdr, new Separator(), fieldNom, lblErr, actions);
-        overlay.getChildren().add(modal);
-        rootStack.getChildren().add(overlay);
-        overlay.setOpacity(0);
-        FadeTransition ft = new FadeTransition(Duration.millis(180), overlay); ft.setFromValue(0); ft.setToValue(1); ft.play();
-        modal.setTranslateY(12);
-        TranslateTransition tt = new TranslateTransition(Duration.millis(200), modal);
-        tt.setFromY(12); tt.setToY(0); tt.setInterpolator(Interpolator.EASE_OUT); tt.play();
+        catalogoMiniModalComponent.abrirMiniModalCategoria(rootStack, cmbCat, cmbSubcat, btnNuevaSubcat);
     }
 
     private void abrirMiniModalSubcategoria(Categoria categoria, ComboBox<Subcategoria> cmbSubcat) {
-        if (categoria == null) return;
-
-        StackPane overlay = new StackPane();
-        overlay.getStyleClass().add("inventario-modal-overlay");
-        overlay.setOnMouseClicked(e -> { if (e.getTarget() == overlay) cerrarModal(overlay); });
-
-        VBox modal = new VBox(16);
-        modal.getStyleClass().add("inventario-modal");
-        modal.setMaxWidth(380); modal.setPadding(new Insets(22));
-
-        HBox hdr = new HBox(10); hdr.setAlignment(Pos.CENTER_LEFT);
-        FontIcon icoT = new FontIcon("fas-tag"); icoT.setIconSize(15); icoT.setIconColor(Paint.valueOf("#D97706"));
-        Label lblTit = new Label("Nueva Subcategoría");
-        lblTit.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
-        HBox.setHgrow(lblTit, Priority.ALWAYS);
-        Button btnX = new Button();
-        FontIcon icoX = new FontIcon("fas-times"); icoX.setIconSize(13); icoX.setIconColor(Paint.valueOf("#78716C"));
-        btnX.setGraphic(icoX); btnX.getStyleClass().add("inventario-modal-close");
-        btnX.setOnAction(e -> cerrarModal(overlay));
-        hdr.getChildren().addAll(icoT, lblTit, btnX);
-
-        Label lblCatInfo = new Label("Categoría: " + categoria.getNombre());
-        lblCatInfo.setStyle("-fx-font-size: 12px; -fx-text-fill: #78716C; " +
-                "-fx-background-color: #F5F1EB; -fx-background-radius: 6; -fx-padding: 6 10;");
-
-        VBox fieldNom = crearCampo("Nombre de la subcategoría *");
-        TextField txtNom = (TextField) fieldNom.getChildren().get(1);
-        txtNom.setPromptText("Ej: Camisas, Zapatos...");
-
-        Label lblErr = new Label();
-        lblErr.getStyleClass().add("inventario-error-label");
-        lblErr.setVisible(false); lblErr.setManaged(false);
-
-        HBox actions = new HBox(10); actions.setAlignment(Pos.CENTER_RIGHT);
-        Button btnCancelar = new Button("Cancelar");
-        btnCancelar.getStyleClass().add("inventario-btn-cancelar");
-        btnCancelar.setOnAction(e -> cerrarModal(overlay));
-        FontIcon icoSave = new FontIcon("fas-save"); icoSave.setIconSize(13); icoSave.setIconColor(Paint.valueOf("#FFFFFF"));
-        Button btnGuardar = new Button("Crear", icoSave);
-        btnGuardar.getStyleClass().add("btn-primario");
-        btnGuardar.setOnAction(e -> {
-            String nombre = txtNom.getText().trim();
-            if (nombre.isEmpty()) { mostrarErrorModal(lblErr, "El nombre es obligatorio."); return; }
-            try {
-                Subcategoria nueva = Subcategoria.builder().nombre(nombre).categoria(categoria).activo(true).build();
-                Subcategoria creada = subcategoriaService.crear(nueva);
-                cmbSubcat.getItems().add(creada);
-                cmbSubcat.setValue(creada);
-                cerrarModal(overlay);
-            } catch (com.nap.pos.domain.exception.BusinessException be) {
-                mostrarErrorModal(lblErr, be.getMessage());
-            } catch (Exception ex) {
-                mostrarErrorModal(lblErr, "Error al crear la subcategoría.");
-            }
-        });
-        actions.getChildren().addAll(btnCancelar, btnGuardar);
-
-        modal.getChildren().addAll(hdr, new Separator(), lblCatInfo, fieldNom, lblErr, actions);
-        overlay.getChildren().add(modal);
-        rootStack.getChildren().add(overlay);
-        overlay.setOpacity(0);
-        FadeTransition ft = new FadeTransition(Duration.millis(180), overlay); ft.setFromValue(0); ft.setToValue(1); ft.play();
-        modal.setTranslateY(12);
-        TranslateTransition tt = new TranslateTransition(Duration.millis(200), modal);
-        tt.setFromY(12); tt.setToY(0); tt.setInterpolator(Interpolator.EASE_OUT); tt.play();
+        catalogoMiniModalComponent.abrirMiniModalSubcategoria(rootStack, categoria, cmbSubcat);
     }
 
     private void cerrarModal(StackPane overlay) {

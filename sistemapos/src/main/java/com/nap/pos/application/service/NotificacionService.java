@@ -10,6 +10,7 @@ import com.nap.pos.domain.repository.ClienteRepository;
 import com.nap.pos.domain.repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class NotificacionService {
 
     private final ProductoRepository    productoRepository;
@@ -79,7 +81,7 @@ public class NotificacionService {
     private Notificacion toNotificacionStock(Producto p, int stockMinimo) {
         Severidad severidad = p.getStock() == 0 ? Severidad.CRITICA : Severidad.ADVERTENCIA;
         String titulo  = "Stock bajo: " + p.getNombre();
-        String mensaje = "Stock actual: " + p.getStock() + " | Mínimo configurado: " + stockMinimo;
+        String mensaje = "Stock actual: " + p.getStock();
         return new Notificacion(TipoNotificacion.STOCK_BAJO, titulo, mensaje, severidad, p.getId());
     }
 

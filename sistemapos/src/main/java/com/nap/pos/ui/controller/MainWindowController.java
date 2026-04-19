@@ -248,6 +248,7 @@ public class MainWindowController {
             return;
         }
         try {
+            actualizarBadge();
             List<Notificacion> notifs = notificacionService.getNotificaciones();
             notifPopup = construirPopupNotificaciones(notifs);
             Bounds b = btnNotificaciones.localToScreen(btnNotificaciones.getBoundsInLocal());
@@ -418,7 +419,7 @@ public class MainWindowController {
         lblBadgeNotificaciones.setVisible(false);
         lblBadgeNotificaciones.setManaged(false);
         StackPane.setAlignment(lblBadgeNotificaciones, Pos.TOP_RIGHT);
-        StackPane.setMargin(lblBadgeNotificaciones, new Insets(-4, -4, 0, 0));
+        StackPane.setMargin(lblBadgeNotificaciones, new Insets(-2, -2, 0, 0));
 
         StackPane wrapper = new StackPane(btnNotificaciones, lblBadgeNotificaciones);
         wrapper.setAlignment(Pos.CENTER);

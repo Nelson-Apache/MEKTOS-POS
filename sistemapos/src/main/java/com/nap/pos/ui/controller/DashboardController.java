@@ -388,6 +388,7 @@ public class DashboardController {
 
         VBox left = new VBox(2);
         HBox.setHgrow(left, Priority.ALWAYS);
+        left.setMinWidth(0);
 
         String nombreMostrado = esPago
                 ? (n.titulo().startsWith("Pago próximo: ") ? n.titulo().substring("Pago próximo: ".length()) : n.titulo())
@@ -398,12 +399,24 @@ public class DashboardController {
 
         Label lMsg = new Label(n.mensaje());
         lMsg.getStyleClass().add("dashboard-alert-msg");
+        lMsg.setWrapText(true);
 
         left.getChildren().addAll(lNom, lMsg);
 
-        String badgeText = esPago ? "Crédito" : "Stock";
+        String badgeText;
+        if (esPago) {
+            badgeText = "Crédito";
+        } else {
+            badgeText = switch (n.severidad()) {
+                case CRITICA -> "Agotado";
+                case ADVERTENCIA -> "Stock bajo";
+                default -> "Stock";
+            };
+        }
         Label badge = new Label(badgeText);
         badge.getStyleClass().add(esPago ? "dashboard-alert-badge-pago" : "dashboard-alert-stock");
+        badge.setMinWidth(72);
+        badge.setAlignment(Pos.CENTER);
 
         row.getChildren().addAll(tipoIco, left, badge);
         return row;
@@ -467,12 +480,15 @@ public class DashboardController {
                     setGraphic(null);
                 } else {
                     Venta v = getTableRow().getItem();
-                    Label badge = new Label(formatarEstadoVenta(v.getEstado()));
                     boolean esCredito = MetodoPago.CREDITO.equals(v.getMetodoPago());
-                    boolean pagada    = EstadoVenta.COMPLETADA.equals(v.getEstado());
-                    String style = pagada
-                            ? (esCredito ? "dash-badge-credito" : "dash-badge-success")
-                            : "dash-badge-danger";
+                    boolean anulada = EstadoVenta.ANULADA.equals(v.getEstado());
+                    String textoEstado = anulada
+                            ? "ANULADA"
+                            : (esCredito ? "CRÉDITO" : "PAGADA");
+                    String style = anulada
+                            ? "dash-badge-danger"
+                            : (esCredito ? "dash-badge-credito" : "dash-badge-success");
+                    Label badge = new Label(textoEstado);
                     badge.getStyleClass().addAll("dash-badge", style);
                     setGraphic(badge);
                 }
@@ -520,14 +536,6 @@ public class DashboardController {
             case EFECTIVO      -> "Efectivo";
             case TRANSFERENCIA -> "Transferencia";
             case CREDITO       -> "Crédito";
-        };
-    }
-
-    private String formatarEstadoVenta(EstadoVenta ev) {
-        if (ev == null) return "—";
-        return switch (ev) {
-            case COMPLETADA -> "PAGADA";
-            case ANULADA    -> "ANULADA";
         };
     }
 }
