@@ -5,6 +5,7 @@ import com.nap.pos.application.service.CategoriaService;
 import com.nap.pos.application.service.ClienteService;
 import com.nap.pos.application.service.ProductoService;
 import com.nap.pos.application.service.VentaService;
+import com.nap.pos.domain.model.Venta;
 import com.nap.pos.domain.exception.BusinessException;
 import com.nap.pos.domain.model.Caja;
 import com.nap.pos.domain.model.Categoria;
@@ -12,13 +13,12 @@ import com.nap.pos.domain.model.Cliente;
 import com.nap.pos.domain.model.Producto;
 import com.nap.pos.domain.model.Usuario;
 import com.nap.pos.domain.model.enums.MetodoPago;
+import com.nap.pos.domain.model.enums.PlazoPago;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
 import javafx.animation.ParallelTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.ScaleTransition;
-import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -31,10 +31,15 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.control.TextField;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -92,12 +97,15 @@ public class VentasController {
     private final Map<Long, VBox>   productCards = new HashMap<>();
 
     // ── Refs UI (catálogo) ────────────────────────────────────────
-    private FlowPane gridProductos;
-    private VBox     contenedorCarrito;
-    private Label    lblTotal;
-    private Label    lblContadorItems;
+    private FlowPane  gridProductos;
+    private VBox      contenedorCarrito;
+    private Label     lblTotal;
+    private Label     lblContadorItems;
+    private TextField campoBusqueda;
+    private Label     lblFeedbackBarcode;
 
     // ── Refs UI (paneles intercambiables) ────────────────────────
+    private StackPane rootPane;
     private VBox vistaCarrito;
     private VBox vistaPago;
 
@@ -156,7 +164,12 @@ public class VentasController {
         animarEntrada(panelDer, 60);
 
         root.getChildren().addAll(panelIzq, panelDer);
-        return root;
+        configurarLectorCodigoBarras(root);
+
+        rootPane = new StackPane(root);
+        rootPane.setMaxWidth(Double.MAX_VALUE);
+        rootPane.setMaxHeight(Double.MAX_VALUE);
+        return rootPane;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -220,29 +233,45 @@ public class VentasController {
         StackPane searchWrap = new StackPane();
         searchWrap.setAlignment(Pos.CENTER_LEFT);
 
-        TextField field = new TextField();
-        field.setPromptText("Buscar producto o código de barras...");
-        field.getStyleClass().add("venta-search-field");
-        field.setPrefWidth(290);
+        campoBusqueda = new TextField();
+        campoBusqueda.setPromptText("Buscar producto o código de barras...");
+        campoBusqueda.getStyleClass().add("venta-search-field");
+        campoBusqueda.setPrefWidth(290);
 
         FontIcon ico = new FontIcon("fas-search");
         ico.setIconSize(13);
         ico.setIconColor(Paint.valueOf("#A8A29E"));
         StackPane.setMargin(ico, new Insets(0, 0, 0, 11));
 
-        searchWrap.getChildren().addAll(field, ico);
+        searchWrap.getChildren().addAll(campoBusqueda, ico);
 
-        field.textProperty().addListener((obs, o, n) -> {
+        campoBusqueda.textProperty().addListener((obs, o, n) -> {
             textoBusqueda = n == null ? "" : n.toLowerCase();
             actualizarGrid();
         });
 
+        // Enter en el campo: intenta agregar por código de barras exacto
+        campoBusqueda.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                procesarCodigoDeBarras(campoBusqueda.getText().trim());
+            }
+        });
+
         // Efecto focus en el campo de búsqueda
-        field.focusedProperty().addListener((obs, o, focused) -> {
+        campoBusqueda.focusedProperty().addListener((obs, o, focused) -> {
             ico.setIconColor(Paint.valueOf(focused ? "#5A6ACF" : "#A8A29E"));
         });
 
-        bar.getChildren().addAll(titleGroup, spacer, searchWrap);
+        // Label de feedback al agregar por código de barras
+        lblFeedbackBarcode = new Label();
+        lblFeedbackBarcode.setStyle(
+            "-fx-background-color: #DCFCE7; -fx-text-fill: #15803D;" +
+            "-fx-font-size: 11px; -fx-font-weight: 700;" +
+            "-fx-background-radius: 6px; -fx-padding: 4 10 4 10;");
+        lblFeedbackBarcode.setVisible(false);
+        lblFeedbackBarcode.setManaged(false);
+
+        bar.getChildren().addAll(titleGroup, spacer, lblFeedbackBarcode, searchWrap);
         return bar;
     }
 
@@ -378,10 +407,11 @@ public class VentasController {
     }
 
     private VBox crearProductoCard(Producto p, NumberFormat fmt) {
-        VBox card = new VBox(8);
+        VBox card = new VBox(0);
         card.getStyleClass().add("venta-producto-card");
         card.setPrefWidth(158);
         card.setMaxWidth(158);
+        card.setPadding(Insets.EMPTY);
 
         boolean sinStock = p.getStock() == 0;
         if (sinStock) {
@@ -391,24 +421,30 @@ public class VentasController {
             aplicarHoverCard(card);
         }
 
-        // Área de ícono con imagen o inicial, más badge de stock
+        // Área de imagen: ocupa todo el ancho de la card y la mitad superior
         StackPane iconArea = new StackPane();
         iconArea.getStyleClass().add("venta-producto-icon");
-        iconArea.setPrefHeight(76);
-        iconArea.setMinHeight(76);
+        iconArea.setPrefHeight(100);
+        iconArea.setMinHeight(100);
+        iconArea.setMaxWidth(Double.MAX_VALUE);
 
-        // Mostrar imagen si existe, si no mostrar inicial
+        // Clip con esquinas superiores redondeadas (el rect se extiende abajo para no redondear la parte inferior)
+        javafx.scene.shape.Rectangle iconClip = new javafx.scene.shape.Rectangle(158, 112);
+        iconClip.setArcWidth(11);
+        iconClip.setArcHeight(11);
+        iconArea.setClip(iconClip);
+
+        // Mostrar imagen si existe (cover: rellena todo el área sin preservar ratio)
         String imgPath = p.getImagenPath();
         boolean tieneImagen = imgPath != null && !imgPath.isBlank() && new File(imgPath).exists();
         if (tieneImagen) {
             try {
-                Image img = new Image(new File(imgPath).toURI().toString(), 76, 76, true, true, false);
+                Image img = new Image(new File(imgPath).toURI().toString(), 158, 100, false, true, false);
                 ImageView iv = new ImageView(img);
-                iv.setFitWidth(76);
-                iv.setFitHeight(76);
-                iv.setPreserveRatio(true);
+                iv.setFitWidth(158);
+                iv.setFitHeight(100);
+                iv.setPreserveRatio(false);
                 iv.setSmooth(true);
-                iv.setStyle("-fx-background-radius: 8;");
                 iconArea.getChildren().add(iv);
             } catch (Exception ex) {
                 tieneImagen = false;
@@ -429,23 +465,27 @@ public class VentasController {
 
         iconArea.getChildren().add(lStock);
 
+        // Área de contenido debajo de la imagen
+        VBox content = new VBox(4);
+        content.setPadding(new Insets(8, 10, 10, 10));
+
         // Nombre
         Label lNombre = new Label(p.getNombre());
         lNombre.getStyleClass().add("venta-producto-nombre");
         lNombre.setWrapText(true);
         lNombre.setMaxWidth(Double.MAX_VALUE);
 
+        content.getChildren().add(lNombre);
+
         // Subcategoría (si tiene)
         if (p.getSubcategoria() != null) {
             Label lSub = new Label(p.getSubcategoria().getNombre());
-            lSub.setStyle("-fx-font-size: 10px; -fx-text-fill: #A8A29E; -fx-padding: -4 0 0 0;");
-            card.getChildren().addAll(iconArea, lNombre, lSub);
-        } else {
-            card.getChildren().addAll(iconArea, lNombre);
+            lSub.setStyle("-fx-font-size: 10px; -fx-text-fill: #A8A29E; -fx-padding: -2 0 0 0;");
+            content.getChildren().add(lSub);
         }
 
-        // Fila precio + botón agregar
-        HBox priceRow = new HBox();
+        // Fila precio + botón agregar (spacing para separar "+" del valor)
+        HBox priceRow = new HBox(8);
         priceRow.setAlignment(Pos.CENTER_LEFT);
 
         String precioStr = fmt.format(p.getPrecioVenta() != null ? p.getPrecioVenta() : BigDecimal.ZERO);
@@ -455,7 +495,7 @@ public class VentasController {
 
         Button btnAdd = new Button();
         FontIcon addIco = new FontIcon("fas-plus");
-        addIco.setIconSize(10);
+        addIco.setIconSize(11);
         addIco.setIconColor(Paint.valueOf("#FFFFFF"));
         btnAdd.setGraphic(addIco);
         btnAdd.getStyleClass().add("venta-btn-add");
@@ -467,7 +507,9 @@ public class VentasController {
         });
 
         priceRow.getChildren().addAll(lPrecio, btnAdd);
-        card.getChildren().add(priceRow);
+        content.getChildren().add(priceRow);
+
+        card.getChildren().addAll(iconArea, content);
 
         if (!sinStock) {
             card.setOnMouseClicked(e -> agregarAlCarrito(p));
@@ -579,14 +621,15 @@ public class VentasController {
         footer.setPadding(new Insets(14, 20, 20, 20));
         footer.setStyle("-fx-border-color: rgba(26,31,46,0.08) transparent transparent transparent; -fx-border-width: 1 0 0 0;");
 
-        HBox totalRow = new HBox();
+        HBox totalRow = new HBox(8);
         totalRow.setAlignment(Pos.CENTER_LEFT);
         Label lTLbl = new Label("Total");
         lTLbl.getStyleClass().add("venta-total-label");
-        HBox.setHgrow(lTLbl, Priority.ALWAYS);
+        Region cartTotalSpacer = new Region();
+        HBox.setHgrow(cartTotalSpacer, Priority.ALWAYS);
         lblTotal = new Label("$0");
         lblTotal.getStyleClass().add("venta-total-valor");
-        totalRow.getChildren().addAll(lTLbl, lblTotal);
+        totalRow.getChildren().addAll(lTLbl, cartTotalSpacer, lblTotal);
 
         // Botón Continuar con ícono y hover effect
         FontIcon arrowIco = new FontIcon("fas-arrow-right");
@@ -650,7 +693,21 @@ public class VentasController {
         lblCreditoDisponible.setManaged(false);
         cboCliente.valueProperty().addListener((obs, o, n) -> actualizarInfoCredito(n));
 
-        VBox clienteBox = new VBox(6, lClienteRow, cboCliente, lblCreditoDisponible);
+        // Botón para crear un nuevo cliente desde el módulo de ventas
+        FontIcon nuevoClienteIco = new FontIcon("fas-user-plus");
+        nuevoClienteIco.setIconSize(13);
+        Button btnNuevoCliente = new Button();
+        btnNuevoCliente.setGraphic(nuevoClienteIco);
+        btnNuevoCliente.getStyleClass().add("btn-primario");
+        btnNuevoCliente.setTooltip(new Tooltip("Crear nuevo cliente"));
+        btnNuevoCliente.setStyle("-fx-padding: 7 10 7 10;");
+        btnNuevoCliente.setOnAction(e -> abrirModalNuevoCliente());
+
+        HBox clienteInputRow = new HBox(6, cboCliente, btnNuevoCliente);
+        clienteInputRow.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(cboCliente, Priority.ALWAYS);
+
+        VBox clienteBox = new VBox(6, lClienteRow, clienteInputRow, lblCreditoDisponible);
 
         // ── Separador visual ─────────────────────────────────────
         Separator sep1 = new Separator();
@@ -677,14 +734,15 @@ public class VentasController {
         txtRecibido.setPromptText("0.00");
         txtRecibido.textProperty().addListener((obs, o, n) -> calcularCambio());
 
-        HBox cambioRow = new HBox();
+        HBox cambioRow = new HBox(8);
         cambioRow.setAlignment(Pos.CENTER_LEFT);
         Label lCLbl = new Label("Cambio");
         lCLbl.getStyleClass().add("form-label");
-        HBox.setHgrow(lCLbl, Priority.ALWAYS);
+        Region cambioSpacer = new Region();
+        HBox.setHgrow(cambioSpacer, Priority.ALWAYS);
         lblCambio = new Label("—");
         lblCambio.getStyleClass().add("venta-cambio-valor");
-        cambioRow.getChildren().addAll(lCLbl, lblCambio);
+        cambioRow.getChildren().addAll(lCLbl, cambioSpacer, lblCambio);
 
         seccionRecibido = new VBox(10,
             new VBox(6, lRecibidoRow, txtRecibido),
@@ -694,16 +752,17 @@ public class VentasController {
         // ── Resumen total ────────────────────────────────────────
         Separator sep2 = new Separator();
 
-        HBox totalRow = new HBox();
+        HBox totalRow = new HBox(8);
         totalRow.setAlignment(Pos.CENTER_LEFT);
         totalRow.setStyle("-fx-background-color: rgba(90,106,207,0.06); -fx-background-radius: 8px; -fx-padding: 10 14 10 14;");
         Label lTLbl = new Label("Total a cobrar");
         lTLbl.getStyleClass().add("venta-total-label");
-        HBox.setHgrow(lTLbl, Priority.ALWAYS);
+        Region totalSpacer = new Region();
+        HBox.setHgrow(totalSpacer, Priority.ALWAYS);
         lblTotalPago = new Label("$0");
         lblTotalPago.getStyleClass().add("venta-total-valor");
         lblTotalPago.setStyle("-fx-text-fill: #5A6ACF;");
-        totalRow.getChildren().addAll(lTLbl, lblTotalPago);
+        totalRow.getChildren().addAll(lTLbl, totalSpacer, lblTotalPago);
 
         // ── Error y botón procesar ───────────────────────────────
         lblErrorPago = new Label();
@@ -833,16 +892,39 @@ public class VentasController {
         row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: rgba(90,106,207,0.04);"));
         row.setOnMouseExited(e -> row.setStyle(""));
 
-        // Avatar circular con inicial
+        // Avatar: imagen del producto si existe, si no inicial del nombre
         StackPane av = new StackPane();
         av.getStyleClass().add("venta-cart-avatar");
         av.setMinWidth(34); av.setMinHeight(34);
         av.setMaxWidth(34); av.setMaxHeight(34);
-        String ini = (item.producto.getNombre() != null && !item.producto.getNombre().isBlank())
-                ? item.producto.getNombre().substring(0, 1).toUpperCase() : "?";
-        Label lI = new Label(ini);
-        lI.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #5A6ACF;");
-        av.getChildren().add(lI);
+
+        // Clip circular para la imagen
+        javafx.scene.shape.Rectangle avatarClip = new javafx.scene.shape.Rectangle(34, 34);
+        avatarClip.setArcWidth(34);
+        avatarClip.setArcHeight(34);
+        av.setClip(avatarClip);
+
+        String imgPath = item.producto.getImagenPath();
+        boolean tieneImg = imgPath != null && !imgPath.isBlank() && new File(imgPath).exists();
+        if (tieneImg) {
+            try {
+                Image img = new Image(new File(imgPath).toURI().toString(), 34, 34, false, true, false);
+                ImageView iv = new ImageView(img);
+                iv.setFitWidth(34);
+                iv.setFitHeight(34);
+                iv.setPreserveRatio(false);
+                av.getChildren().add(iv);
+            } catch (Exception ex) {
+                tieneImg = false;
+            }
+        }
+        if (!tieneImg) {
+            String ini = (item.producto.getNombre() != null && !item.producto.getNombre().isBlank())
+                    ? item.producto.getNombre().substring(0, 1).toUpperCase() : "?";
+            Label lI = new Label(ini);
+            lI.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #5A6ACF;");
+            av.getChildren().add(lI);
+        }
 
         // Nombre y precio unitario
         VBox info = new VBox(2);
@@ -883,11 +965,9 @@ public class VentasController {
         Button bDel = new Button();
         FontIcon dIco = new FontIcon("fas-trash-alt");
         dIco.setIconSize(11);
-        dIco.setIconColor(Paint.valueOf("#DC2626"));
+        dIco.setIconColor(Paint.valueOf("#FFFFFF"));
         bDel.setGraphic(dIco);
         bDel.getStyleClass().add("venta-btn-del");
-        bDel.setOnMouseEntered(e -> dIco.setIconColor(Paint.valueOf("#B91C1C")));
-        bDel.setOnMouseExited(e -> dIco.setIconColor(Paint.valueOf("#DC2626")));
         bDel.setOnAction(e -> {
             animarEliminacion(row, () -> quitarItem(item.producto.getId()));
         });
@@ -1070,7 +1150,7 @@ public class VentasController {
                 .map(i -> new VentaService.ItemVenta(i.producto.getId(), i.cantidad))
                 .collect(Collectors.toList());
 
-            ventaService.registrarVenta(
+            Venta ventaRegistrada = ventaService.registrarVenta(
                 caja.getId(),
                 usuarioActual.getId(),
                 cliente != null ? cliente.getId() : null,
@@ -1087,10 +1167,13 @@ public class VentasController {
             cboCliente.setValue(null);
             txtRecibido.clear();
 
+            String comprobante = ventaRegistrada.getNumeroComprobante() != null
+                    ? String.format("%06d", ventaRegistrada.getNumeroComprobante())
+                    : "-";
             Alert ok = new Alert(Alert.AlertType.INFORMATION);
             ok.setTitle("Venta registrada");
-            ok.setHeaderText(null);
-            ok.setContentText("¡Venta procesada exitosamente!");
+            ok.setHeaderText("¡Venta procesada exitosamente!");
+            ok.setContentText("Comprobante N.° " + comprobante);
             ok.showAndWait();
 
         } catch (BusinessException ex) {
@@ -1116,6 +1199,318 @@ public class VentasController {
         HBox row = new HBox(6, ico, lbl);
         row.setAlignment(Pos.CENTER_LEFT);
         return row;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Modal — Nuevo cliente desde ventas
+    // ─────────────────────────────────────────────────────────────
+
+    private void abrirModalNuevoCliente() {
+        // ── Overlay ───────────────────────────────────────────────
+        StackPane overlay = new StackPane();
+        overlay.getStyleClass().add("inventario-modal-overlay");
+        overlay.setOnMouseClicked(e -> { if (e.getTarget() == overlay) cerrarModalCliente(overlay); });
+
+        // ── Modal ─────────────────────────────────────────────────
+        VBox modal = new VBox(0);
+        modal.setMaxWidth(460);
+        modal.setMaxHeight(Region.USE_PREF_SIZE);
+        modal.setStyle(
+            "-fx-background-color: #FDFCFA; -fx-background-radius: 16px;" +
+            "-fx-border-color: rgba(26,31,46,0.10); -fx-border-radius: 16px;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 36, 0, 0, 10);");
+
+        // ── Header ────────────────────────────────────────────────
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color: #5A6ACF; -fx-background-radius: 16px 16px 0 0;" +
+                        "-fx-padding: 16 20 16 20;");
+        FontIcon headerIco = new FontIcon("fas-user-plus");
+        headerIco.setIconSize(16);
+        headerIco.setIconColor(Paint.valueOf("#FFFFFF"));
+        Label headerLbl = new Label("Nuevo cliente");
+        headerLbl.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: #FFFFFF;");
+        HBox.setHgrow(headerLbl, Priority.ALWAYS);
+        Button btnX = new Button("✕");
+        btnX.setStyle("-fx-background-color: transparent; -fx-text-fill: rgba(255,255,255,0.8);" +
+                      "-fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 0 4 0 4;");
+        btnX.setOnAction(e -> cerrarModalCliente(overlay));
+        header.getChildren().addAll(headerIco, headerLbl, btnX);
+
+        // ── Body (scrollable) ─────────────────────────────────────
+        VBox body = new VBox(12);
+        body.setPadding(new Insets(20, 24, 8, 24));
+
+        // Sección datos personales
+        Label secDatos = new Label("DATOS PERSONALES");
+        secDatos.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #A8A29E;");
+
+        TextField txtNombre    = crearCampoModal("", "Nombre completo *");
+        TextField txtCedula    = crearCampoModal("", "Cédula / NIT *");
+        TextField txtCelular   = crearCampoModal("", "Celular (opcional)");
+        TextField txtDireccion = crearCampoModal("", "Dirección (opcional)");
+
+        // Sección crédito
+        Label secCredito = new Label("CRÉDITO (OPCIONAL)");
+        secCredito.setStyle(
+            "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #A8A29E; -fx-padding: 6 0 0 0;");
+
+        CheckBox chkCredito = new CheckBox("Habilitar crédito para este cliente");
+        chkCredito.setStyle("-fx-font-size: 13px; -fx-text-fill: #1A1F2E;");
+
+        TextField txtMontoCredito = crearCampoModal("", "Monto de crédito aprobado *");
+        txtMontoCredito.setPromptText("Ej: 500000");
+
+        ComboBox<PlazoPago> cboPlazoPago = new ComboBox<>();
+        cboPlazoPago.getItems().addAll(PlazoPago.values());
+        cboPlazoPago.setMaxWidth(Double.MAX_VALUE);
+        cboPlazoPago.getStyleClass().add("inventario-combo");
+        cboPlazoPago.setPromptText("Seleccionar plazo de pago *");
+        cboPlazoPago.setConverter(new StringConverter<>() {
+            @Override public String toString(PlazoPago p) {
+                if (p == null) return "";
+                return p == PlazoPago.QUINCE_DIAS ? "Quincenal (días 15 y 30)" : "Mensual (día 30)";
+            }
+            @Override public PlazoPago fromString(String s) { return null; }
+        });
+
+        VBox camposCredito = new VBox(10);
+        camposCredito.setVisible(false);
+        camposCredito.setManaged(false);
+        camposCredito.getChildren().addAll(
+            buildBodyField("Monto de crédito *", txtMontoCredito),
+            buildBodyField("Plazo de pago *", cboPlazoPago)
+        );
+
+        chkCredito.selectedProperty().addListener((obs, old, on) -> {
+            camposCredito.setVisible(on);
+            camposCredito.setManaged(on);
+            if (!on) { txtMontoCredito.clear(); cboPlazoPago.setValue(null); }
+        });
+
+        // Error
+        Label lblError = new Label();
+        lblError.setWrapText(true);
+        lblError.setMaxWidth(Double.MAX_VALUE);
+        lblError.setStyle(
+            "-fx-background-color: #FEE2E2; -fx-text-fill: #DC2626;" +
+            "-fx-font-size: 11px; -fx-font-weight: 600;" +
+            "-fx-background-radius: 7px; -fx-padding: 8 12 8 12;");
+        lblError.setVisible(false);
+        lblError.setManaged(false);
+
+        body.getChildren().addAll(
+            secDatos, txtNombre, txtCedula, txtCelular, txtDireccion,
+            secCredito, chkCredito, camposCredito,
+            lblError
+        );
+
+        ScrollPane bodyScroll = new ScrollPane(body);
+        bodyScroll.setFitToWidth(true);
+        bodyScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        bodyScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        bodyScroll.getStyleClass().add("inventario-root-stack");
+        bodyScroll.setMaxHeight(420);
+
+        // ── Footer ────────────────────────────────────────────────
+        HBox footer = new HBox(10);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+        footer.setPadding(new Insets(14, 24, 18, 24));
+        footer.setStyle(
+            "-fx-border-color: rgba(26,31,46,0.08) transparent transparent transparent;" +
+            "-fx-border-width: 1 0 0 0;");
+
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.setStyle(
+            "-fx-background-color: #EDE9E2; -fx-background-radius: 8px;" +
+            "-fx-text-fill: #57534E; -fx-font-size: 13px; -fx-padding: 8 16 8 16; -fx-cursor: hand;");
+        btnCancelar.setOnAction(e -> cerrarModalCliente(overlay));
+
+        Button btnGuardar = new Button("Crear cliente");
+        btnGuardar.getStyleClass().add("btn-primario");
+        btnGuardar.setStyle("-fx-padding: 8 20 8 20; -fx-font-size: 13px;");
+        btnGuardar.disableProperty().bind(
+            txtNombre.textProperty().isEmpty().or(txtCedula.textProperty().isEmpty()));
+
+        btnGuardar.setOnAction(e -> {
+            lblError.setVisible(false);
+            lblError.setManaged(false);
+            try {
+                BigDecimal montoCredito = null;
+                PlazoPago plazoPago = null;
+                if (chkCredito.isSelected()) {
+                    String montoTxt = txtMontoCredito.getText().trim();
+                    if (montoTxt.isEmpty())
+                        throw new com.nap.pos.domain.exception.BusinessException("Ingresa el monto de crédito aprobado.");
+                    try {
+                        montoCredito = new BigDecimal(montoTxt.replace(",", "."));
+                        if (montoCredito.compareTo(BigDecimal.ZERO) <= 0) throw new NumberFormatException();
+                    } catch (NumberFormatException ex) {
+                        throw new com.nap.pos.domain.exception.BusinessException(
+                            "El monto de crédito debe ser un número mayor que cero.");
+                    }
+                    plazoPago = cboPlazoPago.getValue();
+                    if (plazoPago == null)
+                        throw new com.nap.pos.domain.exception.BusinessException("Selecciona el plazo de pago.");
+                }
+                Cliente guardado = clienteService.crear(Cliente.builder()
+                    .nombre(txtNombre.getText().trim())
+                    .cedula(txtCedula.getText().trim())
+                    .celular(txtCelular.getText().trim())
+                    .direccion(txtDireccion.getText().trim())
+                    .montoCredito(montoCredito)
+                    .plazoPago(plazoPago)
+                    .activo(true)
+                    .build());
+                cerrarModalCliente(overlay);
+                cboCliente.getItems().add(guardado);
+                cboCliente.setValue(guardado);
+            } catch (com.nap.pos.domain.exception.BusinessException ex) {
+                lblError.setText(ex.getMessage());
+                lblError.setVisible(true);
+                lblError.setManaged(true);
+            }
+        });
+
+        footer.getChildren().addAll(btnCancelar, btnGuardar);
+        modal.getChildren().addAll(header, bodyScroll, footer);
+
+        overlay.getChildren().add(modal);
+        StackPane.setAlignment(modal, Pos.CENTER);
+
+        rootPane.getChildren().add(overlay);
+        animarEntradaModalCliente(overlay, modal);
+    }
+
+    /** Crea un bloque label + nodo de control para el body del modal. */
+    private VBox buildBodyField(String labelText, javafx.scene.Node campo) {
+        Label lbl = new Label(labelText);
+        lbl.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #4B5563;");
+        VBox bloque = new VBox(4, lbl, campo);
+        return bloque;
+    }
+
+    private void cerrarModalCliente(StackPane overlay) {
+        FadeTransition ft = new FadeTransition(Duration.millis(200), overlay);
+        ft.setFromValue(1); ft.setToValue(0);
+        ft.setInterpolator(Interpolator.EASE_IN);
+        ft.setOnFinished(e -> rootPane.getChildren().remove(overlay));
+        ft.play();
+    }
+
+    private void animarEntradaModalCliente(StackPane overlay, Node modal) {
+        overlay.setOpacity(0);
+        modal.setScaleX(0.92); modal.setScaleY(0.92);
+        modal.setTranslateY(20);
+
+        FadeTransition ft = new FadeTransition(Duration.millis(220), overlay);
+        ft.setFromValue(0); ft.setToValue(1);
+
+        ScaleTransition st = new ScaleTransition(Duration.millis(220), modal);
+        st.setFromX(0.92); st.setToX(1);
+        st.setFromY(0.92); st.setToY(1);
+        st.setInterpolator(Interpolator.EASE_OUT);
+
+        TranslateTransition tt = new TranslateTransition(Duration.millis(220), modal);
+        tt.setFromY(20); tt.setToY(0);
+        tt.setInterpolator(Interpolator.EASE_OUT);
+
+        new ParallelTransition(ft, st, tt).play();
+    }
+
+    /** Crea un TextField con estilo de formulario para los modales. */
+    private TextField crearCampoModal(String iconLiteral, String placeholder) {
+        TextField tf = new TextField();
+        tf.setPromptText(placeholder);
+        tf.getStyleClass().add("text-field");
+        tf.setMaxWidth(Double.MAX_VALUE);
+        return tf;
+    }
+
+
+    /**
+     * Captura teclas cuando ningún campo de texto está activo y las redirige
+     * al campo de búsqueda, permitiendo que el lector de código de barras
+     * funcione sin necesidad de hacer clic primero en la pantalla.
+     */
+    private void configurarLectorCodigoBarras(HBox root) {
+        root.addEventFilter(KeyEvent.KEY_TYPED, e -> {
+            if (vistaPago != null && vistaPago.isVisible()) return;
+            Node focused = root.getScene() != null ? root.getScene().getFocusOwner() : null;
+            if (focused instanceof TextInputControl) return;
+
+            String ch = e.getCharacter();
+            if (ch == null || ch.isEmpty() || ch.charAt(0) < 32) return;
+
+            campoBusqueda.requestFocus();
+            campoBusqueda.appendText(ch);
+            e.consume();
+        });
+
+        root.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (vistaPago != null && vistaPago.isVisible()) return;
+            Node focused = root.getScene() != null ? root.getScene().getFocusOwner() : null;
+            if (focused instanceof TextInputControl) return;
+
+            if (e.getCode() == KeyCode.BACK_SPACE) {
+                String txt = campoBusqueda.getText();
+                if (!txt.isEmpty()) campoBusqueda.setText(txt.substring(0, txt.length() - 1));
+                campoBusqueda.requestFocus();
+                e.consume();
+            }
+        });
+    }
+
+    /**
+     * Intenta agregar al carrito el producto cuyo código de barras coincida
+     * exactamente con {@code entrada}. Si no hay coincidencia, el texto queda
+     * en el campo de búsqueda para filtrar por nombre.
+     */
+    private void procesarCodigoDeBarras(String entrada) {
+        if (entrada.isEmpty()) return;
+
+        Producto encontrado = todosProductos.stream()
+            .filter(p -> entrada.equals(p.getCodigoBarras()))
+            .findFirst()
+            .orElse(null);
+
+        if (encontrado == null) return; // no hay coincidencia exacta → filtrar por nombre
+
+        // Limpiar búsqueda y mostrar catálogo completo antes de agregar
+        campoBusqueda.clear();
+        textoBusqueda = "";
+        actualizarGrid();
+
+        if (encontrado.getStock() > 0) {
+            agregarAlCarrito(encontrado);
+            mostrarFeedbackBarcode("✓ " + encontrado.getNombre());
+        } else {
+            Alert alerta = new Alert(Alert.AlertType.WARNING);
+            alerta.setTitle("Sin stock");
+            alerta.setHeaderText("Producto agotado");
+            alerta.setContentText(
+                "\"" + encontrado.getNombre() + "\" no tiene unidades disponibles en este momento.");
+            alerta.showAndWait();
+        }
+    }
+
+    private void mostrarFeedbackBarcode(String mensaje) {
+        lblFeedbackBarcode.setText(mensaje);
+        lblFeedbackBarcode.setVisible(true);
+        lblFeedbackBarcode.setManaged(true);
+        lblFeedbackBarcode.setOpacity(1);
+
+        PauseTransition espera = new PauseTransition(Duration.millis(1800));
+        espera.setOnFinished(e -> {
+            FadeTransition fade = new FadeTransition(Duration.millis(300), lblFeedbackBarcode);
+            fade.setToValue(0);
+            fade.setOnFinished(ev -> {
+                lblFeedbackBarcode.setVisible(false);
+                lblFeedbackBarcode.setManaged(false);
+            });
+            fade.play();
+        });
+        espera.play();
     }
 
     // ─────────────────────────────────────────────────────────────

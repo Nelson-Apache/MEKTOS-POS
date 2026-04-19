@@ -13,7 +13,9 @@ import com.nap.pos.domain.model.enums.TipoNotificacion;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
+import javafx.animation.ScaleTransition;
 import javafx.animation.TranslateTransition;
+import javafx.scene.Cursor;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -218,6 +220,7 @@ public class DashboardController {
 
         row.getChildren().addAll(left, icoBox);
         card.getChildren().add(row);
+        aplicarHoverCard(card, icoBox);
         return card;
     }
 
@@ -252,7 +255,24 @@ public class DashboardController {
 
         row.getChildren().addAll(left, icoBox);
         card.getChildren().add(row);
+        aplicarHoverCard(card, icoBox);
         return card;
+    }
+
+    private void aplicarHoverCard(VBox card, StackPane icoBox) {
+        card.setCursor(Cursor.HAND);
+        card.setOnMouseEntered(e -> {
+            ScaleTransition st = new ScaleTransition(Duration.millis(180), icoBox);
+            st.setToX(1.15); st.setToY(1.15);
+            st.setInterpolator(Interpolator.EASE_OUT);
+            st.play();
+        });
+        card.setOnMouseExited(e -> {
+            ScaleTransition st = new ScaleTransition(Duration.millis(180), icoBox);
+            st.setToX(1.0); st.setToY(1.0);
+            st.setInterpolator(Interpolator.EASE_OUT);
+            st.play();
+        });
     }
 
     private VBox crearChartCard(List<Venta> ventasHoy, BigDecimal totalHoy) {
@@ -322,11 +342,11 @@ public class DashboardController {
         HBox header = new HBox(8);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        Label lTitulo = new Label("Alertas de Stock");
+        Label lTitulo = new Label("Alertas del sistema");
         lTitulo.getStyleClass().add("dashboard-section-title");
         HBox.setHgrow(lTitulo, Priority.ALWAYS);
 
-        FontIcon ico = new FontIcon("fas-boxes");
+        FontIcon ico = new FontIcon("fas-bell");
         ico.setIconSize(15);
         ico.setIconColor(Paint.valueOf("#94A3B8"));
 
@@ -334,50 +354,59 @@ public class DashboardController {
 
         VBox lista = new VBox(0);
 
-        List<Notificacion> stockAlerts = notifs.stream()
-                .filter(n -> TipoNotificacion.STOCK_BAJO.equals(n.tipo()))
-                .limit(5)
-                .collect(Collectors.toList());
+        List<Notificacion> visibles = notifs.stream().limit(6).collect(Collectors.toList());
 
-        if (stockAlerts.isEmpty()) {
-            Label lVacio = new Label("Sin alertas de stock.");
+        if (visibles.isEmpty()) {
+            Label lVacio = new Label("Sin alertas pendientes.");
             lVacio.getStyleClass().add("dashboard-empty");
             lista.getChildren().add(lVacio);
         } else {
-            for (Notificacion n : stockAlerts) {
-                HBox alertRow = new HBox(8);
-                alertRow.setAlignment(Pos.CENTER_LEFT);
-                alertRow.getStyleClass().add("dashboard-alert-row");
-
-                VBox left = new VBox(2);
-                HBox.setHgrow(left, Priority.ALWAYS);
-
-                String nombre = n.titulo().startsWith("Stock bajo: ")
-                        ? n.titulo().substring("Stock bajo: ".length())
-                        : n.titulo();
-                Label lNom = new Label(nombre);
-                lNom.getStyleClass().add("dashboard-alert-name");
-
-                String[] partes = n.mensaje().split("\\|");
-                String stockActualStr = partes.length > 0
-                        ? partes[0].trim().replaceAll("[^0-9]", "") : "?";
-                String minStr = partes.length > 1
-                        ? partes[1].trim().replaceAll("[^0-9]", "") : "?";
-                Label lMsg = new Label("Mín. " + minStr);
-                lMsg.getStyleClass().add("dashboard-alert-msg");
-
-                left.getChildren().addAll(lNom, lMsg);
-
-                Label lStock = new Label(stockActualStr);
-                lStock.getStyleClass().add("dashboard-alert-stock");
-
-                alertRow.getChildren().addAll(left, lStock);
-                lista.getChildren().add(alertRow);
+            for (Notificacion n : visibles) {
+                lista.getChildren().add(crearFilaAlerta(n));
             }
         }
 
         card.getChildren().addAll(header, lista);
         return card;
+    }
+
+    private HBox crearFilaAlerta(Notificacion n) {
+        HBox row = new HBox(10);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.getStyleClass().add("dashboard-alert-row");
+
+        boolean esPago = TipoNotificacion.PAGO_CREDITO_PROXIMO.equals(n.tipo());
+
+        FontIcon tipoIco = new FontIcon(esPago ? "fas-credit-card" : "fas-boxes");
+        tipoIco.setIconSize(14);
+        String icoColor = switch (n.severidad()) {
+            case CRITICA     -> "#EF4444";
+            case ADVERTENCIA -> esPago ? "#F59E0B" : "#F97316";
+            default          -> "#64748B";
+        };
+        tipoIco.setIconColor(Paint.valueOf(icoColor));
+
+        VBox left = new VBox(2);
+        HBox.setHgrow(left, Priority.ALWAYS);
+
+        String nombreMostrado = esPago
+                ? (n.titulo().startsWith("Pago próximo: ") ? n.titulo().substring("Pago próximo: ".length()) : n.titulo())
+                : (n.titulo().startsWith("Stock bajo: ")   ? n.titulo().substring("Stock bajo: ".length())   : n.titulo());
+
+        Label lNom = new Label(nombreMostrado);
+        lNom.getStyleClass().add("dashboard-alert-name");
+
+        Label lMsg = new Label(n.mensaje());
+        lMsg.getStyleClass().add("dashboard-alert-msg");
+
+        left.getChildren().addAll(lNom, lMsg);
+
+        String badgeText = esPago ? "Crédito" : "Stock";
+        Label badge = new Label(badgeText);
+        badge.getStyleClass().add(esPago ? "dashboard-alert-badge-pago" : "dashboard-alert-stock");
+
+        row.getChildren().addAll(tipoIco, left, badge);
+        return row;
     }
 
     private VBox crearUltimasVentasCard(List<Venta> ventas, Runnable onVerHistorial) {

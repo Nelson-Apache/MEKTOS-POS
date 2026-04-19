@@ -19,4 +19,7 @@ public interface VentaRepository {
     List<Venta> findByCajaId(Long cajaId);
 
     List<Venta> findAll();
+
+    // Para generar el siguiente número de comprobante secuencial
+    Optional<Long> findMaxNumeroComprobante();
 }

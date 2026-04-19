@@ -20,6 +20,8 @@ public class VentaService {
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
     private final CajaRepository cajaRepository;
+    private final ConfiguracionService configuracionService;
+    private final ImpresionService impresionService;
 
     /**
      * Datos mínimos que la UI envía por cada producto en la venta.
@@ -46,6 +48,11 @@ public class VentaService {
                         .orElseThrow(() -> new BusinessException("Cliente con ID " + clienteId + " no encontrado."))
                 : null;
 
+        // Número de comprobante secuencial: max actual + 1 ó número inicial configurado
+        long numeroComprobante = ventaRepository.findMaxNumeroComprobante()
+                .map(n -> n + 1)
+                .orElseGet(() -> (long) configuracionService.obtener().getNumeroInicialComprobante());
+
         // Construir detalles usando el precio de venta actual del producto
         List<DetalleVenta> detalles = new ArrayList<>();
         for (ItemVenta item : items) {
@@ -61,6 +68,7 @@ public class VentaService {
                 .cliente(cliente)
                 .metodoPago(metodoPago)
                 .detalles(detalles)
+                .numeroComprobante(numeroComprobante)
                 .build();
         venta.calcularTotal();
         venta.validar();
@@ -79,7 +87,12 @@ public class VentaService {
             productoRepository.save(p);
         });
 
-        return ventaRepository.save(venta);
+        Venta ventaGuardada = ventaRepository.save(venta);
+
+        // Impresión fuera del @Transactional lógico: el fallo de impresora no revierte la venta
+        impresionService.imprimirTicket(ventaGuardada);
+
+        return ventaGuardada;
     }
 
     /**

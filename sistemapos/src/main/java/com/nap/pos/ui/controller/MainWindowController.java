@@ -9,6 +9,7 @@ import com.nap.pos.domain.model.ConfiguracionTienda;
 import com.nap.pos.domain.model.Notificacion;
 import com.nap.pos.domain.model.Usuario;
 import com.nap.pos.domain.model.enums.Rol;
+import com.nap.pos.domain.model.enums.TipoNotificacion;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -16,20 +17,25 @@ import javafx.animation.Timeline;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.RequiredArgsConstructor;
+import org.kordamp.ikonli.javafx.FontIcon;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -95,6 +101,8 @@ public class MainWindowController {
     private Usuario usuarioActual;
     private Button                  navActivo;
     private final Map<Button, Timeline> navAnimaciones = new HashMap<>();
+    private Label                   lblBadgeNotificaciones;
+    private Popup                   notifPopup;
 
     // Color de fondo del nav-item activo: #FFFFFF (píldora blanca sobre sidebar oscuro)
     private static final Color NAV_ACTIVE_COLOR   = Color.color(1.0, 1.0, 1.0, 1.0);
@@ -116,6 +124,7 @@ public class MainWindowController {
         configurarDatosUsuario();
         configurarAccesoSegunRol();
         actualizarEstadoCaja();
+        configurarBadgeNotificaciones();
         navDashboard();
     }
 
@@ -234,18 +243,16 @@ public class MainWindowController {
 
     @FXML
     public void onNotificaciones() {
+        if (notifPopup != null && notifPopup.isShowing()) {
+            notifPopup.hide();
+            return;
+        }
         try {
             List<Notificacion> notifs = notificacionService.getNotificaciones();
-            if (notifs.isEmpty()) {
-                mostrarAlerta("Sin notificaciones",
-                        "No hay alertas pendientes en este momento.");
-            } else {
-                StringBuilder sb = new StringBuilder();
-                for (Notificacion n : notifs) {
-                    sb.append("• ").append(n.titulo()).append(": ").append(n.mensaje()).append("\n");
-                }
-                mostrarAlerta("Notificaciones (" + notifs.size() + ")", sb.toString().trim());
-            }
+            notifPopup = construirPopupNotificaciones(notifs);
+            Bounds b = btnNotificaciones.localToScreen(btnNotificaciones.getBoundsInLocal());
+            notifPopup.show(btnNotificaciones.getScene().getWindow(),
+                    b.getMaxX() - 320, b.getMaxY() + 6);
         } catch (Exception e) {
             mostrarAlerta("Error", "No se pudieron cargar las notificaciones.");
         }
@@ -399,6 +406,161 @@ public class MainWindowController {
 
         box.getChildren().addAll(icon, title, sub);
         contenido.getChildren().setAll(box);
+    }
+
+    private void configurarBadgeNotificaciones() {
+        if (!(btnNotificaciones.getParent() instanceof HBox parent)) return;
+        int idx = parent.getChildren().indexOf(btnNotificaciones);
+        if (idx < 0) return;
+
+        lblBadgeNotificaciones = new Label();
+        lblBadgeNotificaciones.getStyleClass().add("notif-badge");
+        lblBadgeNotificaciones.setVisible(false);
+        lblBadgeNotificaciones.setManaged(false);
+        StackPane.setAlignment(lblBadgeNotificaciones, Pos.TOP_RIGHT);
+        StackPane.setMargin(lblBadgeNotificaciones, new Insets(-4, -4, 0, 0));
+
+        StackPane wrapper = new StackPane(btnNotificaciones, lblBadgeNotificaciones);
+        wrapper.setAlignment(Pos.CENTER);
+        parent.getChildren().set(idx, wrapper);
+
+        actualizarBadge();
+    }
+
+    private void actualizarBadge() {
+        if (lblBadgeNotificaciones == null) return;
+        try {
+            int count = notificacionService.contarNotificaciones();
+            if (count > 0) {
+                lblBadgeNotificaciones.setText(count > 99 ? "99+" : String.valueOf(count));
+                lblBadgeNotificaciones.setVisible(true);
+                lblBadgeNotificaciones.setManaged(true);
+            } else {
+                lblBadgeNotificaciones.setVisible(false);
+                lblBadgeNotificaciones.setManaged(false);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private Popup construirPopupNotificaciones(List<Notificacion> notifs) {
+        // Header
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(12, 16, 12, 16));
+        header.setStyle(
+            "-fx-background-color: #F8F9FB;" +
+            "-fx-border-color: transparent transparent rgba(26,31,46,0.08) transparent;" +
+            "-fx-border-width: 0 0 1 0;"
+        );
+
+        FontIcon bellIco = new FontIcon("fas-bell");
+        bellIco.setIconSize(14);
+        bellIco.setIconColor(Paint.valueOf("#5A6ACF"));
+
+        Label lTitle = new Label("Notificaciones");
+        lTitle.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+
+        Label lCount = new Label(notifs.size() + " alerta(s)");
+        lCount.setStyle(
+            "-fx-font-size: 11px; -fx-text-fill: #FFFFFF; -fx-font-weight: 700;" +
+            "-fx-background-color: " + (notifs.isEmpty() ? "#94A3B8" : "#5A6ACF") + ";" +
+            "-fx-background-radius: 10px; -fx-padding: 2 8 2 8;"
+        );
+        header.getChildren().addAll(bellIco, lTitle, spacer, lCount);
+
+        // Lista de filas
+        VBox lista = new VBox(0);
+        if (notifs.isEmpty()) {
+            VBox emptyBox = new VBox(8);
+            emptyBox.setAlignment(Pos.CENTER);
+            emptyBox.setPadding(new Insets(24, 16, 24, 16));
+
+            FontIcon emptyIco = new FontIcon("fas-check-circle");
+            emptyIco.setIconSize(28);
+            emptyIco.setIconColor(Paint.valueOf("#22C55E"));
+
+            Label lVacio = new Label("Sin alertas pendientes");
+            lVacio.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748B;");
+
+            emptyBox.getChildren().addAll(emptyIco, lVacio);
+            lista.getChildren().add(emptyBox);
+        } else {
+            for (Notificacion n : notifs) {
+                lista.getChildren().add(crearFilaNotificacion(n));
+            }
+        }
+
+        ScrollPane scroll = new ScrollPane(lista);
+        scroll.setFitToWidth(true);
+        scroll.setMaxHeight(320);
+        scroll.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+        VBox panel = new VBox(0);
+        panel.setPrefWidth(330);
+        panel.setStyle(
+            "-fx-background-color: #FFFFFF;" +
+            "-fx-border-color: rgba(26,31,46,0.13);" +
+            "-fx-border-width: 1px;" +
+            "-fx-border-radius: 10px;" +
+            "-fx-background-radius: 10px;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 20, 0, 0, 6);"
+        );
+        panel.getChildren().addAll(header, scroll);
+
+        Popup popup = new Popup();
+        popup.setAutoHide(true);
+        popup.getContent().add(panel);
+        return popup;
+    }
+
+    private HBox crearFilaNotificacion(Notificacion n) {
+        HBox row = new HBox(10);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(10, 16, 10, 16));
+        row.setStyle(
+            "-fx-border-color: transparent transparent rgba(26,31,46,0.06) transparent;" +
+            "-fx-border-width: 0 0 1 0; -fx-background-color: transparent;"
+        );
+
+        boolean esPago = TipoNotificacion.PAGO_CREDITO_PROXIMO.equals(n.tipo());
+        String icoColor = switch (n.severidad()) {
+            case CRITICA     -> "#EF4444";
+            case ADVERTENCIA -> esPago ? "#F59E0B" : "#F97316";
+            default          -> "#64748B";
+        };
+        String bgColor = switch (n.severidad()) {
+            case CRITICA     -> "#FEF2F2";
+            case ADVERTENCIA -> esPago ? "#FFFBEB" : "#FFF7ED";
+            default          -> "#F1F5F9";
+        };
+
+        FontIcon ico = new FontIcon(esPago ? "fas-credit-card" : "fas-exclamation-triangle");
+        ico.setIconSize(14);
+        ico.setIconColor(Paint.valueOf(icoColor));
+
+        StackPane icoWrap = new StackPane(ico);
+        icoWrap.setMinSize(32, 32);
+        icoWrap.setMaxSize(32, 32);
+        icoWrap.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 8px;");
+
+        VBox texts = new VBox(3);
+        HBox.setHgrow(texts, javafx.scene.layout.Priority.ALWAYS);
+
+        Label lTit = new Label(n.titulo());
+        lTit.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
+
+        Label lMsg = new Label(n.mensaje());
+        lMsg.setStyle("-fx-font-size: 11px; -fx-text-fill: #64748B;");
+        lMsg.setWrapText(true);
+        lMsg.setMaxWidth(230);
+
+        texts.getChildren().addAll(lTit, lMsg);
+        row.getChildren().addAll(icoWrap, texts);
+        return row;
     }
 
     private void mostrarAlerta(String titulo, String mensaje) {

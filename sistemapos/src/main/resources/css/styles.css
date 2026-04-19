@@ -299,6 +299,23 @@
     -fx-min-width: 150px;
     -fx-pref-width: 190px;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+    -fx-border-color: rgba(26,31,46,0.08);
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+}
+
+.dashboard-stat-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(90,106,207,0.18), 18, 0, 0, 5);
+    -fx-border-color: rgba(90,106,207,0.20);
+    -fx-translate-y: -3;
+}
+
+.dashboard-stat-card:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0, 0, 1);
+    -fx-translate-y: 0;
 }
 
 .dashboard-stat-value {
@@ -1153,6 +1170,33 @@
     -fx-fill: #FFFFFF;
 }
 
+/* Iconos blancos en botones con fondo azul/primario */
+.btn-primario .ikonli-font-icon,
+.venta-btn-add .ikonli-font-icon,
+.venta-btn-del .ikonli-font-icon,
+.venta-cat-chip-active .ikonli-font-icon,
+.venta-metodo-btn:selected .ikonli-font-icon,
+.inventario-btn-nuevo .ikonli-font-icon,
+.inventario-btn-guardar .ikonli-font-icon {
+    -fx-icon-color: #FFFFFF;
+    -fx-fill: #FFFFFF;
+}
+
+/* Iconos blancos en botones con fondo rojo/danger */
+.btn-danger .ikonli-font-icon,
+.prod-btn-danger .ikonli-font-icon,
+.ajuste-toggle-active-salida .ikonli-font-icon {
+    -fx-icon-color: #FFFFFF;
+    -fx-fill: #FFFFFF;
+}
+
+/* Iconos blancos en botones con fondo verde/success */
+.prod-btn-success .ikonli-font-icon,
+.ajuste-toggle-active-entrada .ikonli-font-icon {
+    -fx-icon-color: #FFFFFF;
+    -fx-fill: #FFFFFF;
+}
+
 /* ── Tabla de datos ─────────────────────────────────────────────── */
 .table-view {
     -fx-background-color: #FDFCFA;
@@ -1486,18 +1530,21 @@
 
 /* Botón eliminar ítem (×) */
 .venta-btn-del {
-    -fx-background-color: transparent;
+    -fx-background-color: #5A6ACF;
+    -fx-background-radius: 6px;
     -fx-border-color: transparent;
     -fx-cursor: hand;
     -fx-padding: 4;
     -fx-effect: none;
-    -fx-min-width: 24px;
-    -fx-min-height: 24px;
+    -fx-min-width: 26px;
+    -fx-min-height: 26px;
+    -fx-max-width: 26px;
+    -fx-max-height: 26px;
 }
 
 .venta-btn-del:hover {
-    -fx-background-color: #FEE2E2;
-    -fx-background-radius: 5px;
+    -fx-background-color: #4A58BF;
+    -fx-background-radius: 6px;
 }
 
 /* Footer del carrito — total */
@@ -2883,4 +2930,95 @@
 
 .cfg-tab-active:hover {
     -fx-background-color: #DDE0F5;
+}
+
+/* ── Dashboard: badge tipo pago ────────────────────────────────── */
+.dashboard-alert-badge-pago {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #92400E;
+    -fx-background-color: #FEF3C7;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 5px;
+}
+
+/* ── Campana: badge de conteo ──────────────────────────────────── */
+.notif-badge {
+    -fx-background-color: #EF4444;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-background-radius: 8px;
+    -fx-padding: 1 4 1 4;
+    -fx-min-width: 16px;
+    -fx-alignment: center;
+}
+
+/* ── Popup de notificaciones ───────────────────────────────────── */
+.notif-popup-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(26,31,46,0.12);
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 16, 0, 0, 4);
+}
+
+.notif-popup-header {
+    -fx-padding: 12 14 12 14;
+    -fx-background-color: #F8F9FB;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.08) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-background-radius: 10px 10px 0 0;
+}
+
+.notif-popup-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1A1F2E;
+}
+
+.notif-popup-count {
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748B;
+}
+
+.notif-popup-empty {
+    -fx-font-size: 13px;
+    -fx-text-fill: #94A3B8;
+    -fx-alignment: center;
+}
+
+.notif-popup-scroll {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.notif-popup-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.notif-popup-row {
+    -fx-border-color: transparent transparent rgba(26,31,46,0.06) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.notif-popup-row:hover {
+    -fx-background-color: #F8F9FB;
+}
+
+.notif-popup-ico-wrap {
+    -fx-background-color: #F1F3FB;
+    -fx-background-radius: 8px;
+}
+
+.notif-popup-row-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1A1F2E;
+}
+
+.notif-popup-row-msg {
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748B;
 }

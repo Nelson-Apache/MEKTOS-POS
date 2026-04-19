@@ -49,4 +49,9 @@ public class VentaRepositoryImpl implements VentaRepository {
                 .map(ventaMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public Optional<Long> findMaxNumeroComprobante() {
+        return jpaVentaRepository.findMaxNumeroComprobante();
+    }
 }

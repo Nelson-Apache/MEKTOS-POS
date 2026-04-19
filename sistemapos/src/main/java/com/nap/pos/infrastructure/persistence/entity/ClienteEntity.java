@@ -25,10 +25,10 @@ public class ClienteEntity {
     @Column(nullable = false, unique = true, length = 20)
     private String cedula;
 
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private String celular;
 
-    @Column(nullable = false, length = 200)
+    @Column(length = 200)
     private String direccion;
 
     // Null si el cliente no tiene crédito aprobado

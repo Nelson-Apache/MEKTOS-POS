@@ -32,6 +32,7 @@ public class VentaMapper {
                 .caja(cajaMapper.toDomain(entity.getCaja()))
                 .estado(entity.getEstado())
                 .detalles(detallesEntityToDomain(entity.getDetalles()))
+                .numeroComprobante(entity.getNumeroComprobante())
                 .build();
     }
 
@@ -49,6 +50,7 @@ public class VentaMapper {
                 ? clienteMapper.toRef(domain.getCliente().getId()) : null);
         entity.setUsuario(usuarioMapper.toRef(domain.getUsuario().getId()));
         entity.setCaja(cajaMapper.toRef(domain.getCaja().getId()));
+        entity.setNumeroComprobante(domain.getNumeroComprobante());
         // Mapea detalles y establece la referencia bidireccional venta ↔ detalle
         List<DetalleVentaEntity> detalles = detallesDomainToEntity(domain.getDetalles(), entity);
         entity.setDetalles(detalles);

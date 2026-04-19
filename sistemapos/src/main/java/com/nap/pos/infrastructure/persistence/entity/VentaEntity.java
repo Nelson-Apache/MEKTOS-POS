@@ -51,6 +51,9 @@ public class VentaEntity {
     @Column(nullable = false, length = 20)
     private EstadoVenta estado;
 
+    @Column(name = "numero_comprobante")
+    private Long numeroComprobante;
+
     // CascadeType.ALL: al guardar la venta, los detalles se guardan automáticamente
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleVentaEntity> detalles = new ArrayList<>();

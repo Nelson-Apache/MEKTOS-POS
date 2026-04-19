@@ -31,6 +31,7 @@ public class Venta {
     private EstadoVenta estado = EstadoVenta.COMPLETADA;
     @Builder.Default
     private List<DetalleVenta> detalles = new ArrayList<>();
+    private Long numeroComprobante;
 
     /**
      * Suma los subtotales de todos los detalles para obtener el total de la venta.

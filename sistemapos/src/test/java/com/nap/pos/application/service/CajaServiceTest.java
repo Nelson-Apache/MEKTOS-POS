@@ -2,7 +2,9 @@ package com.nap.pos.application.service;
 
 import com.nap.pos.domain.exception.BusinessException;
 import com.nap.pos.domain.model.Caja;
+import com.nap.pos.domain.model.Usuario;
 import com.nap.pos.domain.model.enums.EstadoCaja;
+import com.nap.pos.domain.model.enums.Rol;
 import com.nap.pos.domain.repository.CajaRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +41,7 @@ class CajaServiceTest {
                 .estado(EstadoCaja.ABIERTA).build();
         when(cajaRepository.save(any(Caja.class))).thenReturn(cajaGuardada);
 
-        Caja resultado = cajaService.abrirCaja(new BigDecimal("500000"));
+        Caja resultado = cajaService.abrirCaja(new BigDecimal("500000"), usuarioBuilder());
 
         assertThat(resultado.getEstado()).isEqualTo(EstadoCaja.ABIERTA);
         assertThat(resultado.getMontoInicial()).isEqualByComparingTo("500000");
@@ -55,7 +57,7 @@ class CajaServiceTest {
         when(cajaRepository.findCajaAbierta()).thenReturn(Optional.of(cajaExistente));
 
         assertThrows(BusinessException.class,
-                () -> cajaService.abrirCaja(new BigDecimal("500000")));
+                () -> cajaService.abrirCaja(new BigDecimal("500000"), usuarioBuilder()));
         verify(cajaRepository, never()).save(any());
     }
 
@@ -85,5 +87,13 @@ class CajaServiceTest {
         when(cajaRepository.findCajaAbierta()).thenReturn(Optional.empty());
 
         assertThrows(BusinessException.class, () -> cajaService.getCajaAbierta());
+    }
+
+    // --- helper ---
+
+    private Usuario usuarioBuilder() {
+        return Usuario.builder()
+                .id(1L).username("admin").passwordHash("hash")
+                .rol(Rol.ADMIN).activo(true).build();
     }
 }
