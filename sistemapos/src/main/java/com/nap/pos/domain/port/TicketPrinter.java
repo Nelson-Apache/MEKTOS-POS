@@ -9,11 +9,10 @@ package com.nap.pos.domain.port;
 public interface TicketPrinter {
 
     /**
-     * Envía el texto del ticket a la impresora.
-     * Si la impresora no está disponible o falla, lanza TechnicalException;
-     * el llamador decide si propaga o absorbe el error para no revertir la venta.
+     * Guarda y/o envía el texto del ticket.
      *
-     * @param textoTicket contenido del ticket ya formateado como texto plano
+     * @param textoTicket   contenido del ticket ya formateado como texto plano
+     * @param nombreArchivo nombre base del archivo a guardar (sin extensión)
      */
-    void imprimir(String textoTicket);
+    void imprimir(String textoTicket, String nombreArchivo);
 }

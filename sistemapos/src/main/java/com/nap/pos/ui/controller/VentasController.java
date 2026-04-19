@@ -1146,6 +1146,12 @@ public class VentasController {
         try {
             Caja caja = cajaService.getCajaAbierta();
 
+            BigDecimal montoRecibido = null;
+            if (MetodoPago.EFECTIVO.equals(metodo)) {
+                try { montoRecibido = new BigDecimal(txtRecibido.getText().trim().replace(",", ".")); }
+                catch (NumberFormatException ignored) {}
+            }
+
             List<VentaService.ItemVenta> items = carrito.stream()
                 .map(i -> new VentaService.ItemVenta(i.producto.getId(), i.cantidad))
                 .collect(Collectors.toList());
@@ -1155,7 +1161,8 @@ public class VentasController {
                 usuarioActual.getId(),
                 cliente != null ? cliente.getId() : null,
                 metodo,
-                items
+                items,
+                montoRecibido
             );
 
             // Éxito — reiniciar estado

@@ -38,7 +38,8 @@ public class VentaService {
      */
     @Transactional
     public Venta registrarVenta(Long cajaId, Long usuarioId, Long clienteId,
-                                MetodoPago metodoPago, List<ItemVenta> items) {
+                                MetodoPago metodoPago, List<ItemVenta> items,
+                                java.math.BigDecimal montoRecibido) {
         Caja caja = cajaRepository.findById(cajaId)
                 .orElseThrow(() -> new BusinessException("Caja con ID " + cajaId + " no encontrada."));
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -89,8 +90,10 @@ public class VentaService {
 
         Venta ventaGuardada = ventaRepository.save(venta);
 
-        // Impresión fuera del @Transactional lógico: el fallo de impresora no revierte la venta
-        impresionService.imprimirTicket(ventaGuardada);
+        // Se imprime usando `venta` (pre-save) porque sus objetos anidados (producto, usuario)
+        // están completamente cargados. `ventaGuardada` solo tiene proxies JPA con el ID.
+        // `venta` ya tiene el numeroComprobante asignado antes del save.
+        impresionService.imprimirTicket(venta, montoRecibido);
 
         return ventaGuardada;
     }

@@ -5,58 +5,55 @@ import com.nap.pos.domain.port.TicketPrinter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.print.*;
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.PrintRequestAttributeSet;
-import javax.print.attribute.standard.Copies;
+import java.awt.Desktop;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
- * Implementación de TicketPrinter usando la API javax.print del JDK.
- * No requiere dependencias externas ni de la capa de aplicación.
- * Envía el texto recibido como bytes a la impresora predeterminada del sistema.
+ * Guarda el ticket como archivo de texto en ~/.nappos/tickets/
+ * y lo abre con el visor predeterminado del sistema operativo.
  *
- * En Windows las impresoras térmicas USB se registran como impresoras del
- * sistema, por lo que javax.print las detecta correctamente.
+ * No requiere impresora física: el operador puede imprimir desde el visor
+ * de texto si lo necesita. El archivo queda como respaldo histórico.
  */
 @Slf4j
 @Component
 public class TicketPrinterImpl implements TicketPrinter {
 
     @Override
-    public void imprimir(String textoTicket) {
-        byte[] bytes = textoTicket.getBytes(StandardCharsets.UTF_8);
-
-        DocFlavor flavor = DocFlavor.BYTE_ARRAY.AUTOSENSE;
-        PrintRequestAttributeSet attrs = new HashPrintRequestAttributeSet();
-        attrs.add(new Copies(1));
-
-        PrintService servicio = encontrarServicio(flavor, attrs);
-        if (servicio == null) {
-            throw new TechnicalException(
-                    "No se encontró ninguna impresora disponible en el sistema.");
-        }
-
-        log.info("Imprimiendo ticket en: {}", servicio.getName());
-
+    public void imprimir(String textoTicket, String nombreArchivo) {
         try {
-            Doc doc = new SimpleDoc(bytes, flavor, null);
-            DocPrintJob job = servicio.createPrintJob();
-            job.print(doc, attrs);
-        } catch (PrintException e) {
-            throw new TechnicalException("Error al enviar el ticket a la impresora: " + e.getMessage());
+            Path carpeta = Paths.get(System.getProperty("user.home"), ".nappos", "tickets");
+            Files.createDirectories(carpeta);
+
+            Path archivo = carpeta.resolve(nombreArchivo + ".txt");
+            Files.writeString(archivo, textoTicket, StandardCharsets.UTF_8);
+            log.info("Ticket guardado en: {}", archivo.toAbsolutePath());
+
+            abrirArchivo(archivo);
+        } catch (IOException e) {
+            throw new TechnicalException("Error al guardar el ticket: " + e.getMessage());
         }
     }
 
-    private PrintService encontrarServicio(DocFlavor flavor, PrintRequestAttributeSet attrs) {
-        PrintService defecto = PrintServiceLookup.lookupDefaultPrintService();
-        if (defecto != null && defecto.isDocFlavorSupported(flavor)) {
-            return defecto;
+    private void abrirArchivo(Path archivo) {
+        if (!Desktop.isDesktopSupported()) {
+            log.warn("Desktop no disponible — el ticket no se abrirá automáticamente.");
+            return;
         }
-        PrintService[] servicios = PrintServiceLookup.lookupPrintServices(flavor, attrs);
-        if (servicios.length > 0) {
-            return servicios[0];
+        Desktop desktop = Desktop.getDesktop();
+        if (!desktop.isSupported(Desktop.Action.OPEN)) {
+            log.warn("La acción OPEN no está soportada — el ticket no se abrirá automáticamente.");
+            return;
         }
-        return null;
+        try {
+            desktop.open(archivo.toFile());
+        } catch (IOException e) {
+            // No lanzar excepción: el archivo ya fue guardado correctamente.
+            log.warn("No se pudo abrir el ticket automáticamente: {}", e.getMessage());
+        }
     }
 }
