@@ -106,4 +106,69 @@ public class UsuarioService {
                 .build();
         usuarioRepository.save(actualizado);
     }
+
+    /** Actualiza nombre, apellido y rol de un usuario existente. */
+    @Transactional
+    public Usuario actualizarUsuario(Long id, String nombre, String apellido, Rol rol) {
+        Usuario existente = findById(id);
+        Usuario actualizado = Usuario.builder()
+                .id(existente.getId())
+                .username(existente.getUsername())
+                .passwordHash(existente.getPasswordHash())
+                .rol(rol)
+                .activo(existente.isActivo())
+                .nombre(nombre)
+                .apellido(apellido)
+                .creadoPorId(existente.getCreadoPorId())
+                .build();
+        return usuarioRepository.save(actualizado);
+    }
+
+    /** Restablece la contraseña de cualquier usuario (uso exclusivo del admin). */
+    @Transactional
+    public void resetPasswordById(Long id, String newRawPassword) {
+        Usuario existente = findById(id);
+        Usuario actualizado = Usuario.builder()
+                .id(existente.getId())
+                .username(existente.getUsername())
+                .passwordHash(passwordEncoder.encode(newRawPassword))
+                .rol(existente.getRol())
+                .activo(existente.isActivo())
+                .nombre(existente.getNombre())
+                .apellido(existente.getApellido())
+                .creadoPorId(existente.getCreadoPorId())
+                .build();
+        usuarioRepository.save(actualizado);
+    }
+
+    /**
+     * Alterna el estado activo/inactivo de un usuario.
+     * Impide desactivar la propia cuenta o al último admin activo.
+     */
+    @Transactional
+    public Usuario toggleActivo(Long id, Long requestingUserId) {
+        Usuario existente = findById(id);
+        if (existente.getId().equals(requestingUserId)) {
+            throw new BusinessException("No puedes desactivar tu propia cuenta.");
+        }
+        if (existente.isActivo() && existente.esAdmin()) {
+            long otrosAdminsActivos = usuarioRepository.findAll().stream()
+                    .filter(u -> u.esAdmin() && u.isActivo() && !u.getId().equals(id))
+                    .count();
+            if (otrosAdminsActivos == 0) {
+                throw new BusinessException("No puedes desactivar al único administrador activo.");
+            }
+        }
+        Usuario actualizado = Usuario.builder()
+                .id(existente.getId())
+                .username(existente.getUsername())
+                .passwordHash(existente.getPasswordHash())
+                .rol(existente.getRol())
+                .activo(!existente.isActivo())
+                .nombre(existente.getNombre())
+                .apellido(existente.getApellido())
+                .creadoPorId(existente.getCreadoPorId())
+                .build();
+        return usuarioRepository.save(actualizado);
+    }
 }

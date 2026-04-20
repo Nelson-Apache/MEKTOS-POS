@@ -2200,6 +2200,139 @@
     -fx-text-fill: transparent;
 }
 
+/* ── Charts de rentabilidad ───────────────────────────────────── */
+.rentabilidad-bar-chart {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+.rentabilidad-bar-chart .chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.rentabilidad-bar-chart .chart-horizontal-grid-lines {
+    -fx-stroke: rgba(26,31,46,0.10);
+}
+
+.rentabilidad-bar-chart .chart-vertical-grid-lines,
+.rentabilidad-bar-chart .chart-alternative-column-fill,
+.rentabilidad-bar-chart .chart-alternative-row-fill {
+    -fx-stroke: transparent;
+    -fx-fill: transparent;
+}
+
+.rentabilidad-bar-chart .x-axis .tick-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #57534E;
+}
+
+.rentabilidad-bar-chart .y-axis .tick-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #57534E;
+}
+
+.rentabilidad-bar-chart .axis-label {
+    -fx-text-fill: #78716C;
+    -fx-font-size: 11px;
+}
+
+.rentabilidad-grid-chart .chart-horizontal-grid-lines {
+    -fx-stroke: rgba(26,31,46,0.08);
+}
+
+.rentabilidad-grid-chart .chart-vertical-grid-lines {
+    -fx-stroke: transparent;
+}
+
+.rentabilidad-grid-chart .chart-plot-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent rgba(26,31,46,0.22) rgba(26,31,46,0.22);
+    -fx-border-width: 0 0 1 1;
+}
+
+.rentabilidad-grid-chart .chart-alternative-column-fill,
+.rentabilidad-grid-chart .chart-alternative-row-fill {
+    -fx-stroke: transparent;
+    -fx-fill: transparent;
+}
+
+.rentabilidad-grid-chart .axis-line {
+    -fx-stroke: rgba(26,31,46,0.22);
+    -fx-stroke-width: 1px;
+}
+
+.rentabilidad-grid-chart .axis-tick-mark,
+.rentabilidad-grid-chart .minor-tick-mark {
+    -fx-stroke: rgba(26,31,46,0.18);
+}
+
+.rentabilidad-line-chart {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+.rentabilidad-line-chart .chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.rentabilidad-line-chart .chart-horizontal-grid-lines {
+    -fx-stroke: rgba(26,31,46,0.10);
+}
+
+.rentabilidad-line-chart .chart-vertical-grid-lines {
+    -fx-stroke: rgba(26,31,46,0.06);
+}
+
+.rentabilidad-line-chart .default-color0.chart-series-line {
+    -fx-stroke: #5A6ACF;
+    -fx-stroke-width: 2.4px;
+}
+
+.rentabilidad-line-chart .default-color1.chart-series-line {
+    -fx-stroke: #D97706;
+    -fx-stroke-width: 2.4px;
+}
+
+.rentabilidad-line-chart .default-color0.chart-line-symbol {
+    -fx-background-color: #FFFFFF, #5A6ACF;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 6;
+    -fx-padding: 5;
+}
+
+.rentabilidad-line-chart .default-color1.chart-line-symbol {
+    -fx-background-color: #FFFFFF, #D97706;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 6;
+    -fx-padding: 5;
+}
+
+.rentabilidad-line-chart .chart-legend {
+    -fx-background-color: transparent;
+}
+
+.rentabilidad-line-chart .chart-legend-item {
+    -fx-text-fill: #57534E;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+}
+
+.rentabilidad-line-chart .x-axis .tick-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #57534E;
+}
+
+.rentabilidad-line-chart .y-axis .tick-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #57534E;
+}
+
+.rentabilidad-line-chart .axis-label {
+    -fx-text-fill: #78716C;
+    -fx-font-size: 11px;
+}
+
 /* ── Estado vacío de gráficas ──────────────────────────────────── */
 .inventario-chart-empty-title {
     -fx-font-size: 13px;

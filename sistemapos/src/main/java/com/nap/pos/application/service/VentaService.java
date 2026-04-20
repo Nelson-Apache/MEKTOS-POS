@@ -2,12 +2,14 @@ package com.nap.pos.application.service;
 
 import com.nap.pos.domain.exception.BusinessException;
 import com.nap.pos.domain.model.*;
+import com.nap.pos.domain.model.enums.EstadoVenta;
 import com.nap.pos.domain.model.enums.MetodoPago;
 import com.nap.pos.domain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,6 +137,25 @@ public class VentaService {
     public List<Venta> findByCajaId(Long cajaId) {
         return ventaRepository.findByCajaId(cajaId);
     }
+
+        @Transactional(readOnly = true)
+        public void reimprimirTicket(Long ventaId, BigDecimal montoRecibido) {
+                Venta venta = ventaRepository.findById(ventaId)
+                                .orElseThrow(() -> new BusinessException("Venta con ID " + ventaId + " no encontrada."));
+
+                if (!EstadoVenta.COMPLETADA.equals(venta.getEstado())) {
+                        throw new BusinessException("Solo se pueden imprimir facturas de ventas completadas.");
+                }
+
+                if (MetodoPago.EFECTIVO.equals(venta.getMetodoPago())
+                                && montoRecibido != null
+                                && venta.getTotal() != null
+                                && montoRecibido.compareTo(venta.getTotal()) < 0) {
+                        throw new BusinessException("El monto recibido no puede ser menor al total de la venta.");
+                }
+
+                impresionService.imprimirTicket(venta, montoRecibido);
+        }
 
     @Transactional(readOnly = true)
     public List<Venta> findAll() {

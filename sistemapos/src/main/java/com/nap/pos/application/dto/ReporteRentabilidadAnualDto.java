@@ -5,19 +5,16 @@ import java.util.List;
 
 /**
  * Rentabilidad consolidada de un año completo.
- * Incluye los totales anuales y el desglose por cada uno de los 12 meses,
- * lo que permite identificar temporadas de baja o alta rentabilidad.
- *
  * Fórmula:
- *   gananciaBruta    = totalVendido - totalInvertido
+ *   gananciaBruta    = totalVendido - totalInvertido - totalGastosAnual + ajusteCajaTotal
  *   margenPorcentaje = (gananciaBruta / totalVendido) × 100
- *
- * Si no hubo ventas en todo el año, margenPorcentaje es null.
  */
 public record ReporteRentabilidadAnualDto(
         int anio,
         BigDecimal totalInvertido,
         BigDecimal totalVendido,
+        BigDecimal totalGastosAnual,
+        BigDecimal ajusteCajaTotal,
         BigDecimal gananciaBruta,
         BigDecimal margenPorcentaje,   // null si totalVendido = 0
         boolean tuvoPerdida,

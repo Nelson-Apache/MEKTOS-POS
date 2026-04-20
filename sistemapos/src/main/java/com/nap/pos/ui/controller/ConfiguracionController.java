@@ -6,9 +6,14 @@ import com.nap.pos.domain.exception.BusinessException;
 import com.nap.pos.domain.model.ConfiguracionTienda;
 import com.nap.pos.domain.model.Usuario;
 import com.nap.pos.domain.model.enums.RegimenTributario;
+import com.nap.pos.domain.model.enums.Rol;
 import com.nap.pos.domain.model.enums.TipoPersona;
+import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
+import javafx.animation.ParallelTransition;
 import javafx.animation.ScaleTransition;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,6 +25,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 import lombok.RequiredArgsConstructor;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -52,7 +58,7 @@ public class ConfiguracionController {
     private VBox      contentArea;
 
     // ── Tabs ─────────────────────────────────────────────────────────────────
-    private Button tabDatos, tabTributario, tabComprobantes, tabInventario, tabSeguridad;
+    private Button tabDatos, tabTributario, tabComprobantes, tabInventario, tabSeguridad, tabUsuarios;
     private static final String COLOR_ACTIVO   = "#5A6ACF";
     private static final String COLOR_INACTIVO = "#78716C";
 
@@ -136,10 +142,17 @@ public class ConfiguracionController {
         tabInventario.setOnAction(e   -> { animarClickTab(tabInventario);   mostrarTab(tabInventario,   buildInventarioPanel()); });
         tabSeguridad.setOnAction(e    -> { animarClickTab(tabSeguridad);    mostrarTab(tabSeguridad,    buildSeguridadPanel()); });
 
+        bar.getChildren().addAll(tabDatos, tabTributario, tabComprobantes, tabInventario, tabSeguridad);
+
+        if (usuarioActual.esAdmin()) {
+            tabUsuarios = crearTab("fas-users", "Usuarios", false);
+            tabUsuarios.setOnAction(e -> { animarClickTab(tabUsuarios); mostrarTab(tabUsuarios, buildUsuariosPanel()); });
+            bar.getChildren().add(tabUsuarios);
+        }
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        bar.getChildren().addAll(tabDatos, tabTributario, tabComprobantes, tabInventario, tabSeguridad, spacer);
+        bar.getChildren().add(spacer);
         return bar;
     }
 
@@ -156,7 +169,8 @@ public class ConfiguracionController {
     }
 
     private void activarTab(Button activo) {
-        List<Button> todos = List.of(tabDatos, tabTributario, tabComprobantes, tabInventario, tabSeguridad);
+        List<Button> todos = new ArrayList<>(List.of(tabDatos, tabTributario, tabComprobantes, tabInventario, tabSeguridad));
+        if (tabUsuarios != null) todos.add(tabUsuarios);
         for (Button b : todos) {
             b.getStyleClass().remove("inventario-tab-active");
             ((FontIcon) b.getGraphic()).setIconColor(Paint.valueOf(COLOR_INACTIVO));
@@ -757,4 +771,435 @@ public class ConfiguracionController {
     }
 
     private static String nvl(String s) { return s != null ? s : ""; }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  Panel — Usuarios (solo ADMIN)
+    // ════════════════════════════════════════════════════════════════════════
+
+    private VBox buildUsuariosPanel() {
+        List<Usuario> todos = usuarioService.findAll();
+        long nAdmins  = todos.stream().filter(Usuario::esAdmin).count();
+        long nCajeros = todos.stream().filter(u -> !u.esAdmin()).count();
+        long nActivos = todos.stream().filter(Usuario::isActivo).count();
+
+        VBox panel = new VBox(20);
+        panel.setStyle("-fx-padding: 28 32 28 32; -fx-background-color: #F5F1EB;");
+
+        // ── KPI ──────────────────────────────────────────────────────────────
+        HBox kpiRow = new HBox(16);
+        kpiRow.getChildren().addAll(
+            crearKpiUsuario("fas-users",         "#5A6ACF", "Total usuarios",    String.valueOf(todos.size())),
+            crearKpiUsuario("fas-user-shield",   "#7C3AED", "Administradores",   String.valueOf(nAdmins)),
+            crearKpiUsuario("fas-cash-register", "#D97706", "Cajeros",           String.valueOf(nCajeros)),
+            crearKpiUsuario("fas-user-check",    "#15803D", "Activos",           String.valueOf(nActivos))
+        );
+
+        // ── Card con tabla ────────────────────────────────────────────────────
+        VBox card = buildCard("Gestión de Usuarios", "fas-users");
+
+        FontIcon icoPlus = new FontIcon("fas-user-plus");
+        icoPlus.setIconSize(13);
+        icoPlus.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnNuevo = new Button("Nuevo Usuario", icoPlus);
+        btnNuevo.getStyleClass().add("btn-primario");
+        btnNuevo.setStyle("-fx-padding: 8 16 8 16; -fx-font-size: 13px;");
+        btnNuevo.setOnAction(e -> abrirModalUsuario(null));
+
+        HBox toolbar = new HBox(btnNuevo);
+        toolbar.setAlignment(Pos.CENTER_RIGHT);
+
+        card.getChildren().addAll(toolbar, crearTablaUsuarios(todos));
+        panel.getChildren().addAll(kpiRow, card);
+        return panel;
+    }
+
+    private VBox crearKpiUsuario(String icon, String color, String titulo, String valor) {
+        VBox card = new VBox(8);
+        card.setStyle(
+            "-fx-background-color: #FDFCFA; -fx-border-color: rgba(26,31,46,0.10); " +
+            "-fx-border-width: 1; -fx-border-radius: 10; -fx-background-radius: 10; " +
+            "-fx-padding: 18 20 18 20;"
+        );
+        HBox.setHgrow(card, Priority.ALWAYS);
+
+        StackPane icoCircle = new StackPane();
+        icoCircle.setStyle("-fx-background-color: " + color + "22; -fx-background-radius: 8px;");
+        icoCircle.setMinSize(36, 36);
+        icoCircle.setMaxSize(36, 36);
+        FontIcon ico = new FontIcon(icon);
+        ico.setIconSize(16);
+        ico.setIconColor(Paint.valueOf(color));
+        icoCircle.getChildren().add(ico);
+
+        Label lblVal = new Label(valor);
+        lblVal.setStyle("-fx-font-size: 24px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
+        Label lblTit = new Label(titulo);
+        lblTit.setStyle("-fx-font-size: 12px; -fx-text-fill: #78716C;");
+
+        card.getChildren().addAll(icoCircle, lblVal, lblTit);
+        return card;
+    }
+
+    @SuppressWarnings("unchecked")
+    private TableView<Usuario> crearTablaUsuarios(List<Usuario> lista) {
+        TableView<Usuario> tabla = new TableView<>();
+        tabla.getStyleClass().add("inventario-table");
+        tabla.setPrefHeight(Math.min(lista.size() * 44 + 44, 420));
+        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        tabla.setPlaceholder(new Label("No hay usuarios registrados."));
+
+        TableColumn<Usuario, String> colUser = new TableColumn<>("Usuario");
+        colUser.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getUsername()));
+        colUser.setPrefWidth(150);
+
+        TableColumn<Usuario, String> colNombre = new TableColumn<>("Nombre completo");
+        colNombre.setCellValueFactory(c -> {
+            Usuario u = c.getValue();
+            String n = u.getNombre() != null ? u.getNombre() : "";
+            String a = u.getApellido() != null ? u.getApellido() : "";
+            String full = (n + " " + a).trim();
+            return new SimpleStringProperty(full.isEmpty() ? "—" : full);
+        });
+        colNombre.setPrefWidth(190);
+
+        TableColumn<Usuario, String> colRol = new TableColumn<>("Rol");
+        colRol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().esAdmin() ? "Admin" : "Cajero"));
+        colRol.setPrefWidth(100);
+        colRol.setCellFactory(tc -> new TableCell<>() {
+            @Override protected void updateItem(String s, boolean empty) {
+                super.updateItem(s, empty);
+                if (empty || s == null) { setGraphic(null); setText(null); return; }
+                boolean admin = "Admin".equals(s);
+                Label badge = new Label(s);
+                badge.setStyle(
+                    "-fx-background-color: " + (admin ? "#EDE9FA" : "#ECEEF7") + ";" +
+                    "-fx-text-fill: " + (admin ? "#7C3AED" : "#5A6ACF") + ";" +
+                    "-fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 3 10;" +
+                    "-fx-background-radius: 10px;"
+                );
+                setGraphic(badge);
+                setText(null);
+                setAlignment(Pos.CENTER);
+            }
+        });
+
+        TableColumn<Usuario, String> colEstado = new TableColumn<>("Estado");
+        colEstado.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().isActivo() ? "Activo" : "Inactivo"));
+        colEstado.setPrefWidth(90);
+        colEstado.setCellFactory(tc -> new TableCell<>() {
+            @Override protected void updateItem(String s, boolean empty) {
+                super.updateItem(s, empty);
+                if (empty || s == null) { setGraphic(null); setText(null); return; }
+                boolean activo = "Activo".equals(s);
+                Label badge = new Label(s);
+                badge.setStyle(
+                    "-fx-background-color: " + (activo ? "#DCFCE7" : "#FEE2E2") + ";" +
+                    "-fx-text-fill: " + (activo ? "#15803D" : "#DC2626") + ";" +
+                    "-fx-font-size: 11px; -fx-font-weight: 700; -fx-padding: 3 10;" +
+                    "-fx-background-radius: 10px;"
+                );
+                setGraphic(badge);
+                setText(null);
+                setAlignment(Pos.CENTER);
+            }
+        });
+
+        TableColumn<Usuario, Void> colAcciones = new TableColumn<>("");
+        colAcciones.setPrefWidth(100);
+        colAcciones.setCellFactory(tc -> new TableCell<>() {
+            private final Button btnEditar = new Button();
+            private final Button btnToggle = new Button();
+            {
+                FontIcon icoEdit = new FontIcon("fas-pen");
+                icoEdit.setIconSize(12);
+                icoEdit.setIconColor(Paint.valueOf("#5A6ACF"));
+                btnEditar.setGraphic(icoEdit);
+                btnEditar.setStyle(
+                    "-fx-background-color: #ECEEF7; -fx-background-radius: 6px;" +
+                    "-fx-border-color: transparent; -fx-cursor: hand; -fx-padding: 5 8;"
+                );
+                btnEditar.setOnAction(e -> abrirModalUsuario(getTableView().getItems().get(getIndex())));
+
+                btnToggle.setStyle(
+                    "-fx-background-color: #F5F1EB; -fx-background-radius: 6px;" +
+                    "-fx-border-color: transparent; -fx-cursor: hand; -fx-padding: 5 8;"
+                );
+                btnToggle.setOnAction(e -> toggleActivoUsuario(getTableView().getItems().get(getIndex())));
+            }
+            @Override protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) { setGraphic(null); return; }
+                Usuario u = getTableView().getItems().get(getIndex());
+                FontIcon icoToggle = new FontIcon(u.isActivo() ? "fas-user-slash" : "fas-user-check");
+                icoToggle.setIconSize(12);
+                icoToggle.setIconColor(Paint.valueOf(u.isActivo() ? "#DC2626" : "#15803D"));
+                btnToggle.setGraphic(icoToggle);
+                HBox acciones = new HBox(6, btnEditar, btnToggle);
+                acciones.setAlignment(Pos.CENTER);
+                setGraphic(acciones);
+            }
+        });
+
+        tabla.getItems().addAll(lista);
+        tabla.getColumns().addAll(colUser, colNombre, colRol, colEstado, colAcciones);
+        return tabla;
+    }
+
+    private void toggleActivoUsuario(Usuario u) {
+        String accion = u.isActivo() ? "Desactivar" : "Activar";
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle(accion + " usuario");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿" + accion + " al usuario \"" + u.getUsername() + "\"?");
+        confirm.showAndWait().ifPresent(r -> {
+            if (r == ButtonType.OK) {
+                try {
+                    usuarioService.toggleActivo(u.getId(), usuarioActual.getId());
+                    mostrarTab(tabUsuarios, buildUsuariosPanel());
+                } catch (BusinessException ex) {
+                    mostrarError(ex.getMessage());
+                }
+            }
+        });
+    }
+
+    private void abrirModalUsuario(Usuario usuarioEditar) {
+        boolean esEdicion = usuarioEditar != null;
+
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: rgba(25,32,48,0.55);");
+        overlay.setAlignment(Pos.CENTER);
+
+        VBox panel = new VBox(18);
+        panel.setMinWidth(320);
+        panel.prefWidthProperty().bind(
+            Bindings.when(overlay.widthProperty().subtract(64).lessThan(480))
+                    .then(overlay.widthProperty().subtract(64))
+                    .otherwise(480.0)
+        );
+        panel.setMaxWidth(Double.MAX_VALUE);
+        panel.setPadding(new Insets(28, 32, 28, 32));
+        panel.setStyle(
+            "-fx-background-color: #FDFCFA; -fx-background-radius: 14px;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 28, 0, 0, 8);"
+        );
+
+        // Header
+        HBox header = new HBox(12);
+        header.setAlignment(Pos.CENTER_LEFT);
+        StackPane icoCircle = new StackPane();
+        icoCircle.setStyle("-fx-background-color: #5A6ACF22; -fx-background-radius: 10px;");
+        icoCircle.setMinSize(40, 40);
+        icoCircle.setMaxSize(40, 40);
+        FontIcon icoH = new FontIcon(esEdicion ? "fas-user-edit" : "fas-user-plus");
+        icoH.setIconSize(18);
+        icoH.setIconColor(Paint.valueOf("#5A6ACF"));
+        icoCircle.getChildren().add(icoH);
+        Label lblTituloModal = new Label(esEdicion ? "Editar Usuario" : "Nuevo Usuario");
+        lblTituloModal.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E;");
+        Region spacerH = new Region();
+        HBox.setHgrow(spacerH, Priority.ALWAYS);
+        Button btnX = new Button("✕");
+        btnX.setStyle(
+            "-fx-background-color: transparent; -fx-font-size: 15px;" +
+            "-fx-text-fill: #94A3B8; -fx-cursor: hand; -fx-padding: 4 8;"
+        );
+        header.getChildren().addAll(icoCircle, lblTituloModal, spacerH, btnX);
+
+        // Formulario
+        VBox form = new VBox(14);
+
+        // Username
+        TextField txtUsernameM = new TextField(esEdicion ? usuarioEditar.getUsername() : "");
+        txtUsernameM.setPromptText("nombre.usuario");
+        txtUsernameM.setMaxWidth(Double.MAX_VALUE);
+        txtUsernameM.setDisable(esEdicion);
+        txtUsernameM.setStyle(
+            "-fx-font-size: 13px; -fx-background-color: " + (esEdicion ? "#E9E5DE" : "#EDE9E2") + ";" +
+            "-fx-background-radius: 8px; -fx-border-color: transparent; -fx-padding: 8 12;"
+        );
+        VBox grpUser = new VBox(6, labelForm("Usuario" + (esEdicion ? "" : " *")), txtUsernameM);
+
+        // Nombre y Apellido
+        TextField txtNombreM = new TextField(esEdicion && usuarioEditar.getNombre() != null ? usuarioEditar.getNombre() : "");
+        txtNombreM.setPromptText("Nombre");
+        txtNombreM.setMaxWidth(Double.MAX_VALUE);
+        txtNombreM.setStyle(
+            "-fx-font-size: 13px; -fx-background-color: #EDE9E2;" +
+            "-fx-background-radius: 8px; -fx-border-color: transparent; -fx-padding: 8 12;"
+        );
+        TextField txtApellidoM = new TextField(esEdicion && usuarioEditar.getApellido() != null ? usuarioEditar.getApellido() : "");
+        txtApellidoM.setPromptText("Apellido");
+        txtApellidoM.setMaxWidth(Double.MAX_VALUE);
+        txtApellidoM.setStyle(
+            "-fx-font-size: 13px; -fx-background-color: #EDE9E2;" +
+            "-fx-background-radius: 8px; -fx-border-color: transparent; -fx-padding: 8 12;"
+        );
+        VBox grpNombreM   = new VBox(6, labelForm("Nombre"), txtNombreM);
+        VBox grpApellidoM = new VBox(6, labelForm("Apellido"), txtApellidoM);
+        grpNombreM.setMaxWidth(Double.MAX_VALUE);
+        grpApellidoM.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(grpNombreM, Priority.ALWAYS);
+        HBox.setHgrow(grpApellidoM, Priority.ALWAYS);
+        HBox nombreRow = new HBox(12, grpNombreM, grpApellidoM);
+
+        // Rol
+        ComboBox<Rol> cbRolM = new ComboBox<>(FXCollections.observableArrayList(Rol.values()));
+        cbRolM.setValue(esEdicion ? usuarioEditar.getRol() : Rol.CAJERO);
+        cbRolM.setMaxWidth(Double.MAX_VALUE);
+        cbRolM.setConverter(new StringConverter<>() {
+            @Override public String toString(Rol r) {
+                if (r == null) return "";
+                return r == Rol.ADMIN ? "Administrador" : "Cajero";
+            }
+            @Override public Rol fromString(String s) { return null; }
+        });
+        VBox grpRolM = new VBox(6, labelForm("Rol *"), cbRolM);
+
+        // Contraseña
+        PasswordField txtPwdM = new PasswordField();
+        txtPwdM.setPromptText(esEdicion ? "Nueva contraseña (opcional)" : "Mínimo 6 caracteres");
+        txtPwdM.setMaxWidth(Double.MAX_VALUE);
+        txtPwdM.setStyle(
+            "-fx-font-size: 13px; -fx-background-color: #EDE9E2;" +
+            "-fx-background-radius: 8px; -fx-border-color: transparent; -fx-padding: 8 12;"
+        );
+        PasswordField txtPwdConfirmM = new PasswordField();
+        txtPwdConfirmM.setPromptText("Confirmar contraseña");
+        txtPwdConfirmM.setMaxWidth(Double.MAX_VALUE);
+        txtPwdConfirmM.setStyle(
+            "-fx-font-size: 13px; -fx-background-color: #EDE9E2;" +
+            "-fx-background-radius: 8px; -fx-border-color: transparent; -fx-padding: 8 12;"
+        );
+        VBox grpPwdM = new VBox(6, labelForm(esEdicion ? "Nueva Contraseña" : "Contraseña *"), txtPwdM);
+        VBox grpPwdConfirmM = new VBox(6, labelForm("Confirmar Contraseña" + (esEdicion ? "" : " *")), txtPwdConfirmM);
+        if (esEdicion) {
+            Label hintPwd = new Label("Deja en blanco para no cambiar la contraseña.");
+            hintPwd.setStyle("-fx-font-size: 11px; -fx-text-fill: #A8A29E;");
+            grpPwdM.getChildren().add(hintPwd);
+        }
+
+        form.getChildren().addAll(grpUser, nombreRow, grpRolM, grpPwdM, grpPwdConfirmM);
+
+        // Error
+        Label lblModalError = new Label();
+        lblModalError.setStyle("-fx-font-size: 12px; -fx-text-fill: #DC2626;");
+        lblModalError.setWrapText(true);
+        lblModalError.setVisible(false);
+        lblModalError.setManaged(false);
+
+        // Botones
+        HBox botones = new HBox(10);
+        botones.setAlignment(Pos.CENTER_RIGHT);
+        Button btnCancelarM = new Button("Cancelar");
+        btnCancelarM.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: #4B5563;" +
+            "-fx-font-size: 13px; -fx-font-weight: 600; -fx-padding: 8 18;" +
+            "-fx-border-color: rgba(26,31,46,0.15); -fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px; -fx-cursor: hand;"
+        );
+        FontIcon icoSave = new FontIcon("fas-save");
+        icoSave.setIconSize(13);
+        icoSave.setIconColor(Paint.valueOf("#FFFFFF"));
+        Button btnGuardarM = new Button("Guardar", icoSave);
+        btnGuardarM.getStyleClass().add("btn-primario");
+        btnGuardarM.setStyle("-fx-padding: 8 20 8 20; -fx-font-size: 13px;");
+        botones.getChildren().addAll(btnCancelarM, btnGuardarM);
+
+        panel.getChildren().addAll(header, new Separator(), form, lblModalError, botones);
+
+        ScrollPane panelScroll = new ScrollPane(panel);
+        panelScroll.setFitToWidth(true);
+        panelScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        panelScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        panelScroll.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0;");
+        panelScroll.setMinWidth(320);
+        panelScroll.prefWidthProperty().bind(panel.prefWidthProperty());
+        panelScroll.maxWidthProperty().bind(panel.prefWidthProperty());
+        panelScroll.maxHeightProperty().bind(overlay.heightProperty().subtract(48));
+        overlay.getChildren().add(panelScroll);
+
+        Runnable cerrar = () -> {
+            FadeTransition ft = new FadeTransition(Duration.millis(180), overlay);
+            ft.setFromValue(1);
+            ft.setToValue(0);
+            ft.setOnFinished(ev -> rootStack.getChildren().remove(overlay));
+            ft.play();
+        };
+        btnX.setOnAction(e -> cerrar.run());
+        btnCancelarM.setOnAction(e -> cerrar.run());
+        overlay.setOnMouseClicked(e -> { if (e.getTarget() == overlay) cerrar.run(); });
+
+        btnGuardarM.setOnAction(e -> {
+            lblModalError.setVisible(false);
+            lblModalError.setManaged(false);
+
+            String uname    = txtUsernameM.getText().trim();
+            String nombre   = txtNombreM.getText().trim();
+            String apellido = txtApellidoM.getText().trim();
+            Rol    rol      = cbRolM.getValue();
+            String pwd      = txtPwdM.getText();
+            String pwdC     = txtPwdConfirmM.getText();
+
+            if (!esEdicion && uname.isBlank()) {
+                setModalError(lblModalError, "El nombre de usuario es obligatorio."); return;
+            }
+            if (rol == null) {
+                setModalError(lblModalError, "Selecciona un rol."); return;
+            }
+            if (!esEdicion && pwd.isBlank()) {
+                setModalError(lblModalError, "La contraseña es obligatoria."); return;
+            }
+            if (!pwd.isBlank()) {
+                if (pwd.length() < 6) {
+                    setModalError(lblModalError, "La contraseña debe tener al menos 6 caracteres."); return;
+                }
+                if (!pwd.equals(pwdC)) {
+                    setModalError(lblModalError, "Las contraseñas no coinciden."); return;
+                }
+            }
+
+            try {
+                if (esEdicion) {
+                    usuarioService.actualizarUsuario(usuarioEditar.getId(),
+                            nombre.isBlank() ? null : nombre,
+                            apellido.isBlank() ? null : apellido,
+                            rol);
+                    if (!pwd.isBlank()) {
+                        usuarioService.resetPasswordById(usuarioEditar.getId(), pwd);
+                    }
+                } else {
+                    usuarioService.crear(uname, pwd, rol,
+                            nombre.isBlank() ? null : nombre,
+                            apellido.isBlank() ? null : apellido,
+                            usuarioActual.getId());
+                }
+                cerrar.run();
+                mostrarTab(tabUsuarios, buildUsuariosPanel());
+            } catch (BusinessException ex) {
+                setModalError(lblModalError, ex.getMessage());
+            } catch (Exception ex) {
+                setModalError(lblModalError, "Error al guardar. Intenta de nuevo.");
+            }
+        });
+
+        rootStack.getChildren().add(overlay);
+        overlay.setOpacity(0);
+        panelScroll.setScaleX(0.93);
+        panelScroll.setScaleY(0.93);
+
+        FadeTransition ft = new FadeTransition(Duration.millis(200), overlay);
+        ft.setFromValue(0);
+        ft.setToValue(1);
+        ScaleTransition st = new ScaleTransition(Duration.millis(220), panelScroll);
+        st.setFromX(0.93); st.setToX(1.0); st.setFromY(0.93); st.setToY(1.0);
+        st.setInterpolator(Interpolator.EASE_OUT);
+        new ParallelTransition(ft, st).play();
+    }
+
+    private void setModalError(Label lbl, String msg) {
+        lbl.setText(msg);
+        lbl.setVisible(true);
+        lbl.setManaged(true);
+    }
 }

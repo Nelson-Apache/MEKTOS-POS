@@ -43,8 +43,10 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -368,6 +370,14 @@ public class CajaController {
                 .filter(v -> v.getEstado() == EstadoVenta.COMPLETADA && v.getMetodoPago() == MetodoPago.EFECTIVO)
                 .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal transferencia = ventas.stream()
+            .filter(v -> v.getEstado() == EstadoVenta.COMPLETADA && v.getMetodoPago() == MetodoPago.TRANSFERENCIA)
+            .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal credito = ventas.stream()
+            .filter(v -> v.getEstado() == EstadoVenta.COMPLETADA && v.getMetodoPago() == MetodoPago.CREDITO)
+            .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         VBox filas = new VBox(10);
         BigDecimal montoIni = caja.getMontoInicial() != null ? caja.getMontoInicial() : BigDecimal.ZERO;
@@ -376,6 +386,9 @@ public class CajaController {
             crearFilaResumen("fas-calendar-check",  "#78716C", "Cierre",               caja.getFechaCierre()   != null ? caja.getFechaCierre().format(DFT)   : "—"),
             crearFilaResumen("fas-receipt",         "#D97706", "Ventas completadas",   totalVentas + " ventas"),
             crearFilaResumen("fas-dollar-sign",     "#15803D", "Total cobrado",        FMT.format(totalCobrado)),
+            crearFilaResumen("fas-money-bill-wave", "#D97706", "Contado",              FMT.format(efectivo)),
+            crearFilaResumen("fas-exchange-alt",    "#7C3AED", "Transferencia",        FMT.format(transferencia)),
+            crearFilaResumen("fas-credit-card",     "#DC2626", "A crédito",            FMT.format(credito)),
             crearFilaResumen("fas-coins",           "#5A6ACF", "Monto inicial",        FMT.format(montoIni)),
             crearFilaResumen("fas-coins",           "#D97706", "Monto final contado",  caja.getMontoFinal() != null ? FMT.format(caja.getMontoFinal()) : "—")
         );
@@ -459,6 +472,20 @@ public class CajaController {
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         tabla.setPlaceholder(new Label("Sin registros de caja."));
 
+        List<Caja> cajasOrdenadas = todasCajas.stream()
+            .filter(c -> c.getFechaApertura() != null)
+            .sorted(Comparator.comparing(Caja::getFechaApertura, Comparator.reverseOrder()))
+            .collect(Collectors.toList());
+        Map<Long, List<Venta>> ventasPorCaja = cargarVentasPorCaja(cajasOrdenadas);
+
+        Map<Long, BigDecimal> esperadoPorCaja = new HashMap<>();
+        for (Caja caja : cajasOrdenadas) {
+            BigDecimal montoIni = caja.getMontoInicial() != null ? caja.getMontoInicial() : BigDecimal.ZERO;
+            List<Venta> ventasCaja = ventasPorCaja.getOrDefault(caja.getId(), List.of());
+            BigDecimal efectivo = sumarVentasCompletadasPorMetodo(ventasCaja, MetodoPago.EFECTIVO);
+            esperadoPorCaja.put(caja.getId(), montoIni.add(efectivo));
+        }
+
         TableColumn<Caja, String> colApertura = new TableColumn<>("Apertura");
         colApertura.setCellValueFactory(d -> new SimpleStringProperty(
                 d.getValue().getFechaApertura() != null ? d.getValue().getFechaApertura().format(DFT) : "—"));
@@ -488,14 +515,36 @@ public class CajaController {
                 super.updateItem(s, empty);
                 if (empty || s == null || "—".equals(s)) { setText(s); setStyle(""); return; }
                 Caja caja = getTableRow() != null ? (Caja) getTableRow().getItem() : null;
-                boolean deficit = caja != null
-                        && caja.getMontoFinal() != null
-                        && caja.getMontoInicial() != null
-                        && caja.getMontoFinal().compareTo(caja.getMontoInicial()) < 0;
+            BigDecimal esperado = caja != null && caja.getId() != null
+                ? esperadoPorCaja.getOrDefault(caja.getId(), caja.getMontoInicial() != null ? caja.getMontoInicial() : BigDecimal.ZERO)
+                : BigDecimal.ZERO;
+            BigDecimal diferencia = caja != null && caja.getMontoFinal() != null
+                ? caja.getMontoFinal().subtract(esperado)
+                : BigDecimal.ZERO;
+
+            String color = diferencia.compareTo(BigDecimal.ZERO) < 0
+                ? "#DC2626"
+                : (diferencia.compareTo(BigDecimal.ZERO) > 0 ? "#D97706" : "#15803D");
                 setText(s);
-                setStyle("-fx-font-weight: 700; -fx-text-fill: " + (deficit ? "#DC2626" : "#15803D") + ";");
+            setStyle("-fx-font-weight: 700; -fx-text-fill: " + color + ";");
             }
         });
+
+        TableColumn<Caja, String> colTransferencia = new TableColumn<>("Transferencia");
+        colTransferencia.setCellValueFactory(d -> {
+            List<Venta> ventasCaja = ventasPorCaja.getOrDefault(d.getValue().getId(), List.of());
+            BigDecimal transferencia = sumarVentasCompletadasPorMetodo(ventasCaja, MetodoPago.TRANSFERENCIA);
+            return new SimpleStringProperty(FMT.format(transferencia));
+        });
+        colTransferencia.setPrefWidth(120);
+
+        TableColumn<Caja, String> colCredito = new TableColumn<>("Crédito");
+        colCredito.setCellValueFactory(d -> {
+            List<Venta> ventasCaja = ventasPorCaja.getOrDefault(d.getValue().getId(), List.of());
+            BigDecimal credito = sumarVentasCompletadasPorMetodo(ventasCaja, MetodoPago.CREDITO);
+            return new SimpleStringProperty(FMT.format(credito));
+        });
+        colCredito.setPrefWidth(110);
 
         TableColumn<Caja, String> colEstado = new TableColumn<>("Estado");
         colEstado.setCellValueFactory(d -> new SimpleStringProperty(
@@ -535,7 +584,7 @@ public class CajaController {
         });
         colVer.setMinWidth(44); colVer.setMaxWidth(44); colVer.setSortable(false);
 
-        tabla.getColumns().addAll(colApertura, colCierre, colUsuario, colInicial, colFinal, colEstado, colVer);
+        tabla.getColumns().addAll(colApertura, colCierre, colUsuario, colInicial, colFinal, colTransferencia, colCredito, colEstado, colVer);
 
         tabla.setRowFactory(tv -> {
             TableRow<Caja> row = new TableRow<>();
@@ -545,10 +594,6 @@ public class CajaController {
             return row;
         });
 
-        List<Caja> cajasOrdenadas = todasCajas.stream()
-                .filter(c -> c.getFechaApertura() != null)
-                .sorted(Comparator.comparing(Caja::getFechaApertura, Comparator.reverseOrder()))
-                .collect(Collectors.toList());
         tabla.setItems(FXCollections.observableArrayList(cajasOrdenadas));
 
         wrapper.getChildren().addAll(toolbar, tabla);
@@ -681,6 +726,14 @@ public class CajaController {
                 .filter(v -> v.getMetodoPago() == MetodoPago.EFECTIVO)
                 .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal enTransferencia = completadas.stream()
+            .filter(v -> v.getMetodoPago() == MetodoPago.TRANSFERENCIA)
+            .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal enCredito = completadas.stream()
+            .filter(v -> v.getMetodoPago() == MetodoPago.CREDITO)
+            .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal montoInicial  = cajaActual.getMontoInicial() != null ? cajaActual.getMontoInicial() : BigDecimal.ZERO;
         BigDecimal esperadoEnCaja = montoInicial.add(enEfectivo);
 
@@ -721,7 +774,9 @@ public class CajaController {
         resumen.getChildren().addAll(
             crearFilaResumen("fas-receipt",         "#5A6ACF", "Ventas completadas",  completadas.size() + " ventas"),
             crearFilaResumen("fas-dollar-sign",     "#15803D", "Total cobrado",       FMT.format(totalVentas)),
-            crearFilaResumen("fas-money-bill-wave", "#D97706", "Efectivo en ventas",  FMT.format(enEfectivo)),
+            crearFilaResumen("fas-money-bill-wave", "#D97706", "Contado en ventas",   FMT.format(enEfectivo)),
+            crearFilaResumen("fas-exchange-alt",    "#7C3AED", "Transferencia",       FMT.format(enTransferencia)),
+            crearFilaResumen("fas-credit-card",     "#DC2626", "A crédito",           FMT.format(enCredito)),
             crearFilaResumen("fas-coins",           "#5A6ACF", "Monto inicial",       FMT.format(montoInicial)),
             crearFilaResumen("fas-calculator",      "#1A1F2E", "Esperado en caja",    FMT.format(esperadoEnCaja))
         );
@@ -867,24 +922,39 @@ public class CajaController {
 
         long completadasCnt = ventasFinal.stream().filter(v -> v.getEstado() == EstadoVenta.COMPLETADA).count();
         long anuladasCnt    = ventasFinal.stream().filter(v -> v.getEstado() == EstadoVenta.ANULADA).count();
-        BigDecimal totalCobrado = ventasFinal.stream()
-                .filter(v -> v.getEstado() == EstadoVenta.COMPLETADA)
-                .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCobrado = sumarVentasCompletadas(ventasFinal);
+        BigDecimal enEfectivo = sumarVentasCompletadasPorMetodo(ventasFinal, MetodoPago.EFECTIVO);
+        BigDecimal enTransferencia = sumarVentasCompletadasPorMetodo(ventasFinal, MetodoPago.TRANSFERENCIA);
+        BigDecimal enCredito = sumarVentasCompletadasPorMetodo(ventasFinal, MetodoPago.CREDITO);
 
         VBox resumen = new VBox(8);
         resumen.setStyle("-fx-background-color: #F5F1EB; -fx-background-radius: 10px; -fx-padding: 12 16 12 16;");
         BigDecimal montoIni = caja.getMontoInicial() != null ? caja.getMontoInicial() : BigDecimal.ZERO;
+        BigDecimal esperadoEnCaja = montoIni.add(enEfectivo);
         resumen.getChildren().addAll(
             crearFilaResumen("fas-calendar",       "#5A6ACF", "Apertura",             caja.getFechaApertura() != null ? caja.getFechaApertura().format(DFT) : "—"),
             crearFilaResumen("fas-calendar-check", "#78716C", "Cierre",               caja.getFechaCierre()   != null ? caja.getFechaCierre().format(DFT)   : "En curso"),
             crearFilaResumen("fas-check-circle",   "#15803D", "Ventas completadas",   completadasCnt + " ventas"),
             crearFilaResumen("fas-times-circle",   "#DC2626", "Ventas anuladas",      anuladasCnt    + " ventas"),
             crearFilaResumen("fas-dollar-sign",    "#15803D", "Total cobrado",        FMT.format(totalCobrado)),
-            crearFilaResumen("fas-coins",          "#5A6ACF", "Monto inicial",        FMT.format(montoIni))
+            crearFilaResumen("fas-money-bill-wave", "#D97706", "Contado en ventas",   FMT.format(enEfectivo)),
+            crearFilaResumen("fas-exchange-alt",    "#7C3AED", "Transferencia",       FMT.format(enTransferencia)),
+            crearFilaResumen("fas-credit-card",     "#DC2626", "A crédito",           FMT.format(enCredito)),
+            crearFilaResumen("fas-coins",           "#5A6ACF", "Monto inicial",        FMT.format(montoIni)),
+            crearFilaResumen("fas-calculator",      "#1A1F2E", "Esperado en caja",     FMT.format(esperadoEnCaja))
         );
-        if (caja.getMontoFinal() != null)
-            resumen.getChildren().add(crearFilaResumen("fas-coins", "#D97706", "Monto final contado", FMT.format(caja.getMontoFinal())));
+        if (caja.getMontoFinal() != null) {
+            BigDecimal diferencia = caja.getMontoFinal().subtract(esperadoEnCaja);
+            String difColor = diferencia.compareTo(BigDecimal.ZERO) < 0
+                    ? "#DC2626"
+                    : (diferencia.compareTo(BigDecimal.ZERO) > 0 ? "#D97706" : "#15803D");
+            String signo = diferencia.compareTo(BigDecimal.ZERO) > 0 ? "+" : "";
+
+            resumen.getChildren().addAll(
+                crearFilaResumen("fas-coins", "#D97706", "Monto final contado", FMT.format(caja.getMontoFinal())),
+                crearFilaResumen("fas-balance-scale", difColor, "Desajuste", signo + FMT.format(diferencia))
+            );
+        }
 
         Label lblVentas = new Label("Ventas de esta sesión");
         lblVentas.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #1A1F2E; -fx-padding: 4 0 0 0;");
@@ -955,6 +1025,35 @@ public class CajaController {
 
         card.getChildren().addAll(icoCircle, lblValor, lblTitulo);
         return card;
+    }
+
+    private Map<Long, List<Venta>> cargarVentasPorCaja(List<Caja> cajas) {
+        Map<Long, List<Venta>> ventasPorCaja = new HashMap<>();
+        for (Caja caja : cajas) {
+            if (caja == null || caja.getId() == null) continue;
+            try {
+                ventasPorCaja.put(caja.getId(), ventaService.findByCajaId(caja.getId()));
+            } catch (Exception e) {
+                ventasPorCaja.put(caja.getId(), List.of());
+            }
+        }
+        return ventasPorCaja;
+    }
+
+    private BigDecimal sumarVentasCompletadas(List<Venta> ventas) {
+        if (ventas == null || ventas.isEmpty()) return BigDecimal.ZERO;
+        return ventas.stream()
+                .filter(v -> v.getEstado() == EstadoVenta.COMPLETADA)
+                .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal sumarVentasCompletadasPorMetodo(List<Venta> ventas, MetodoPago metodoPago) {
+        if (ventas == null || ventas.isEmpty() || metodoPago == null) return BigDecimal.ZERO;
+        return ventas.stream()
+                .filter(v -> v.getEstado() == EstadoVenta.COMPLETADA && metodoPago == v.getMetodoPago())
+                .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private HBox crearFilaResumen(String iconLiteral, String color, String label, String valor) {

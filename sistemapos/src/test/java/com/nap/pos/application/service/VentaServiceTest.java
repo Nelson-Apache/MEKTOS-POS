@@ -52,7 +52,8 @@ class VentaServiceTest {
         when(ventaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<VentaService.ItemVenta> items = List.of(new VentaService.ItemVenta(1L, 3));
-        Venta resultado = ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items);
+        Venta resultado = ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items,
+            new BigDecimal("10000"));
 
         // Total = 2000 × 3 = 6000
         assertThat(resultado.getTotal()).isEqualByComparingTo("6000");
@@ -81,7 +82,7 @@ class VentaServiceTest {
         when(ventaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<VentaService.ItemVenta> items = List.of(new VentaService.ItemVenta(1L, 2));
-        ventaService.registrarVenta(1L, 1L, 2L, MetodoPago.CREDITO, items);
+        ventaService.registrarVenta(1L, 1L, 2L, MetodoPago.CREDITO, items, null);
 
         // Crédito utilizado: 2 × 1000 = 2000
         verify(clienteRepository).save(argThat(c ->
@@ -104,7 +105,8 @@ class VentaServiceTest {
         List<VentaService.ItemVenta> items = List.of(new VentaService.ItemVenta(99L, 1));
 
         assertThrows(BusinessException.class,
-                () -> ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items));
+                () -> ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items,
+                    new BigDecimal("10000")));
         verify(ventaRepository, never()).save(any());
     }
 
@@ -130,7 +132,8 @@ class VentaServiceTest {
         List<VentaService.ItemVenta> items = List.of(new VentaService.ItemVenta(1L, 1));
 
         assertThrows(BusinessException.class,
-                () -> ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items));
+                () -> ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items,
+                    new BigDecimal("10000")));
         verify(ventaRepository, never()).save(any());
     }
 
@@ -152,7 +155,8 @@ class VentaServiceTest {
         List<VentaService.ItemVenta> items = List.of(new VentaService.ItemVenta(1L, 5)); // pide 5
 
         assertThrows(BusinessException.class,
-                () -> ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items));
+                () -> ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items,
+                    new BigDecimal("10000")));
         verify(ventaRepository, never()).save(any());
         verify(productoRepository, never()).save(any());
     }
@@ -171,7 +175,8 @@ class VentaServiceTest {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
 
         assertThrows(BusinessException.class,
-                () -> ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, List.of()));
+                () -> ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, List.of(),
+                    new BigDecimal("10000")));
         verify(ventaRepository, never()).save(any());
     }
 
@@ -198,7 +203,7 @@ class VentaServiceTest {
         List<VentaService.ItemVenta> items = List.of(new VentaService.ItemVenta(1L, 1));
 
         assertThrows(BusinessException.class,
-                () -> ventaService.registrarVenta(1L, 1L, 3L, MetodoPago.CREDITO, items));
+                () -> ventaService.registrarVenta(1L, 1L, 3L, MetodoPago.CREDITO, items, null));
         verify(ventaRepository, never()).save(any());
         verify(clienteRepository, never()).save(any());
     }
@@ -224,7 +229,7 @@ class VentaServiceTest {
         List<VentaService.ItemVenta> items = List.of(new VentaService.ItemVenta(1L, 1)); // venta de 10.000
 
         assertThrows(BusinessException.class,
-                () -> ventaService.registrarVenta(1L, 1L, 4L, MetodoPago.CREDITO, items));
+                () -> ventaService.registrarVenta(1L, 1L, 4L, MetodoPago.CREDITO, items, null));
         verify(ventaRepository, never()).save(any());
         verify(clienteRepository, never()).save(any());
     }
@@ -248,7 +253,8 @@ class VentaServiceTest {
         when(ventaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<VentaService.ItemVenta> items = List.of(new VentaService.ItemVenta(1L, 1));
-        Venta resultado = ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items);
+        Venta resultado = ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items,
+            new BigDecimal("10000"));
 
         assertThat(resultado.getNumeroComprobante()).isEqualTo(6L);
     }
@@ -278,7 +284,8 @@ class VentaServiceTest {
         when(ventaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<VentaService.ItemVenta> items = List.of(new VentaService.ItemVenta(1L, 1));
-        Venta resultado = ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items);
+        Venta resultado = ventaService.registrarVenta(1L, 1L, null, MetodoPago.EFECTIVO, items,
+            new BigDecimal("10000"));
 
         assertThat(resultado.getNumeroComprobante()).isEqualTo(100L);
     }
@@ -349,6 +356,62 @@ class VentaServiceTest {
 
         assertThrows(BusinessException.class, () -> ventaService.anularVenta(1L));
         verify(ventaRepository, never()).save(any());
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // reimprimirTicket
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    void reimprimirTicket_ventaCompletada_imprimeCorrectamente() {
+        Venta venta = Venta.builder()
+                .id(1L)
+                .estado(EstadoVenta.COMPLETADA)
+                .metodoPago(MetodoPago.EFECTIVO)
+                .total(new BigDecimal("10000"))
+                .build();
+
+        when(ventaRepository.findById(1L)).thenReturn(Optional.of(venta));
+
+        ventaService.reimprimirTicket(1L, new BigDecimal("12000"));
+
+        verify(impresionService).imprimirTicket(venta, new BigDecimal("12000"));
+    }
+
+    @Test
+    void reimprimirTicket_ventaNoEncontrada_lanzaBusinessException() {
+        when(ventaRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () -> ventaService.reimprimirTicket(1L, null));
+        verify(impresionService, never()).imprimirTicket(any(), any());
+    }
+
+    @Test
+    void reimprimirTicket_ventaAnulada_lanzaBusinessException() {
+        Venta ventaAnulada = Venta.builder()
+                .id(1L)
+                .estado(EstadoVenta.ANULADA)
+                .metodoPago(MetodoPago.EFECTIVO)
+                .total(new BigDecimal("10000"))
+                .build();
+        when(ventaRepository.findById(1L)).thenReturn(Optional.of(ventaAnulada));
+
+        assertThrows(BusinessException.class, () -> ventaService.reimprimirTicket(1L, new BigDecimal("12000")));
+        verify(impresionService, never()).imprimirTicket(any(), any());
+    }
+
+    @Test
+    void reimprimirTicket_efectivoConMontoMenor_lanzaBusinessException() {
+        Venta venta = Venta.builder()
+                .id(1L)
+                .estado(EstadoVenta.COMPLETADA)
+                .metodoPago(MetodoPago.EFECTIVO)
+                .total(new BigDecimal("10000"))
+                .build();
+        when(ventaRepository.findById(1L)).thenReturn(Optional.of(venta));
+
+        assertThrows(BusinessException.class, () -> ventaService.reimprimirTicket(1L, new BigDecimal("9000")));
+        verify(impresionService, never()).imprimirTicket(any(), any());
     }
 
     // ─────────────────────────────────────────────────────────────────────────

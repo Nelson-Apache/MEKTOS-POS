@@ -29,6 +29,7 @@ class ReporteServiceTest {
     @Mock private CajaRepository cajaRepository;
     @Mock private ProveedorRepository proveedorRepository;
     @Mock private ProductoRepository productoRepository;
+    @Mock private GastoRepository gastoRepository;
 
     @InjectMocks
     private ReporteService reporteService;
@@ -113,6 +114,118 @@ class ReporteServiceTest {
     }
 
     @Test
+    void reporteVentasPorCaja_detalleVentas_incluyeClienteYHora_ordenadoDesc() {
+        Caja caja = cajaBuilder();
+        Cliente cliente = clienteBuilder(7L, "Laura Mejía", "109999", new BigDecimal("500000"), BigDecimal.ZERO);
+
+        Venta ventaAnterior = Venta.builder()
+                .id(10L)
+                .numeroComprobante(1001L)
+                .metodoPago(MetodoPago.EFECTIVO)
+                .estado(EstadoVenta.COMPLETADA)
+                .total(new BigDecimal("12000"))
+                .fecha(LocalDateTime.of(2026, 4, 10, 9, 30))
+                .detalles(List.of())
+                .build();
+
+        Venta ventaReciente = Venta.builder()
+                .id(11L)
+                .numeroComprobante(1002L)
+                .metodoPago(MetodoPago.TRANSFERENCIA)
+                .estado(EstadoVenta.COMPLETADA)
+                .total(new BigDecimal("18500"))
+                .fecha(LocalDateTime.of(2026, 4, 10, 11, 45))
+                .cliente(cliente)
+                .detalles(List.of())
+                .build();
+
+        when(cajaRepository.findById(1L)).thenReturn(Optional.of(caja));
+        when(ventaRepository.findByCajaId(1L)).thenReturn(List.of(ventaAnterior, ventaReciente));
+
+        ReporteVentasDto reporte = reporteService.reporteVentasPorCaja(1L);
+
+        assertThat(reporte.detalleVentas()).hasSize(2);
+
+        VentaDetalleDto primera = reporte.detalleVentas().get(0);
+        assertThat(primera.numeroComprobante()).isEqualTo(1002L);
+        assertThat(primera.fecha()).isEqualTo(LocalDateTime.of(2026, 4, 10, 11, 45));
+        assertThat(primera.clienteNombre()).isEqualTo("Laura Mejía");
+        assertThat(primera.clienteCedula()).isEqualTo("109999");
+        assertThat(primera.metodoPago()).isEqualTo(MetodoPago.TRANSFERENCIA);
+    }
+
+    @Test
+    void reporteVentasPorCaja_comprasPorCliente_agregaProductosPorCliente() {
+        Caja caja = cajaBuilder();
+
+        Producto cafe = productoBuilder(1L, "Café", "BAR-A");
+        Producto agua = productoBuilder(2L, "Agua", "BAR-B");
+
+        Cliente ana = clienteBuilder(10L, "Ana López", "111", new BigDecimal("500000"), BigDecimal.ZERO);
+        Cliente bruno = clienteBuilder(11L, "Bruno Díaz", "222", new BigDecimal("500000"), BigDecimal.ZERO);
+
+        Venta v1 = Venta.builder()
+                .metodoPago(MetodoPago.CREDITO)
+                .estado(EstadoVenta.COMPLETADA)
+                .cliente(ana)
+                .total(new BigDecimal("5500"))
+                .detalles(List.of(
+                        new DetalleVenta(cafe, 2, new BigDecimal("2000")),
+                        new DetalleVenta(agua, 1, new BigDecimal("1500"))
+                ))
+                .build();
+
+        Venta v2 = Venta.builder()
+                .metodoPago(MetodoPago.CREDITO)
+                .estado(EstadoVenta.COMPLETADA)
+                .cliente(ana)
+                .total(new BigDecimal("2000"))
+                .detalles(List.of(new DetalleVenta(cafe, 1, new BigDecimal("2000"))))
+                .build();
+
+        Venta v3 = Venta.builder()
+                .metodoPago(MetodoPago.CREDITO)
+                .estado(EstadoVenta.COMPLETADA)
+                .cliente(bruno)
+                .total(new BigDecimal("4000"))
+                .detalles(List.of(new DetalleVenta(cafe, 2, new BigDecimal("2000"))))
+                .build();
+
+        // Venta directa: no debe aparecer en comprasPorCliente
+        Venta v4 = Venta.builder()
+                .metodoPago(MetodoPago.EFECTIVO)
+                .estado(EstadoVenta.COMPLETADA)
+                .total(new BigDecimal("2000"))
+                .detalles(List.of(new DetalleVenta(cafe, 1, new BigDecimal("2000"))))
+                .build();
+
+        when(cajaRepository.findById(1L)).thenReturn(Optional.of(caja));
+        when(ventaRepository.findByCajaId(1L)).thenReturn(List.of(v1, v2, v3, v4));
+
+        ReporteVentasDto reporte = reporteService.reporteVentasPorCaja(1L);
+
+        assertThat(reporte.comprasPorCliente()).hasSize(3);
+
+        ClienteProductoVendidoDto anaCafe = reporte.comprasPorCliente().stream()
+                .filter(x -> "Ana López".equals(x.clienteNombre()) && "Café".equals(x.productoNombre()))
+                .findFirst().orElseThrow();
+        assertThat(anaCafe.cantidadComprada()).isEqualTo(3);
+        assertThat(anaCafe.totalComprado()).isEqualByComparingTo("6000");
+
+        ClienteProductoVendidoDto anaAgua = reporte.comprasPorCliente().stream()
+                .filter(x -> "Ana López".equals(x.clienteNombre()) && "Agua".equals(x.productoNombre()))
+                .findFirst().orElseThrow();
+        assertThat(anaAgua.cantidadComprada()).isEqualTo(1);
+        assertThat(anaAgua.totalComprado()).isEqualByComparingTo("1500");
+
+        ClienteProductoVendidoDto brunoCafe = reporte.comprasPorCliente().stream()
+                .filter(x -> "Bruno Díaz".equals(x.clienteNombre()) && "Café".equals(x.productoNombre()))
+                .findFirst().orElseThrow();
+        assertThat(brunoCafe.cantidadComprada()).isEqualTo(2);
+        assertThat(brunoCafe.totalComprado()).isEqualByComparingTo("4000");
+    }
+
+    @Test
     void reporteVentasPorCaja_cajaNoExiste_lanzaBusinessException() {
         when(cajaRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(BusinessException.class, () -> reporteService.reporteVentasPorCaja(99L));
@@ -131,13 +244,16 @@ class ReporteServiceTest {
         Producto prodA = productoBuilder(1L, "Café",  "BAR-A");
         Producto prodB = productoBuilder(2L, "Azúcar", "BAR-B");
 
+        LocalDateTime fechaC1 = LocalDateTime.of(2026, 4, 10, 9, 0);
+        LocalDateTime fechaC2 = LocalDateTime.of(2026, 4, 15, 10, 30);
+
         // Compra 1: 100 uds de Café a 800 c/u = 80.000; 50 uds de Azúcar a 500 = 25.000
-        Compra c1 = compraBuilder(proveedor, List.of(
+        Compra c1 = compraBuilder(proveedor, "F-101", fechaC1, List.of(
                 new DetalleCompra(prodA, 100, new BigDecimal("800")),
                 new DetalleCompra(prodB,  50, new BigDecimal("500"))));
 
         // Compra 2: 200 uds más de Café a 750 = 150.000
-        Compra c2 = compraBuilder(proveedor, List.of(
+        Compra c2 = compraBuilder(proveedor, "F-102", fechaC2, List.of(
                 new DetalleCompra(prodA, 200, new BigDecimal("750"))));
 
         when(proveedorRepository.findById(1L)).thenReturn(Optional.of(proveedor));
@@ -149,6 +265,14 @@ class ReporteServiceTest {
         assertThat(reporte.totalCompras()).isEqualTo(2);
         // Total: 80.000 + 25.000 + 150.000 = 255.000
         assertThat(reporte.totalInvertido()).isEqualByComparingTo("255000");
+        assertThat(reporte.totalUnidades()).isEqualTo(350);
+        assertThat(reporte.ticketPromedio()).isEqualByComparingTo("127500.00");
+        assertThat(reporte.fechaUltimaCompra()).isEqualTo(fechaC2);
+        assertThat(reporte.compras()).hasSize(2);
+        assertThat(reporte.compras().get(0).numeroFactura()).isEqualTo("F-102");
+        assertThat(reporte.compras().get(0).unidades()).isEqualTo(200);
+        assertThat(reporte.compras().get(0).items()).isEqualTo(1);
+        assertThat(reporte.compras().get(0).productos()).hasSize(1);
         assertThat(reporte.productos()).hasSize(2);
 
         // Café: 100+200=300 uds, invertido 80.000+150.000=230.000
@@ -210,6 +334,80 @@ class ReporteServiceTest {
         assertThat(reporte.clientesConDeuda()).isZero();
         assertThat(reporte.totalDeudaPendiente()).isEqualByComparingTo("0");
         assertThat(reporte.clientes()).isEmpty();
+    }
+
+    @Test
+    void reporteCreditos_porCliente_retornaSoloClienteSeleccionado() {
+        Cliente ana = clienteBuilder(1L, "Ana López", "111",
+                new BigDecimal("500000"), new BigDecimal("150000"));
+        Cliente carlos = clienteBuilder(2L, "Carlos Ruiz", "222",
+                new BigDecimal("800000"), new BigDecimal("300000"));
+
+        when(clienteRepository.findAll()).thenReturn(List.of(ana, carlos));
+
+        ReporteCreditosDto reporte = reporteService.reporteCreditos(2L);
+
+        assertThat(reporte.clientesConDeuda()).isEqualTo(1);
+        assertThat(reporte.totalDeudaPendiente()).isEqualByComparingTo("300000");
+        assertThat(reporte.clientes()).hasSize(1);
+        assertThat(reporte.clientes().get(0).nombre()).isEqualTo("Carlos Ruiz");
+    }
+
+    @Test
+    void historialComprasCliente_retornaSoloCreditoYOrdenadasDesc() {
+        Cliente ana = clienteBuilder(1L, "Ana López", "111",
+                new BigDecimal("500000"), new BigDecimal("150000"));
+        Cliente bruno = clienteBuilder(2L, "Bruno Díaz", "222",
+                new BigDecimal("500000"), new BigDecimal("50000"));
+
+        Venta anaReciente = Venta.builder()
+                .id(11L)
+                .cliente(ana)
+                .fecha(LocalDateTime.of(2026, 4, 15, 11, 0))
+                .metodoPago(MetodoPago.CREDITO)
+                .estado(EstadoVenta.COMPLETADA)
+                .total(new BigDecimal("120000"))
+                .detalles(List.of())
+                .build();
+
+        Venta anaAnterior = Venta.builder()
+                .id(10L)
+                .cliente(ana)
+                .fecha(LocalDateTime.of(2026, 4, 10, 9, 0))
+                .metodoPago(MetodoPago.CREDITO)
+                .estado(EstadoVenta.COMPLETADA)
+                .total(new BigDecimal("85000"))
+                .detalles(List.of())
+                .build();
+
+        Venta anaContado = Venta.builder()
+                .id(13L)
+                .cliente(ana)
+                .fecha(LocalDateTime.of(2026, 4, 12, 8, 30))
+                .metodoPago(MetodoPago.EFECTIVO)
+                .estado(EstadoVenta.COMPLETADA)
+                .total(new BigDecimal("50000"))
+                .detalles(List.of())
+                .build();
+
+        Venta otroCliente = Venta.builder()
+                .id(12L)
+                .cliente(bruno)
+                .fecha(LocalDateTime.of(2026, 4, 20, 14, 0))
+                .metodoPago(MetodoPago.CREDITO)
+                .estado(EstadoVenta.COMPLETADA)
+                .total(new BigDecimal("95000"))
+                .detalles(List.of())
+                .build();
+
+                when(ventaRepository.findAll()).thenReturn(List.of(anaContado, anaAnterior, otroCliente, anaReciente));
+
+        List<Venta> historial = reporteService.historialComprasCliente(1L);
+
+        assertThat(historial).hasSize(2);
+        assertThat(historial.get(0).getId()).isEqualTo(11L);
+        assertThat(historial.get(1).getId()).isEqualTo(10L);
+                assertThat(historial).allMatch(v -> MetodoPago.CREDITO.equals(v.getMetodoPago()));
     }
 
     // ----------------------------------------------------------------
@@ -337,6 +535,42 @@ class ReporteServiceTest {
         assertThat(reporte.tuvoPerdida()).isTrue();      // invertimos sin vender nada
     }
 
+        @Test
+        void reporteRentabilidad_conDesajusteNegativo_reduceGananciaBruta() {
+                Compra c1 = compraConFecha(new BigDecimal("500000"), LocalDateTime.of(2026, 2, 10, 9, 0));
+
+                Caja caja = Caja.builder()
+                                .id(101L)
+                                .estado(EstadoCaja.CERRADA)
+                                .fechaApertura(LocalDateTime.of(2026, 2, 10, 8, 0))
+                                .fechaCierre(LocalDateTime.of(2026, 2, 10, 18, 0))
+                                .montoInicial(new BigDecimal("100000"))
+                                .montoFinal(new BigDecimal("850000"))
+                                .build();
+
+                Venta v1 = Venta.builder()
+                                .metodoPago(MetodoPago.EFECTIVO)
+                                .estado(EstadoVenta.COMPLETADA)
+                                .total(new BigDecimal("800000"))
+                                .fecha(LocalDateTime.of(2026, 2, 10, 14, 0))
+                                .caja(caja)
+                                .detalles(List.of())
+                                .build();
+
+                when(compraRepository.findAll()).thenReturn(List.of(c1));
+                when(ventaRepository.findAll()).thenReturn(List.of(v1));
+                when(cajaRepository.findAll()).thenReturn(List.of(caja));
+
+                ReporteRentabilidadDto reporte = reporteService.reporteRentabilidad(2026, 2);
+
+                // Desajuste: 850.000 - (100.000 + 800.000) = -50.000
+                assertThat(reporte.ajusteCaja()).isEqualByComparingTo("-50000");
+                // Ganancia: (800.000 - 500.000) + (-50.000) = 250.000
+                assertThat(reporte.gananciaBruta()).isEqualByComparingTo("250000");
+                // Margen: 250.000 / 800.000 × 100 = 31.25
+                assertThat(reporte.margenPorcentaje()).isEqualByComparingTo("31.25");
+        }
+
     // ----------------------------------------------------------------
     // reporteRentabilidadAnual
     // ----------------------------------------------------------------
@@ -389,6 +623,69 @@ class ReporteServiceTest {
         assertThat(ene.totalInvertido()).isEqualByComparingTo("0");
         assertThat(ene.totalVendido()).isEqualByComparingTo("0");
         assertThat(ene.tuvoPerdida()).isFalse();
+    }
+
+    @Test
+    void reporteRentabilidadAnual_conDesajustes_muestraAjusteYGananciaAjustadaEnMeses() {
+        Compra cFeb = compraConFecha(new BigDecimal("500000"), LocalDateTime.of(2026, 2, 10, 9, 0));
+        Compra cJun = compraConFecha(new BigDecimal("200000"), LocalDateTime.of(2026, 6, 5, 9, 0));
+
+        Caja cajaFeb = Caja.builder()
+                .id(201L)
+                .estado(EstadoCaja.CERRADA)
+                .fechaApertura(LocalDateTime.of(2026, 2, 10, 8, 0))
+                .fechaCierre(LocalDateTime.of(2026, 2, 10, 18, 0))
+                .montoInicial(new BigDecimal("100000"))
+                .montoFinal(new BigDecimal("850000"))
+                .build();
+
+        Caja cajaJun = Caja.builder()
+                .id(202L)
+                .estado(EstadoCaja.CERRADA)
+                .fechaApertura(LocalDateTime.of(2026, 6, 15, 8, 0))
+                .fechaCierre(LocalDateTime.of(2026, 6, 15, 18, 0))
+                .montoInicial(new BigDecimal("50000"))
+                .montoFinal(new BigDecimal("420000"))
+                .build();
+
+        Venta vFeb = Venta.builder()
+                .metodoPago(MetodoPago.EFECTIVO)
+                .estado(EstadoVenta.COMPLETADA)
+                .total(new BigDecimal("800000"))
+                .fecha(LocalDateTime.of(2026, 2, 10, 14, 0))
+                .caja(cajaFeb)
+                .detalles(List.of())
+                .build();
+
+        Venta vJun = Venta.builder()
+                .metodoPago(MetodoPago.EFECTIVO)
+                .estado(EstadoVenta.COMPLETADA)
+                .total(new BigDecimal("350000"))
+                .fecha(LocalDateTime.of(2026, 6, 15, 14, 0))
+                .caja(cajaJun)
+                .detalles(List.of())
+                .build();
+
+        when(compraRepository.findAll()).thenReturn(List.of(cFeb, cJun));
+        when(ventaRepository.findAll()).thenReturn(List.of(vFeb, vJun));
+        when(cajaRepository.findAll()).thenReturn(List.of(cajaFeb, cajaJun));
+
+        ReporteRentabilidadAnualDto reporte = reporteService.reporteRentabilidadAnual(2026);
+
+        // Ajuste total: (-50.000) + (+20.000) = -30.000
+        assertThat(reporte.ajusteCajaTotal()).isEqualByComparingTo("-30000");
+        // Ganancia anual: (1.150.000 - 700.000) - 30.000 = 420.000
+        assertThat(reporte.gananciaBruta()).isEqualByComparingTo("420000");
+        // Margen: 420.000 / 1.150.000 × 100 = 36.52
+        assertThat(reporte.margenPorcentaje()).isEqualByComparingTo("36.52");
+
+        RentabilidadMensualDto feb = reporte.meses().get(1);
+        assertThat(feb.ajusteCaja()).isEqualByComparingTo("-50000");
+        assertThat(feb.gananciaBruta()).isEqualByComparingTo("250000");
+
+        RentabilidadMensualDto jun = reporte.meses().get(5);
+        assertThat(jun.ajusteCaja()).isEqualByComparingTo("20000");
+        assertThat(jun.gananciaBruta()).isEqualByComparingTo("170000");
     }
 
     @Test
@@ -458,11 +755,21 @@ class ReporteServiceTest {
     }
 
     private Compra compraBuilder(Proveedor proveedor, List<DetalleCompra> detalles) {
+        return compraBuilder(proveedor, null, LocalDateTime.now(), detalles);
+    }
+
+    private Compra compraBuilder(Proveedor proveedor, String numeroFactura,
+                                 LocalDateTime fecha, List<DetalleCompra> detalles) {
         BigDecimal total = detalles.stream()
                 .map(DetalleCompra::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return Compra.builder()
-                .proveedor(proveedor).total(total).detalles(detalles).build();
+                .proveedor(proveedor)
+                .numeroFactura(numeroFactura)
+                .fecha(fecha)
+                .total(total)
+                .detalles(detalles)
+                .build();
     }
 
     private Cliente clienteBuilder(Long id, String nombre, String cedula,

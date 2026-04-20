@@ -9,9 +9,11 @@ import java.math.BigDecimal;
  */
 public record RentabilidadMensualDto(
         int mes,
-        String nombreMes,          // "Enero", "Febrero", ... "Diciembre"
+        String nombreMes,
         BigDecimal totalInvertido,
         BigDecimal totalVendido,
-        BigDecimal gananciaBruta,  // puede ser negativa
+        BigDecimal totalGastos,      // gastos operativos del mes (no inventario)
+        BigDecimal ajusteCaja,
+        BigDecimal gananciaBruta,    // puede ser negativa
         boolean tuvoPerdida
 ) {}

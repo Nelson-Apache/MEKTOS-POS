@@ -1,6 +1,7 @@
 package com.nap.pos.application.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -13,5 +14,9 @@ public record ReporteComprasDto(
         String nombreProveedor,
         int totalCompras,
         BigDecimal totalInvertido,
+        int totalUnidades,
+        BigDecimal ticketPromedio,
+        LocalDateTime fechaUltimaCompra,
+        List<CompraHistorialDto> compras,
         List<ProductoCompradoDto> productos  // ordenados de mayor a menor inversión
 ) {}

@@ -87,6 +87,14 @@
                 <graphic><FontIcon iconLiteral="fas-cash-register" iconSize="14" styleClass="nav-icon"/></graphic>
             </Button>
 
+            <Button fx:id="btnGastos"
+                    text="Gastos"
+                    styleClass="nav-item"
+                    onAction="#navGastos"
+                    maxWidth="Infinity">
+                <graphic><FontIcon iconLiteral="fas-file-invoice-dollar" iconSize="14" styleClass="nav-icon"/></graphic>
+            </Button>
+
             <Button fx:id="btnReportes"
                     text="Reportes"
                     styleClass="nav-item"

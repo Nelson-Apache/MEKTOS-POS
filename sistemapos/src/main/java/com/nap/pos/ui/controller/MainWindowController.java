@@ -58,6 +58,7 @@ public class MainWindowController {
     private final ClientesController       clientesController;
     private final ProveedoresController    proveedoresController;
     private final CajaController           cajaController;
+    private final GastosController         gastosController;
     private final ReportesController       reportesController;
     private final ConfiguracionController  configuracionController;
 
@@ -82,6 +83,7 @@ public class MainWindowController {
     @FXML private Button btnClientes;
     @FXML private Button btnProveedores;
     @FXML private Button btnCaja;
+    @FXML private Button btnGastos;
     @FXML private Button btnReportes;
     @FXML private Button btnConfiguracion;
 
@@ -112,7 +114,7 @@ public class MainWindowController {
     private static final String[] NAV_TEXTS = {
         "Dashboard", "Ventas", "Inventario",
         "Compras", "Clientes", "Proveedores",
-        "Caja", "Reportes", "Configuración"
+        "Caja", "Gastos", "Reportes", "Configuración"
     };
 
     /**
@@ -173,6 +175,12 @@ public class MainWindowController {
     }
 
     @FXML
+    public void navGastos() {
+        activarNav(btnGastos, "Gastos");
+        contenido.getChildren().setAll(gastosController.buildView(usuarioActual));
+    }
+
+    @FXML
     public void navReportes() {
         activarNav(btnReportes, "Reportes");
         contenido.getChildren().setAll(reportesController.buildView());
@@ -230,7 +238,7 @@ public class MainWindowController {
 
             Button[] btns = { btnDashboard, btnVentas, btnInventario,
                               btnCompras, btnClientes, btnProveedores,
-                              btnCaja, btnReportes, btnConfiguracion };
+                              btnCaja, btnGastos, btnReportes, btnConfiguracion };
             for (int i = 0; i < btns.length; i++) {
                 btns[i].setContentDisplay(ContentDisplay.LEFT);
                 btns[i].setAlignment(Pos.CENTER_LEFT);
@@ -382,7 +390,7 @@ public class MainWindowController {
     private List<Button> navButtons() {
         return List.of(btnDashboard, btnVentas, btnInventario,
                        btnCompras, btnClientes, btnProveedores,
-                       btnCaja, btnReportes, btnConfiguracion);
+                       btnCaja, btnGastos, btnReportes, btnConfiguracion);
     }
 
     // ── Dashboard — delegado a DashboardController ───────────────
